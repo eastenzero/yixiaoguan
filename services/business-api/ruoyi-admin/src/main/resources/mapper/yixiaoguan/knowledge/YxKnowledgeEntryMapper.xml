@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.knowledge.mapper.YxKnowledgeEntryMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.knowledge.domain.YxKnowledgeEntry">
+        <id property="id" column="id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="summary" column="summary"/>
+        <result property="status" column="status"/>
+        <result property="version" column="version"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="authorId" column="author_id"/>
+        <result property="publishedAt" column="published_at"/>
+        <result property="expiredAt" column="expired_at"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="hitCount" column="hit_count"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="categoryName" column="category_name"/>
+        <result property="authorName" column="author_name"/>
+        <result property="sourceFileName" column="source_file_name"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        e.id, e.category_id, e.title, e.content, e.summary, e.status, e.version,
+        e.source_id, e.author_id, e.published_at, e.expired_at, e.view_count, e.hit_count,
+        e.remark, e.created_at, e.updated_at, e.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        c.name AS category_name,
+        u.real_name AS author_name,
+        s.file_name AS source_file_name
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_knowledge_entry e
+        LEFT JOIN yx_knowledge_category c ON e.category_id = c.id AND c.is_deleted = FALSE
+        LEFT JOIN yx_user u ON e.author_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_knowledge_source s ON e.source_id = s.id AND s.is_deleted = FALSE
+        WHERE e.is_deleted = FALSE
+        <if test="categoryId != null">
+            AND e.category_id = #{categoryId}
+        </if>
+        <if test="status != null">
+            AND e.status = #{status}
+        </if>
+        <if test="title != null and title != ''">
+            AND e.title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        ORDER BY e.updated_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_knowledge_entry e
+        WHERE e.is_deleted = FALSE
+        <if test="categoryId != null">
+            AND e.category_id = #{categoryId}
+        </if>
+        <if test="status != null">
+            AND e.status = #{status}
+        </if>
+        <if test="title != null and title != ''">
+            AND e.title LIKE CONCAT('%', #{title}, '%')
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_knowledge_entry e
+        LEFT JOIN yx_knowledge_category c ON e.category_id = c.id AND c.is_deleted = FALSE
+        LEFT JOIN yx_user u ON e.author_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_knowledge_source s ON e.source_id = s.id AND s.is_deleted = FALSE
+        WHERE e.id = #{id} AND e.is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_knowledge_entry (
+            category_id, title, content, summary, status, version,
+            source_id, author_id, published_at, expired_at, remark
+        ) VALUES (
+            #{categoryId}, #{title}, #{content}, #{summary}, #{status}, #{version},
+            #{sourceId}, #{authorId}, #{publishedAt}, #{expiredAt}, #{remark}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE yx_knowledge_entry
+        SET category_id = #{categoryId},
+            title = #{title},
+            content = #{content},
+            summary = #{summary},
+            source_id = #{sourceId},
+            expired_at = #{expiredAt},
+            remark = #{remark},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="updateStatus">
+        UPDATE yx_knowledge_entry
+        SET status = #{status},
+            version = #{version},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="updatePublishInfo">
+        UPDATE yx_knowledge_entry
+        SET status = #{status},
+            version = #{version},
+            published_at = NOW(),
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_knowledge_entry
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

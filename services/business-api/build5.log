@@ -1,0 +1,303 @@
+﻿[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] ruoyi                                                              [pom]
+[INFO] ruoyi-common                                                       [jar]
+[INFO] ruoyi-system                                                       [jar]
+[INFO] ruoyi-framework                                                    [jar]
+[INFO] ruoyi-quartz                                                       [jar]
+[INFO] ruoyi-generator                                                    [jar]
+[INFO] ruoyi-admin                                                        [jar]
+[INFO] 
+[INFO] --------------------------< com.ruoyi:ruoyi >---------------------------
+[INFO] Building ruoyi 3.9.2                                               [1/7]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi ---
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-common >-----------------------
+[INFO] Building ruoyi-common 3.9.2                                        [2/7]
+[INFO]   from ruoyi-common\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi-common ---
+[INFO] Deleting C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-common\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ ruoyi-common ---
+[INFO] skip non existing resourceDirectory C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-common\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ ruoyi-common ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 116 source files with javac [debug parameters target 17] to target\classes
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-common/src/main/java/com/ruoyi/common/utils/file/ImageUtils.java: 某些输入文件使用或覆盖了已过时的 API。
+[INFO] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-common/src/main/java/com/ruoyi/common/utils/file/ImageUtils.java: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-system >-----------------------
+[INFO] Building ruoyi-system 3.9.2                                        [3/7]
+[INFO]   from ruoyi-system\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi-system ---
+[INFO] Deleting C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-system\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ ruoyi-system ---
+[INFO] Copying 16 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ ruoyi-system ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 56 source files with javac [debug parameters target 17] to target\classes
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] 
+[INFO] ---------------------< com.ruoyi:ruoyi-framework >----------------------
+[INFO] Building ruoyi-framework 3.9.2                                     [4/7]
+[INFO]   from ruoyi-framework\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi-framework ---
+[INFO] Deleting C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-framework\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ ruoyi-framework ---
+[INFO] skip non existing resourceDirectory C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-framework\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ ruoyi-framework ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 45 source files with javac [debug parameters target 17] to target\classes
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-quartz >-----------------------
+[INFO] Building ruoyi-quartz 3.9.2                                        [5/7]
+[INFO]   from ruoyi-quartz\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi-quartz ---
+[INFO] Deleting C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-quartz\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ ruoyi-quartz ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ ruoyi-quartz ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 18 source files with javac [debug parameters target 17] to target\classes
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] 
+[INFO] ---------------------< com.ruoyi:ruoyi-generator >----------------------
+[INFO] Building ruoyi-generator 3.9.2                                     [6/7]
+[INFO]   from ruoyi-generator\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi-generator ---
+[INFO] Deleting C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-generator\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ ruoyi-generator ---
+[INFO] Copying 21 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ ruoyi-generator ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 13 source files with javac [debug parameters target 17] to target\classes
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] 
+[INFO] -----------------------< com.ruoyi:ruoyi-admin >------------------------
+[INFO] Building ruoyi-admin 3.9.2                                         [7/7]
+[INFO]   from ruoyi-admin\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ ruoyi-admin ---
+[INFO] Deleting C:\Users\Administrator\Documents\code\yixiaoguan\services\business-api\ruoyi-admin\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ ruoyi-admin ---
+[INFO] Copying 27 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ ruoyi-admin ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 116 source files with javac [debug parameters target 17] to target\classes
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] 未与 -source 17 一起设置系统模块路径
+[INFO] 1 warning
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/IYxAiPersonaService.java:[4,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/IYxAiPersonaService.java:[20,5] 找不到符号
+  符号:   类 TableDataInfo
+  位置: 接口 com.yixiaoguan.aipersona.service.IYxAiPersonaService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/IYxAuditLogService.java:[4,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/IYxAuditLogService.java:[21,5] 找不到符号
+  符号:   类 TableDataInfo
+  位置: 接口 com.yixiaoguan.auditlog.service.IYxAuditLogService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[26,26] 程序包javax.servlet.http不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[27,26] 程序包javax.servlet.http不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/IYxNotificationService.java:[3,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/IYxNotificationService.java:[19,5] 找不到符号
+  符号:   类 TableDataInfo
+  位置: 接口 com.yixiaoguan.notification.service.IYxNotificationService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/IYxPushTaskService.java:[3,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/IYxPushTaskService.java:[19,5] 找不到符号
+  符号:   类 TableDataInfo
+  位置: 接口 com.yixiaoguan.pushtask.service.IYxPushTaskService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[28,31] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[29,29] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[29,75] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[30,30] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[31,31] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[32,29] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[32,75] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[33,30] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[84,13] 找不到符号
+  符号:   类 HttpServletRequest
+  位置: 类 com.yixiaoguan.common.aspect.YxAuditLogAspect
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[208,36] 找不到符号
+  符号:   类 HttpServletRequest
+  位置: 类 com.yixiaoguan.common.aspect.YxAuditLogAspect
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[209,43] 找不到符号
+  符号:   类 HttpServletResponse
+  位置: 类 com.yixiaoguan.common.aspect.YxAuditLogAspect
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[36,31] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[37,29] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[37,75] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[38,30] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[42,31] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[43,29] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[43,75] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[44,30] 找不到符号
+  符号:   方法 getPageDomain()
+  位置: 类 com.ruoyi.common.utils.PageUtils
+[INFO] 29 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for ruoyi 3.9.2:
+[INFO] 
+[INFO] ruoyi .............................................. SUCCESS [  0.110 s]
+[INFO] ruoyi-common ....................................... SUCCESS [  2.782 s]
+[INFO] ruoyi-system ....................................... SUCCESS [  0.574 s]
+[INFO] ruoyi-framework .................................... SUCCESS [  0.795 s]
+[INFO] ruoyi-quartz ....................................... SUCCESS [  0.352 s]
+[INFO] ruoyi-generator .................................... SUCCESS [  0.387 s]
+[INFO] ruoyi-admin ........................................ FAILURE [  0.778 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.006 s
+[INFO] Finished at: 2026-04-01T01:06:01+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project ruoyi-admin: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/IYxAiPersonaService.java:[4,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/IYxAiPersonaService.java:[20,5] 找不到符号
+[ERROR]   符号:   类 TableDataInfo
+[ERROR]   位置: 接口 com.yixiaoguan.aipersona.service.IYxAiPersonaService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/IYxAuditLogService.java:[4,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/IYxAuditLogService.java:[21,5] 找不到符号
+[ERROR]   符号:   类 TableDataInfo
+[ERROR]   位置: 接口 com.yixiaoguan.auditlog.service.IYxAuditLogService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[26,26] 程序包javax.servlet.http不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[27,26] 程序包javax.servlet.http不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/IYxNotificationService.java:[3,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/IYxNotificationService.java:[19,5] 找不到符号
+[ERROR]   符号:   类 TableDataInfo
+[ERROR]   位置: 接口 com.yixiaoguan.notification.service.IYxNotificationService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/IYxPushTaskService.java:[3,39] 程序包com.yixiaoguan.common.core.page不存在
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/IYxPushTaskService.java:[19,5] 找不到符号
+[ERROR]   符号:   类 TableDataInfo
+[ERROR]   位置: 接口 com.yixiaoguan.pushtask.service.IYxPushTaskService
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[28,31] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[29,29] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[29,75] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/aipersona/service/impl/YxAiPersonaServiceImpl.java:[30,30] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[31,31] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[32,29] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[32,75] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/auditlog/service/impl/YxAuditLogServiceImpl.java:[33,30] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[84,13] 找不到符号
+[ERROR]   符号:   类 HttpServletRequest
+[ERROR]   位置: 类 com.yixiaoguan.common.aspect.YxAuditLogAspect
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[208,36] 找不到符号
+[ERROR]   符号:   类 HttpServletRequest
+[ERROR]   位置: 类 com.yixiaoguan.common.aspect.YxAuditLogAspect
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/common/aspect/YxAuditLogAspect.java:[209,43] 找不到符号
+[ERROR]   符号:   类 HttpServletResponse
+[ERROR]   位置: 类 com.yixiaoguan.common.aspect.YxAuditLogAspect
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[36,31] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[37,29] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[37,75] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/notification/service/impl/YxNotificationServiceImpl.java:[38,30] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[42,31] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[43,29] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[43,75] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] /C:/Users/Administrator/Documents/code/yixiaoguan/services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/pushtask/service/impl/YxPushTaskServiceImpl.java:[44,30] 找不到符号
+[ERROR]   符号:   方法 getPageDomain()
+[ERROR]   位置: 类 com.ruoyi.common.utils.PageUtils
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :ruoyi-admin

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.classroom.mapper.YxClassroomApplicationMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.classroom.domain.YxClassroomApplication">
+        <id property="id" column="id"/>
+        <result property="applicantId" column="applicant_id"/>
+        <result property="classroomId" column="classroom_id"/>
+        <result property="applyDate" column="apply_date"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="purpose" column="purpose"/>
+        <result property="attendeeCount" column="attendee_count"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="attachments" column="attachments"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="applicantName" column="applicant_name"/>
+        <result property="building" column="building"/>
+        <result property="roomNumber" column="room_number"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        a.id, a.applicant_id, a.classroom_id, a.apply_date, a.start_time, a.end_time,
+        a.purpose, a.attendee_count, a.contact_phone, a.attachments, a.status, a.remark,
+        a.created_at, a.updated_at, a.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        u.real_name AS applicant_name,
+        c.building,
+        c.room_number
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_classroom_application a
+        LEFT JOIN yx_user u ON a.applicant_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_classroom c ON a.classroom_id = c.id AND c.is_deleted = FALSE
+        WHERE a.is_deleted = FALSE
+        <if test="applicantId != null">
+            AND a.applicant_id = #{applicantId}
+        </if>
+        <if test="classroomId != null">
+            AND a.classroom_id = #{classroomId}
+        </if>
+        <if test="status != null">
+            AND a.status = #{status}
+        </if>
+        ORDER BY a.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_classroom_application a
+        WHERE a.is_deleted = FALSE
+        <if test="applicantId != null">
+            AND a.applicant_id = #{applicantId}
+        </if>
+        <if test="classroomId != null">
+            AND a.classroom_id = #{classroomId}
+        </if>
+        <if test="status != null">
+            AND a.status = #{status}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_classroom_application a
+        LEFT JOIN yx_user u ON a.applicant_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_classroom c ON a.classroom_id = c.id AND c.is_deleted = FALSE
+        WHERE a.id = #{id} AND a.is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_classroom_application (
+            applicant_id, classroom_id, apply_date, start_time, end_time,
+            purpose, attendee_count, contact_phone, attachments, status, remark
+        ) VALUES (
+            #{applicantId}, #{classroomId}, #{applyDate}, #{startTime}, #{endTime},
+            #{purpose}, #{attendeeCount}, #{contactPhone}, #{attachments}, #{status}, #{remark}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE yx_classroom_application
+        SET classroom_id = #{classroomId},
+            apply_date = #{applyDate},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            purpose = #{purpose},
+            attendee_count = #{attendeeCount},
+            contact_phone = #{contactPhone},
+            attachments = #{attachments},
+            remark = #{remark},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="updateStatus">
+        UPDATE yx_classroom_application
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_classroom_application
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

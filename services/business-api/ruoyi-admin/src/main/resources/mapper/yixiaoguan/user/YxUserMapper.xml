@@ -66,4 +66,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </update>
 
+    <select id="selectAllStudentIds" resultType="java.lang.Long">
+        SELECT DISTINCT u.id
+        FROM yx_user u
+        LEFT JOIN yx_user_role ur ON u.id = ur.user_id
+        LEFT JOIN yx_role r ON ur.role_id = r.id
+        WHERE u.is_deleted = FALSE
+        AND u.status = 1
+        AND r.role_key = 'student'
+    </select>
+
+    <select id="selectIdsByClassNames" resultType="java.lang.Long">
+        SELECT DISTINCT u.id
+        FROM yx_user u
+        WHERE u.is_deleted = FALSE
+        AND u.status = 1
+        AND u.class_name IN
+        <foreach collection="classNames" item="className" open="(" separator="," close=")">
+            #{className}
+        </foreach>
+    </select>
+
 </mapper>

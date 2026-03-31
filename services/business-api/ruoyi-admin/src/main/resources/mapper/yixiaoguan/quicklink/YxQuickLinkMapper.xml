@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.quicklink.mapper.YxQuickLinkMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.quicklink.domain.YxQuickLink">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="url" column="url"/>
+        <result property="description" column="description"/>
+        <result property="category" column="category"/>
+        <result property="tags" column="tags"/>
+        <result property="icon" column="icon"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="isActive" column="is_active"/>
+        <result property="clickCount" column="click_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, name, url, description, category, tags, icon, sort_order, is_active, click_count,
+        created_at, updated_at, is_deleted
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yx_quick_link
+        WHERE is_deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="isActive != null">
+            AND is_active = #{isActive}
+        </if>
+        ORDER BY sort_order ASC, created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_quick_link
+        WHERE is_deleted = FALSE
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="isActive != null">
+            AND is_active = #{isActive}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yx_quick_link
+        WHERE id = #{id} AND is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_quick_link (
+            name, url, description, category, tags, icon, sort_order, is_active
+        ) VALUES (
+            #{name}, #{url}, #{description}, #{category}, #{tags}, #{icon}, #{sortOrder}, #{isActive}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE yx_quick_link
+        SET name = #{name},
+            url = #{url},
+            description = #{description},
+            category = #{category},
+            tags = #{tags},
+            icon = #{icon},
+            sort_order = #{sortOrder},
+            is_active = #{isActive},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="incrementClickCount">
+        UPDATE yx_quick_link
+        SET click_count = click_count + 1,
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_quick_link
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

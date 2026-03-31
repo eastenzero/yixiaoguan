@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.aipersona.mapper.YxAiPersonaMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.aipersona.domain.YxAiPersona">
+        <id property="id" column="id"/>
+        <result property="teacherId" column="teacher_id"/>
+        <result property="name" column="name"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="greeting" column="greeting"/>
+        <result property="systemPrompt" column="system_prompt"/>
+        <result property="toneStyle" column="tone_style"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="teacherName" column="teacher_name"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        p.id, p.teacher_id, p.name, p.avatar_url, p.greeting, p.system_prompt,
+        p.tone_style, p.is_default, p.status, p.created_at, p.updated_at, p.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        u.real_name AS teacher_name
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_ai_persona p
+        LEFT JOIN yx_user u ON p.teacher_id = u.id AND u.is_deleted = FALSE
+        WHERE p.is_deleted = FALSE
+        <if test="teacherId != null">
+            AND p.teacher_id = #{teacherId}
+        </if>
+        <if test="status != null">
+            AND p.status = #{status}
+        </if>
+        ORDER BY p.is_default DESC, p.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_ai_persona
+        WHERE is_deleted = FALSE
+        <if test="teacherId != null">
+            AND teacher_id = #{teacherId}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_ai_persona p
+        LEFT JOIN yx_user u ON p.teacher_id = u.id AND u.is_deleted = FALSE
+        WHERE p.id = #{id} AND p.is_deleted = FALSE
+    </select>
+
+    <select id="selectByTeacherId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_ai_persona p
+        LEFT JOIN yx_user u ON p.teacher_id = u.id AND u.is_deleted = FALSE
+        WHERE p.teacher_id = #{teacherId} AND p.is_deleted = FALSE AND p.status = 1
+        LIMIT 1
+    </select>
+
+    <select id="selectDefault" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_ai_persona p
+        LEFT JOIN yx_user u ON p.teacher_id = u.id AND u.is_deleted = FALSE
+        WHERE p.is_default = TRUE AND p.is_deleted = FALSE AND p.status = 1
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_ai_persona (
+            teacher_id, name, avatar_url, greeting, system_prompt,
+            tone_style, is_default, status
+        ) VALUES (
+            #{teacherId}, #{name}, #{avatarUrl}, #{greeting}, #{systemPrompt},
+            #{toneStyle}, #{isDefault}, #{status}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE yx_ai_persona
+        SET name = #{name},
+            avatar_url = #{avatarUrl},
+            greeting = #{greeting},
+            system_prompt = #{systemPrompt},
+            tone_style = #{toneStyle},
+            is_default = #{isDefault},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="updateStatus">
+        UPDATE yx_ai_persona
+        SET status = #{status}, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_ai_persona
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

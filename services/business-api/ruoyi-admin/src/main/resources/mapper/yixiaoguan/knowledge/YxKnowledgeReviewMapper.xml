@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.knowledge.mapper.YxKnowledgeReviewMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.knowledge.domain.YxKnowledgeReview">
+        <id property="id" column="id"/>
+        <result property="entryId" column="entry_id"/>
+        <result property="reviewerId" column="reviewer_id"/>
+        <result property="action" column="action"/>
+        <result property="opinion" column="opinion"/>
+        <result property="entryVersion" column="entry_version"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="reviewerName" column="reviewer_name"/>
+        <result property="entryTitle" column="entry_title"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        r.id, r.entry_id, r.reviewer_id, r.action, r.opinion, r.entry_version, r.created_at, r.updated_at, r.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        u.real_name AS reviewer_name,
+        e.title AS entry_title
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_knowledge_review r
+        LEFT JOIN yx_user u ON r.reviewer_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_knowledge_entry e ON r.entry_id = e.id
+        WHERE r.is_deleted = FALSE
+        <if test="entryId != null">
+            AND r.entry_id = #{entryId}
+        </if>
+        ORDER BY r.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_knowledge_review r
+        WHERE r.is_deleted = FALSE
+        <if test="entryId != null">
+            AND r.entry_id = #{entryId}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_knowledge_review r
+        LEFT JOIN yx_user u ON r.reviewer_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_knowledge_entry e ON r.entry_id = e.id
+        WHERE r.id = #{id} AND r.is_deleted = FALSE
+    </select>
+
+    <select id="selectLatestByEntryId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_knowledge_review r
+        LEFT JOIN yx_user u ON r.reviewer_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_knowledge_entry e ON r.entry_id = e.id
+        WHERE r.entry_id = #{entryId} AND r.is_deleted = FALSE
+        ORDER BY r.created_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_knowledge_review (entry_id, reviewer_id, action, opinion, entry_version)
+        VALUES (#{entryId}, #{reviewerId}, #{action}, #{opinion}, #{entryVersion})
+    </insert>
+
+</mapper>

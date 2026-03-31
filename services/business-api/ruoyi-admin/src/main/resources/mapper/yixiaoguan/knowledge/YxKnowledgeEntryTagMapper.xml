@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.knowledge.mapper.YxKnowledgeEntryTagMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.knowledge.domain.YxKnowledgeEntryTag">
+        <result property="entryId" column="entry_id"/>
+        <result property="tagId" column="tag_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="tagName" column="tag_name"/>
+    </resultMap>
+
+    <insert id="batchInsert">
+        INSERT INTO yx_knowledge_entry_tag (entry_id, tag_id)
+        VALUES
+        <foreach collection="tagIds" item="tagId" separator=",">
+            (#{entryId}, #{tagId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByEntryId">
+        DELETE FROM yx_knowledge_entry_tag
+        WHERE entry_id = #{entryId}
+    </delete>
+
+    <select id="selectByEntryId" resultMap="BaseResultMap">
+        SELECT et.entry_id, et.tag_id, et.created_at, et.updated_at, et.is_deleted,
+               t.name AS tag_name
+        FROM yx_knowledge_entry_tag et
+        LEFT JOIN yx_knowledge_tag t ON et.tag_id = t.id AND t.is_deleted = FALSE
+        WHERE et.entry_id = #{entryId}
+    </select>
+
+    <select id="selectTagIdsByEntryId" resultType="java.lang.Long">
+        SELECT tag_id
+        FROM yx_knowledge_entry_tag
+        WHERE entry_id = #{entryId}
+    </select>
+
+</mapper>

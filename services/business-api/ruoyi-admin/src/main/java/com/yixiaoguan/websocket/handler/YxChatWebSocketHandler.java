@@ -7,6 +7,7 @@ import com.yixiaoguan.conversation.domain.YxConversation;
 import com.yixiaoguan.conversation.domain.YxMessage;
 import com.yixiaoguan.conversation.service.IYxConversationService;
 import com.yixiaoguan.conversation.service.IYxMessageService;
+import com.yixiaoguan.ai.service.IAiCoordinatorService;
 import com.yixiaoguan.websocket.domain.WsMessagePacket;
 import com.yixiaoguan.websocket.session.WsSessionManager;
 import org.slf4j.Logger;
@@ -52,6 +53,9 @@ public class YxChatWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private IYxMessageService messageService;
+
+    @Autowired
+    private IAiCoordinatorService aiCoordinator;
 
     // ========================= 连接生命周期 =========================
 
@@ -197,6 +201,8 @@ public class YxChatWebSocketHandler extends TextWebSocketHandler {
      * 1. 确定 senderType（根据会话状态和用户角色）
      * 2. 存库（调用 MessageService）
      * 3. 将消息转发给会话内的对端（学生 → 教师 | 教师 → 学生）
+     * 
+     * 特殊处理：学生发送消息且非教师介入状态下，由 AI 协调器接管处理
      */
     private void handleChatMessage(WebSocketSession session, WsMessagePacket packet) {
         LoginUser loginUser = getLoginUser(session);
@@ -212,37 +218,61 @@ public class YxChatWebSocketHandler extends TextWebSocketHandler {
             // 判断 senderType
             int senderType = determineSenderType(loginUser);
 
-            // 构建消息并存库
-            YxMessage message = new YxMessage();
-            message.setConversationId(conversationId);
-            message.setSenderType(senderType);
-            message.setSenderId(yxUser.getId());
-            message.setContent(packet.getContent());
-            message.setMessageType(packet.getMessageType() != null ? packet.getMessageType() : 1);
-            message.setParentMessageId(packet.getParentMessageId());
-            YxMessage saved = messageService.sendMessage(message);
-
-            // 组装下行数据包
-            WsMessagePacket outPacket = new WsMessagePacket();
-            outPacket.setType("CHAT_MESSAGE");
-            outPacket.setConversationId(conversationId);
-            outPacket.setMessageId(saved.getId());
-            outPacket.setContent(saved.getContent());
-            outPacket.setMessageType(saved.getMessageType());
-            outPacket.setSenderId(yxUser.getId());
-            outPacket.setSenderName(yxUser.getRealName());
-            outPacket.setSenderType(senderType);
-            outPacket.setParentMessageId(saved.getParentMessageId());
-
-            // 转发给会话内其他用户
-            broadcastToConversation(conversationId, yxUser.getId(), outPacket);
-            // 给发送方回传消息（含 messageId，前端可做已发成功确认）
-            sendPacket(session, outPacket);
+            // 如果是学生发送的消息，触发 AI 协调器处理（意图识别 + 分支调度）
+            if (senderType == 1) {
+                // 检查当前会话是否处于教师介入状态
+                YxConversation conversation = conversationService.selectById(conversationId, yxUser.getId());
+                if (conversation != null && conversation.getStatus() != null && conversation.getStatus() == 2) {
+                    // 状态 2 = 教师介入中，走正常转发逻辑（不经过 AI）
+                    log.debug("[WS] 会话 {} 处于教师介入状态，消息直接转发", conversationId);
+                    forwardChatMessage(session, yxUser, conversationId, packet, senderType);
+                } else {
+                    // AI 接管状态，交由 AI 协调器处理
+                    log.debug("[WS] 会话 {} 由 AI 接管，触发意图识别", conversationId);
+                    aiCoordinator.processStudentMessage(yxUser.getId(), conversationId, packet.getContent(), session);
+                }
+            } else {
+                // 教师/管理员发送的消息，正常转发
+                forwardChatMessage(session, yxUser, conversationId, packet, senderType);
+            }
 
         } catch (Exception e) {
             log.error("[WS] 发送消息失败: {}", e.getMessage());
             sendPacket(session, buildSystemNotify(conversationId, "发送失败: " + e.getMessage(), "ERROR"));
         }
+    }
+
+    /**
+     * 转发聊天消息（学生↔教师直接通信场景）
+     */
+    private void forwardChatMessage(WebSocketSession session, YxUser yxUser, Long conversationId,
+                                     WsMessagePacket packet, int senderType) {
+        // 构建消息并存库
+        YxMessage message = new YxMessage();
+        message.setConversationId(conversationId);
+        message.setSenderType(senderType);
+        message.setSenderId(yxUser.getId());
+        message.setContent(packet.getContent());
+        message.setMessageType(packet.getMessageType() != null ? packet.getMessageType() : 1);
+        message.setParentMessageId(packet.getParentMessageId());
+        YxMessage saved = messageService.sendMessage(message);
+
+        // 组装下行数据包
+        WsMessagePacket outPacket = new WsMessagePacket();
+        outPacket.setType("CHAT_MESSAGE");
+        outPacket.setConversationId(conversationId);
+        outPacket.setMessageId(saved.getId());
+        outPacket.setContent(saved.getContent());
+        outPacket.setMessageType(saved.getMessageType());
+        outPacket.setSenderId(yxUser.getId());
+        outPacket.setSenderName(yxUser.getRealName());
+        outPacket.setSenderType(senderType);
+        outPacket.setParentMessageId(saved.getParentMessageId());
+
+        // 转发给会话内其他用户
+        broadcastToConversation(conversationId, yxUser.getId(), outPacket);
+        // 给发送方回传消息（含 messageId，前端可做已发成功确认）
+        sendPacket(session, outPacket);
     }
 
     // ========================= 工具方法 =========================

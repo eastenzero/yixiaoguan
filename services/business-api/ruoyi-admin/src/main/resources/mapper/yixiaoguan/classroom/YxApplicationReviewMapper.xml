@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.classroom.mapper.YxApplicationReviewMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.classroom.domain.YxApplicationReview">
+        <id property="id" column="id"/>
+        <result property="applicationId" column="application_id"/>
+        <result property="reviewerId" column="reviewer_id"/>
+        <result property="action" column="action"/>
+        <result property="opinion" column="opinion"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="reviewerName" column="reviewer_name"/>
+        <result property="applicantName" column="applicant_name"/>
+        <result property="building" column="building"/>
+        <result property="roomNumber" column="room_number"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        r.id, r.application_id, r.reviewer_id, r.action, r.opinion,
+        r.created_at, r.updated_at, r.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        u.real_name AS reviewer_name,
+        au.real_name AS applicant_name,
+        c.building,
+        c.room_number
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_application_review r
+        LEFT JOIN yx_user u ON r.reviewer_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_classroom_application a ON r.application_id = a.id AND a.is_deleted = FALSE
+        LEFT JOIN yx_user au ON a.applicant_id = au.id AND au.is_deleted = FALSE
+        LEFT JOIN yx_classroom c ON a.classroom_id = c.id AND c.is_deleted = FALSE
+        WHERE r.is_deleted = FALSE
+        <if test="applicationId != null">
+            AND r.application_id = #{applicationId}
+        </if>
+        <if test="reviewerId != null">
+            AND r.reviewer_id = #{reviewerId}
+        </if>
+        ORDER BY r.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_application_review r
+        WHERE r.is_deleted = FALSE
+        <if test="applicationId != null">
+            AND r.application_id = #{applicationId}
+        </if>
+        <if test="reviewerId != null">
+            AND r.reviewer_id = #{reviewerId}
+        </if>
+    </select>
+
+    <select id="selectByApplicationId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_application_review r
+        LEFT JOIN yx_user u ON r.reviewer_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_classroom_application a ON r.application_id = a.id AND a.is_deleted = FALSE
+        LEFT JOIN yx_user au ON a.applicant_id = au.id AND au.is_deleted = FALSE
+        LEFT JOIN yx_classroom c ON a.classroom_id = c.id AND c.is_deleted = FALSE
+        WHERE r.application_id = #{applicationId} AND r.is_deleted = FALSE
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_application_review r
+        LEFT JOIN yx_user u ON r.reviewer_id = u.id AND u.is_deleted = FALSE
+        LEFT JOIN yx_classroom_application a ON r.application_id = a.id AND a.is_deleted = FALSE
+        LEFT JOIN yx_user au ON a.applicant_id = au.id AND au.is_deleted = FALSE
+        LEFT JOIN yx_classroom c ON a.classroom_id = c.id AND c.is_deleted = FALSE
+        WHERE r.id = #{id} AND r.is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_application_review (
+            application_id, reviewer_id, action, opinion
+        ) VALUES (
+            #{applicationId}, #{reviewerId}, #{action}, #{opinion}
+        )
+    </insert>
+
+    <update id="deleteById">
+        UPDATE yx_application_review
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

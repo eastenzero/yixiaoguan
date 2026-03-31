@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.pushtask.mapper.YxPushTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.pushtask.domain.YxPushTask">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="targetType" column="target_type"/>
+        <result property="targetFilter" column="target_filter"/>
+        <result property="status" column="status"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="sentAt" column="sent_at"/>
+        <result property="recipientCount" column="recipient_count"/>
+        <result property="readCount" column="read_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="senderName" column="sender_name"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        t.id, t.title, t.content, t.target_type, t.target_filter, t.status,
+        t.sender_id, t.sent_at, t.recipient_count, t.read_count, t.created_at, t.updated_at, t.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        u.real_name AS sender_name
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_push_task t
+        LEFT JOIN yx_user u ON t.sender_id = u.id AND u.is_deleted = FALSE
+        WHERE t.is_deleted = FALSE
+        <if test="status != null">
+            AND t.status = #{status}
+        </if>
+        ORDER BY t.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_push_task
+        WHERE is_deleted = FALSE
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_push_task t
+        LEFT JOIN yx_user u ON t.sender_id = u.id AND u.is_deleted = FALSE
+        WHERE t.id = #{id} AND t.is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_push_task (
+            title, content, target_type, target_filter, status,
+            sender_id, recipient_count, read_count
+        ) VALUES (
+            #{title}, #{content}, #{targetType}, #{targetFilter}, #{status},
+            #{senderId}, #{recipientCount}, #{readCount}
+        )
+    </insert>
+
+    <update id="updateSentStatus">
+        UPDATE yx_push_task
+        SET status = 1, sent_at = NOW(), recipient_count = #{recipientCount}, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="updateCancelStatus">
+        UPDATE yx_push_task
+        SET status = 2, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="incrementReadCount">
+        UPDATE yx_push_task
+        SET read_count = read_count + 1, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_push_task
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

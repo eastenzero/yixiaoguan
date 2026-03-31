@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.notification.mapper.YxNotificationMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.notification.domain.YxNotification">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="type" column="type"/>
+        <result property="bizType" column="biz_type"/>
+        <result property="bizId" column="biz_id"/>
+        <result property="isRead" column="is_read"/>
+        <result property="readAt" column="read_at"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="pushTaskId" column="push_task_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <!-- 扩展字段 -->
+        <result property="senderName" column="sender_name"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        n.id, n.user_id, n.title, n.content, n.type, n.biz_type, n.biz_id, n.is_read,
+        n.read_at, n.sender_id, n.push_task_id, n.created_at, n.updated_at, n.is_deleted
+    </sql>
+
+    <sql id="Join_Column_List">
+        u.real_name AS sender_name
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_notification n
+        LEFT JOIN yx_user u ON n.sender_id = u.id AND u.is_deleted = FALSE
+        WHERE n.is_deleted = FALSE
+        AND n.user_id = #{userId}
+        <if test="isRead != null">
+            AND n.is_read = #{isRead}
+        </if>
+        ORDER BY n.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_notification n
+        WHERE n.is_deleted = FALSE
+        AND n.user_id = #{userId}
+        <if test="isRead != null">
+            AND n.is_read = #{isRead}
+        </if>
+    </select>
+
+    <select id="countUnread" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_notification
+        WHERE is_deleted = FALSE
+        AND user_id = #{userId}
+        AND is_read = FALSE
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>,
+        <include refid="Join_Column_List"/>
+        FROM yx_notification n
+        LEFT JOIN yx_user u ON n.sender_id = u.id AND u.is_deleted = FALSE
+        WHERE n.id = #{id} AND n.is_deleted = FALSE
+    </select>
+
+    <insert id="batchInsert">
+        INSERT INTO yx_notification (
+            user_id, title, content, type, biz_type, biz_id,
+            sender_id, push_task_id
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.title}, #{item.content}, #{item.type}, #{item.bizType}, #{item.bizId},
+            #{item.senderId}, #{item.pushTaskId})
+        </foreach>
+    </insert>
+
+    <update id="markAsRead">
+        UPDATE yx_notification
+        SET is_read = TRUE, read_at = NOW(), updated_at = NOW()
+        WHERE id = #{id} AND user_id = #{userId} AND is_deleted = FALSE
+    </update>
+
+    <update id="markAllAsRead">
+        UPDATE yx_notification
+        SET is_read = TRUE, read_at = NOW(), updated_at = NOW()
+        WHERE user_id = #{userId} AND is_read = FALSE AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_notification
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND user_id = #{userId} AND is_deleted = FALSE
+    </update>
+
+</mapper>

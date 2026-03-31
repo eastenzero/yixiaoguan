@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.classroom.mapper.YxClassroomMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.classroom.domain.YxClassroom">
+        <id property="id" column="id"/>
+        <result property="building" column="building"/>
+        <result property="roomNumber" column="room_number"/>
+        <result property="capacity" column="capacity"/>
+        <result property="equipment" column="equipment"/>
+        <result property="location" column="location"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, building, room_number, capacity, equipment, location, status, remark,
+        created_at, updated_at, is_deleted
+    </sql>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yx_classroom
+        WHERE is_deleted = FALSE
+        <if test="building != null and building != ''">
+            AND building LIKE CONCAT('%', #{building}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY building, room_number
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM yx_classroom
+        WHERE is_deleted = FALSE
+        <if test="building != null and building != ''">
+            AND building LIKE CONCAT('%', #{building}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yx_classroom
+        WHERE id = #{id} AND is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_classroom (
+            building, room_number, capacity, equipment, location, status, remark
+        ) VALUES (
+            #{building}, #{roomNumber}, #{capacity}, #{equipment}, #{location}, #{status}, #{remark}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE yx_classroom
+        SET building = #{building},
+            room_number = #{roomNumber},
+            capacity = #{capacity},
+            equipment = #{equipment},
+            location = #{location},
+            status = #{status},
+            remark = #{remark},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_classroom
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>

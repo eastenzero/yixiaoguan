@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.knowledge.mapper.YxKnowledgeCategoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.yixiaoguan.knowledge.domain.YxKnowledgeCategory">
+        <id property="id" column="id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="name" column="name"/>
+        <result property="code" column="code"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="description" column="description"/>
+        <result property="icon" column="icon"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, parent_id, name, code, sort_order, description, icon, status, created_at, updated_at, is_deleted
+    </sql>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yx_knowledge_category
+        WHERE is_deleted = FALSE
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yx_knowledge_category
+        WHERE id = #{id} AND is_deleted = FALSE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO yx_knowledge_category (parent_id, name, code, sort_order, description, icon, status)
+        VALUES (#{parentId}, #{name}, #{code}, #{sortOrder}, #{description}, #{icon}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE yx_knowledge_category
+        SET parent_id = #{parentId},
+            name = #{name},
+            code = #{code},
+            sort_order = #{sortOrder},
+            description = #{description},
+            icon = #{icon},
+            status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+    <update id="deleteById">
+        UPDATE yx_knowledge_category
+        SET is_deleted = TRUE, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = FALSE
+    </update>
+
+</mapper>
