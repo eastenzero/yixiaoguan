@@ -1,0 +1,56 @@
+# 📋 Project Rules
+
+> 此文件用于存储项目特定的规则和约定，AI 会在对话中自动遵守这些规则。
+> 全局规则（持续对话等）可能也在这里配置。
+
+---
+
+## 项目概述
+<!-- 描述项目类型、主要功能、技术栈等 -->
+- 项目类型: 校园智能服务平台（医小管 / YiXiaoGuan）
+- 主要语言: Java（后端）/ Python（AI服务）/ TypeScript（前端）
+- 框架:
+  - 主业务后端：Java 21 + Spring Boot 3 + 若依（RuoYi-Vue3）
+  - AI 服务：Python 3.11+ + FastAPI + ChromaDB + DashScope
+  - 教师/管理端 Web：Vue 3 + TypeScript + Element Plus
+  - 学生端：uni-app + TypeScript（H5 优先，后发小程序）
+- 数据库：PostgreSQL + Redis
+- 对象存储：腾讯云 COS
+- 大模型：阿里云 DashScope 通义千问（云端 API）
+- Embedding：DashScope text-embedding-v3
+- 向量库：ChromaDB（本地持久化）
+- 部署：Docker Compose 单机
+
+---
+
+## 代码规范
+<!-- 代码风格、命名约定、注释要求等 -->
+- 使用中文注释
+- 函数/方法命名: camelCase
+- 类命名: PascalCase
+- 数据库表名: snake_case，统一加 `yx_` 前缀（如 `yx_user`、`yx_conversation`）
+- API 响应格式统一：`{ code, msg, data }`
+- 时间字段统一用 ISO 8601 格式
+
+---
+
+## 架构规则
+<!-- 目录结构、模块划分、依赖关系等 -->
+- `services/business-api/`：主业务后端，只处理业务逻辑，不直接调用大模型
+- `services/ai-service/`：AI 能力层，只处理 RAG/Embedding/Prompt，不处理业务权限
+- `apps/teacher-web/`：教师+管理员统一 PC Web，RBAC 控制页面可见性
+- `apps/student-app/`：学生端 uni-app，H5 优先
+- `docs/`：所有开发文档，开发前必须先读对应模块的文档
+- AI 服务只对 business-api 暴露接口，不直接对前端暴露
+- WebSocket 服务在 business-api 中实现，用于教师实时插入对话和主动推送
+
+---
+
+## 待办/注意事项
+<!-- AI 在对话中会持续追加有价值的规则到这里 -->
+- 首批源数据正式清洗输出统一放在 `knowledge-base/raw/first-batch-processing/`。
+- `manifests/` 存材料总表与清洗标注，`converted/` 存格式转换结果，`logs/` 存转换日志与阻塞记录。
+- 原始材料始终保留在 `_references/数据库部分材料/`，清洗阶段不移动、不改名、不覆盖原件。
+- 向量库使用 ChromaDB（非 pgvector），集合：`kb_entries`（知识库）、`quick_links`（快捷链接）。
+- 开发文档在 `docs/` 各子目录，开发前必须先读对应文档。
+- P0 文档（database/schema-phase1.md）写完后才能启动后端开发。

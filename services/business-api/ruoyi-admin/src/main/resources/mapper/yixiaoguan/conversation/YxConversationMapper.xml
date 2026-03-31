@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.conversation.mapper.YxConversationMapper">
+
+    <!-- 会话基础结果映射（包含连表扩展字段） -->
+    <resultMap type="com.yixiaoguan.conversation.domain.YxConversation" id="YxConversationResult">
+        <id     property="id"              column="id"                />
+        <result property="userId"          column="user_id"           />
+        <result property="title"           column="title"             />
+        <result property="status"          column="status"            />
+        <result property="teacherId"       column="teacher_id"        />
+        <result property="teacherJoinedAt" column="teacher_joined_at" />
+        <result property="lastMessageAt"   column="last_message_at"   />
+        <result property="messageCount"    column="message_count"     />
+        <result property="createdAt"       column="created_at"        />
+        <result property="updatedAt"       column="updated_at"        />
+        <result property="isDeleted"       column="is_deleted"        />
+        <!-- 连表扩展字段 -->
+        <result property="userRealName"    column="user_real_name"    />
+        <result property="teacherRealName" column="teacher_real_name" />
+    </resultMap>
+
+    <!-- 基础查询列（含连表） -->
+    <sql id="selectConversationVo">
+        select
+            c.id,
+            c.user_id,
+            c.title,
+            c.status,
+            c.teacher_id,
+            c.teacher_joined_at,
+            c.last_message_at,
+            c.message_count,
+            c.created_at,
+            c.updated_at,
+            c.is_deleted,
+            su.real_name  as user_real_name,
+            tu.real_name  as teacher_real_name
+        from yx_conversation c
+            left join yx_user su on c.user_id    = su.id and su.is_deleted = false
+            left join yx_user tu on c.teacher_id = tu.id and tu.is_deleted = false
+    </sql>
+
+    <!-- 通过 user_id 分页查询会话列表 -->
+    <select id="selectPageByUserId" resultMap="YxConversationResult">
+        <include refid="selectConversationVo"/>
+        where c.user_id = #{userId}
+          and c.is_deleted = false
+        <if test="status != null">
+            and c.status = #{status}
+        </if>
+        order by c.last_message_at desc nulls last, c.created_at desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <!-- 统计 user_id 下的会话总数 -->
+    <select id="countByUserId" resultType="long">
+        select count(1)
+        from yx_conversation c
+        where c.user_id = #{userId}
+          and c.is_deleted = false
+        <if test="status != null">
+            and c.status = #{status}
+        </if>
+    </select>
+
+    <!-- 通过主键查询单个会话 -->
+    <select id="selectById" resultMap="YxConversationResult">
+        <include refid="selectConversationVo"/>
+        where c.id = #{id}
+          and c.is_deleted = false
+    </select>
+
+    <!-- 新建会话 -->
+    <insert id="insert" parameterType="com.yixiaoguan.conversation.domain.YxConversation"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into yx_conversation
+            (user_id, title, status, created_at, updated_at, is_deleted)
+        values
+            (#{userId}, #{title}, 1, now(), now(), false)
+    </insert>
+
+    <!-- 更新会话标题 -->
+    <update id="updateTitle">
+        update yx_conversation
+        set title = #{title}, updated_at = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 更新会话状态 -->
+    <update id="updateStatus">
+        update yx_conversation
+        set status = #{status}, updated_at = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 教师加入会话：状态改为 2，记录教师 ID 和当前时间 -->
+    <update id="updateTeacherJoin">
+        update yx_conversation
+        set status           = 2,
+            teacher_id       = #{teacherId},
+            teacher_joined_at = now(),
+            updated_at       = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 教师离开会话：状态回到 1，清空教师 ID（保留 teacher_joined_at 记录历史） -->
+    <update id="updateTeacherLeave">
+        update yx_conversation
+        set status     = 1,
+            teacher_id = null,
+            updated_at = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 更新最后消息时间和消息计数（在新消息插入后调用） -->
+    <update id="updateLastMessageInfo">
+        update yx_conversation
+        set last_message_at = now(),
+            message_count   = message_count + 1,
+            updated_at      = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 软删除（关闭）会话 -->
+    <update id="deleteById">
+        update yx_conversation
+        set is_deleted = true,
+            status     = 0,
+            updated_at = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+</mapper>

@@ -1,0 +1,66 @@
+{
+	"pages": [
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "医小管",
+				"navigationBarBackgroundColor": "#1a7a4a",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "智能问答",
+				"navigationBarBackgroundColor": "#1a7a4a",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/apply/apply",
+			"style": {
+				"navigationBarTitleText": "事务申请",
+				"navigationBarBackgroundColor": "#1a7a4a",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/profile/profile",
+			"style": {
+				"navigationBarTitleText": "个人主页",
+				"navigationBarBackgroundColor": "#1a7a4a",
+				"navigationBarTextStyle": "white"
+			}
+		}
+	],
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#1a7a4a",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/chat/chat",
+				"text": "问答"
+			},
+			{
+				"pagePath": "pages/apply/apply",
+				"text": "申请"
+			},
+			{
+				"pagePath": "pages/profile/profile",
+				"text": "我的"
+			}
+		]
+	},
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "医小管",
+		"navigationBarBackgroundColor": "#1a7a4a",
+		"backgroundColor": "#f5f5f5"
+	}
+}

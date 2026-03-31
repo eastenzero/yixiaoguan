@@ -1,0 +1,80 @@
+# 医小管 — 本地开发 Docker Compose
+# 包含：PostgreSQL + Redis + ai-service
+# 启动命令：docker compose up -d
+# 暂不含 business-api 和 Nginx（待若依初始化完成后添加）
+
+version: "3.9"
+
+services:
+  # ─── PostgreSQL 16 ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: yx_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-yixiaoguan}
+      POSTGRES_USER: ${POSTGRES_USER:-yx_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_dotenv}
+      TZ: Asia/Shanghai
+    ports:
+      - "5432:5432" # 本地开发暴露，生产环境去掉
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yx_admin} -d ${POSTGRES_DB:-yixiaoguan}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis 7 ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: yx_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-change_me_in_dotenv} --appendonly yes
+    ports:
+      - "6379:6379" # 本地开发暴露，生产环境去掉
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-change_me_in_dotenv}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── AI Service（FastAPI + ChromaDB）───────────────────────────
+  ai-service:
+    build:
+      context: ../services/ai-service
+      dockerfile: Dockerfile
+    container_name: yx_ai_service
+    restart: unless-stopped
+    environment:
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      DASHSCOPE_CHAT_MODEL: ${DASHSCOPE_CHAT_MODEL:-qwen-plus}
+      DASHSCOPE_EMBEDDING_MODEL: ${DASHSCOPE_EMBEDDING_MODEL:-text-embedding-v3}
+      CHROMA_PERSIST_DIR: /app/data/chroma
+      BUSINESS_API_BASE_URL: http://host.docker.internal:8080
+      DEBUG: ${DEBUG:-false}
+    ports:
+      - "8000:8000" # 注意：生产环境此端口不对外暴露，仅 business-api 内网访问
+    volumes:
+      - chroma_data:/app/data/chroma
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  chroma_data:
+    driver: local

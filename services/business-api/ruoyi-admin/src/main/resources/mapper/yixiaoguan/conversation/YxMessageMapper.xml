@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.conversation.mapper.YxMessageMapper">
+
+    <!-- 消息基础结果映射（包含连表扩展字段） -->
+    <resultMap type="com.yixiaoguan.conversation.domain.YxMessage" id="YxMessageResult">
+        <id     property="id"               column="id"                 />
+        <result property="conversationId"   column="conversation_id"    />
+        <result property="senderType"       column="sender_type"        />
+        <result property="senderId"         column="sender_id"          />
+        <result property="content"          column="content"            />
+        <result property="messageType"      column="message_type"       />
+        <result property="parentMessageId"  column="parent_message_id"  />
+        <result property="aiConfidence"     column="ai_confidence"      />
+        <result property="aiSourceEntryIds" column="ai_source_entry_ids"/>
+        <result property="aiSourceLinkIds"  column="ai_source_link_ids" />
+        <result property="createdAt"        column="created_at"         />
+        <result property="updatedAt"        column="updated_at"         />
+        <result property="isDeleted"        column="is_deleted"         />
+        <!-- 连表扩展字段 -->
+        <result property="senderRealName"   column="sender_real_name"   />
+    </resultMap>
+
+    <!-- 基础查询列（含连表，AI/系统消息 sender_id 为空时 left join 返回 null） -->
+    <sql id="selectMessageVo">
+        select
+            m.id,
+            m.conversation_id,
+            m.sender_type,
+            m.sender_id,
+            m.content,
+            m.message_type,
+            m.parent_message_id,
+            m.ai_confidence,
+            m.ai_source_entry_ids,
+            m.ai_source_link_ids,
+            m.created_at,
+            m.updated_at,
+            m.is_deleted,
+            u.real_name as sender_real_name
+        from yx_message m
+            left join yx_user u on m.sender_id = u.id and u.is_deleted = false
+    </sql>
+
+    <!-- 通过会话 ID 检索所有历史消息（正序，适用于初次加载整段对话） -->
+    <select id="selectByConversationId" resultMap="YxMessageResult">
+        <include refid="selectMessageVo"/>
+        where m.conversation_id = #{conversationId}
+          and m.is_deleted = false
+        order by m.created_at asc
+    </select>
+
+    <!-- 通过会话 ID 分页查询消息（逆序，用于"查看更多历史"翻页） -->
+    <select id="selectPageByConversationId" resultMap="YxMessageResult">
+        <include refid="selectMessageVo"/>
+        where m.conversation_id = #{conversationId}
+          and m.is_deleted = false
+        order by m.created_at desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <!-- 统计会话消息总数 -->
+    <select id="countByConversationId" resultType="long">
+        select count(1)
+        from yx_message m
+        where m.conversation_id = #{conversationId}
+          and m.is_deleted = false
+    </select>
+
+    <!-- 通过主键查询单条消息 -->
+    <select id="selectById" resultMap="YxMessageResult">
+        <include refid="selectMessageVo"/>
+        where m.id = #{id}
+          and m.is_deleted = false
+    </select>
+
+    <!-- 新增消息，回填主键 -->
+    <insert id="insert" parameterType="com.yixiaoguan.conversation.domain.YxMessage"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into yx_message
+            (conversation_id, sender_type, sender_id, content, message_type,
+             parent_message_id, ai_confidence, ai_source_entry_ids, ai_source_link_ids,
+             created_at, updated_at, is_deleted)
+        values
+            (#{conversationId}, #{senderType}, #{senderId}, #{content}, #{messageType},
+             #{parentMessageId}, #{aiConfidence}, #{aiSourceEntryIds}, #{aiSourceLinkIds},
+             now(), now(), false)
+    </insert>
+
+</mapper>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.user.mapper.YxUserMapper">
+
+    <resultMap type="com.yixiaoguan.common.core.domain.YxUser" id="YxUserResult">
+        <id     property="id"       column="id"      />
+        <result property="username"    column="username"   />
+        <result property="password"    column="password"   />
+        <result property="realName"    column="real_name"  />
+        <result property="nickname"    column="nickname"   />
+        <result property="gender"      column="gender"     />
+        <result property="phone"       column="phone"      />
+        <result property="email"       column="email"      />
+        <result property="avatarUrl"   column="avatar_url" />
+        <result property="bio"         column="bio"        />
+        <result property="studentId"   column="student_id" />
+        <result property="employeeId"  column="employee_id"/>
+        <result property="department"  column="department" />
+        <result property="major"       column="major"      />
+        <result property="className"   column="class_name" />
+        <result property="grade"       column="grade"      />
+        <result property="wechatOpenid" column="wechat_openid"/>
+        <result property="status"      column="status"     />
+        <result property="passwordChanged" column="password_changed"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <result property="lastLoginIp" column="last_login_ip"/>
+        <result property="remark"      column="remark"     />
+        <result property="createdAt"   column="created_at" />
+        <result property="updatedAt"   column="updated_at" />
+        <result property="isDeleted"   column="is_deleted" />
+        <collection  property="roles"   javaType="java.util.List"  resultMap="RoleResult" />
+    </resultMap>
+
+    <resultMap id="RoleResult" type="com.yixiaoguan.common.core.domain.YxRole">
+        <id     property="id"       column="role_id"        />
+        <result property="roleKey"    column="role_key"      />
+        <result property="roleName"   column="role_name"     />
+        <result property="sortOrder"  column="role_sort_order"/>
+        <result property="status"     column="role_status"   />
+    </resultMap>
+
+    <sql id="selectUserVo">
+        select u.id, u.username, u.password, u.real_name, u.nickname, u.gender, u.phone, u.email, u.avatar_url, u.bio,
+               u.student_id, u.employee_id, u.department, u.major, u.class_name, u.grade, u.wechat_openid, u.status,
+               u.password_changed, u.last_login_at, u.last_login_ip, u.remark, u.created_at, u.updated_at, u.is_deleted,
+               r.id as role_id, r.role_key, r.role_name, r.sort_order as role_sort_order, r.status as role_status
+        from yx_user u
+            left join yx_user_role ur on u.id = ur.user_id
+            left join yx_role r on r.id = ur.role_id and r.is_deleted = false
+    </sql>
+
+    <select id="selectUserByUsername" parameterType="String" resultMap="YxUserResult">
+        <include refid="selectUserVo"/>
+        where u.username = #{username} and u.is_deleted = false
+    </select>
+
+    <select id="selectUserById" parameterType="Long" resultMap="YxUserResult">
+        <include refid="selectUserVo"/>
+        where u.id = #{id} and u.is_deleted = false
+    </select>
+
+    <update id="updateLoginInfo">
+        update yx_user set last_login_ip = #{lastLoginIp}, last_login_at = #{lastLoginAt}, updated_at = now()
+        where id = #{id}
+    </update>
+
+</mapper>

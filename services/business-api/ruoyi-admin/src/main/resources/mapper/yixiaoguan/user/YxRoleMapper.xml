@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.user.mapper.YxRoleMapper">
+
+    <resultMap type="com.yixiaoguan.common.core.domain.YxRole" id="YxRoleResult">
+        <id     property="id"       column="id"        />
+        <result property="roleKey"    column="role_key"      />
+        <result property="roleName"   column="role_name"     />
+        <result property="sortOrder"  column="sort_order"    />
+        <result property="status"     column="status"        />
+        <result property="remark"     column="remark"        />
+        <result property="createdAt"  column="created_at"    />
+        <result property="updatedAt"  column="updated_at"    />
+        <result property="isDeleted"  column="is_deleted"    />
+    </resultMap>
+
+    <select id="selectRolesByUserId" parameterType="Long" resultMap="YxRoleResult">
+        select distinct r.id, r.role_key, r.role_name, r.sort_order, r.status, r.remark, r.created_at, r.updated_at, r.is_deleted
+        from yx_role r
+             left join yx_user_role ur on ur.role_id = r.id
+             left join yx_user u on u.id = ur.user_id
+        where u.id = #{userId} and r.is_deleted = false and u.is_deleted = false
+    </select>
+
+</mapper>

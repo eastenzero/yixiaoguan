@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yixiaoguan.conversation.mapper.YxEscalationMapper">
+
+    <!-- 工单基础结果映射（包含连表扩展字段） -->
+    <resultMap type="com.yixiaoguan.conversation.domain.YxEscalation" id="YxEscalationResult">
+        <id     property="id"               column="id"                 />
+        <result property="conversationId"   column="conversation_id"    />
+        <result property="messageId"        column="message_id"         />
+        <result property="studentId"        column="student_id"         />
+        <result property="teacherId"        column="teacher_id"         />
+        <result property="questionSummary"  column="question_summary"   />
+        <result property="status"           column="status"             />
+        <result property="priority"         column="priority"           />
+        <result property="triggerType"      column="trigger_type"       />
+        <result property="teacherReply"     column="teacher_reply"      />
+        <result property="resolvedAt"       column="resolved_at"        />
+        <result property="knowledgeEntryId" column="knowledge_entry_id" />
+        <result property="remark"           column="remark"             />
+        <result property="createdAt"        column="created_at"         />
+        <result property="updatedAt"        column="updated_at"         />
+        <result property="isDeleted"        column="is_deleted"         />
+        <!-- 连表扩展字段 -->
+        <result property="studentRealName"  column="student_real_name"  />
+        <result property="teacherRealName"  column="teacher_real_name"  />
+        <result property="studentClassName" column="student_class_name" />
+    </resultMap>
+
+    <!-- 基础查询列（连表获取学生和教师信息） -->
+    <sql id="selectEscalationVo">
+        select
+            e.id,
+            e.conversation_id,
+            e.message_id,
+            e.student_id,
+            e.teacher_id,
+            e.question_summary,
+            e.status,
+            e.priority,
+            e.trigger_type,
+            e.teacher_reply,
+            e.resolved_at,
+            e.knowledge_entry_id,
+            e.remark,
+            e.created_at,
+            e.updated_at,
+            e.is_deleted,
+            su.real_name  as student_real_name,
+            su.class_name as student_class_name,
+            tu.real_name  as teacher_real_name
+        from yx_escalation e
+            left join yx_user su on e.student_id = su.id and su.is_deleted = false
+            left join yx_user tu on e.teacher_id = tu.id and tu.is_deleted = false
+    </sql>
+
+    <!-- 通过主键查询单个工单 -->
+    <select id="selectById" resultMap="YxEscalationResult">
+        <include refid="selectEscalationVo"/>
+        where e.id = #{id}
+          and e.is_deleted = false
+    </select>
+
+    <!-- 通过教师 ID 分页查询已分配工单 -->
+    <select id="selectPageByTeacherId" resultMap="YxEscalationResult">
+        <include refid="selectEscalationVo"/>
+        where e.teacher_id = #{teacherId}
+          and e.is_deleted = false
+        <if test="status != null">
+            and e.status = #{status}
+        </if>
+        order by e.priority desc, e.created_at desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <!-- 统计教师可见工单总数 -->
+    <select id="countByTeacherId" resultType="long">
+        select count(1)
+        from yx_escalation e
+        where e.teacher_id = #{teacherId}
+          and e.is_deleted = false
+        <if test="status != null">
+            and e.status = #{status}
+        </if>
+    </select>
+
+    <!-- 通过学生 ID 分页查询自己的工单 -->
+    <select id="selectPageByStudentId" resultMap="YxEscalationResult">
+        <include refid="selectEscalationVo"/>
+        where e.student_id = #{studentId}
+          and e.is_deleted = false
+        <if test="status != null">
+            and e.status = #{status}
+        </if>
+        order by e.created_at desc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <!-- 统计学生工单总数 -->
+    <select id="countByStudentId" resultType="long">
+        select count(1)
+        from yx_escalation e
+        where e.student_id = #{studentId}
+          and e.is_deleted = false
+        <if test="status != null">
+            and e.status = #{status}
+        </if>
+    </select>
+
+    <!-- 查询待处理工单（status=0，未分配教师）按优先级倒序 -->
+    <select id="selectPendingPage" resultMap="YxEscalationResult">
+        <include refid="selectEscalationVo"/>
+        where e.status = 0
+          and e.is_deleted = false
+        order by e.priority desc, e.created_at asc
+        limit #{limit} offset #{offset}
+    </select>
+
+    <!-- 统计待处理工单总数 -->
+    <select id="countPending" resultType="long">
+        select count(1)
+        from yx_escalation e
+        where e.status = 0
+          and e.is_deleted = false
+    </select>
+
+    <!-- 新建工单，回填主键 -->
+    <insert id="insert" parameterType="com.yixiaoguan.conversation.domain.YxEscalation"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into yx_escalation
+            (conversation_id, message_id, student_id, teacher_id, question_summary,
+             status, priority, trigger_type, remark,
+             created_at, updated_at, is_deleted)
+        values
+            (#{conversationId}, #{messageId}, #{studentId}, #{teacherId}, #{questionSummary},
+             0, #{priority}, #{triggerType}, #{remark},
+             now(), now(), false)
+    </insert>
+
+    <!-- 更新工单状态 -->
+    <update id="updateStatus">
+        update yx_escalation
+        set status     = #{status},
+            updated_at = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 分配教师并将状态更新为 1-处理中 -->
+    <update id="assignTeacher">
+        update yx_escalation
+        set teacher_id = #{teacherId},
+            status     = 1,
+            updated_at = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+    <!-- 教师回复并解决（写入回复内容、更新状态为 2、写解决时间） -->
+    <update id="resolve">
+        update yx_escalation
+        set teacher_reply = #{teacherReply},
+            status        = 2,
+            resolved_at   = now(),
+            updated_at    = now()
+        where id = #{id} and is_deleted = false
+    </update>
+
+</mapper>

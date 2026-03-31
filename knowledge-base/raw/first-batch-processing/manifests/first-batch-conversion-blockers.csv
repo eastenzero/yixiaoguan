@@ -1,0 +1,9 @@
+﻿"material_id","source_path","stage","error_type","error_message","impact_scope","fallback_plan","blocker_status","resolution_notes","resolved_at"
+"MAT-20260323-0002","数据库部分材料/数据库部分材料/2025年工作/2025下-25级新生工作/2025年学籍注册/附件1：教育在线学生信息与班级实际情况核对方法.doc","doc_to_docx","COMException","这不是有效文件名。
+请试用下列方法: 
+* 检查路径，确认键入无误。
+* 从文件和文件夹列表中选择文件。","markdown 文本已补齐，可进入后续规则抽取","使用 scripts\retry_doc_conversion.ps1 的 ASCII 临时路径流程；核心转换器改为 Wordconv.exe，pandoc 负责 docx -> md","resolved","已通过 ASCII 临时路径复制源文件，使用 Wordconv.exe 生成 docx，再用 pandoc 转为 markdown。原 Word COM SaveAs2 会长时间卡在另存阶段，不建议继续作为首选重试路径。","2026-03-23 23:00:24"
+"MAT-20260323-0003","数据库部分材料/数据库部分材料/2025年工作/2025下-25级新生工作/2025年学籍注册/附件5：学信网学籍注册信息核对方法指南.doc","doc_to_docx","COMException","这不是有效文件名。
+请试用下列方法: 
+* 检查路径，确认键入无误。
+* 从文件和文件夹列表中选择文件。","markdown 文本已补齐，可进入后续规则抽取","使用 scripts\retry_doc_conversion.ps1 的 ASCII 临时路径流程；核心转换器改为 Wordconv.exe，pandoc 负责 docx -> md","resolved","已通过 ASCII 临时路径复制源文件，使用 Wordconv.exe 生成 docx，再用 pandoc 转为 markdown。原 Word COM SaveAs2 会长时间卡在另存阶段，不建议继续作为首选重试路径。","2026-03-23 23:00:24"

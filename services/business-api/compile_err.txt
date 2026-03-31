@@ -1,0 +1,10 @@
+﻿mvn : The JAVA_HOME environment variable is not defined cor
+rectly, 
+At line:1 char:1
++ mvn compile -pl ruoyi-admin -am > compile_err.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (The JAVA_HOME 
+    e...ned correctly, :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+this environment variable is needed to run this program. 
