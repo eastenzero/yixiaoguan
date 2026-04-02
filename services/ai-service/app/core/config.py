@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     dashscope_embedding_model: str = "text-embedding-v3"
 
     # -- ChromaDB --
-    chroma_persist_dir: str = "./data/chroma"
+    # 使用绝对路径避免工作目录问题
+    chroma_persist_dir: str = r"C:\Users\Administrator\Documents\code\yixiaoguan\services\ai-service\data\chroma"
     chroma_collection_kb: str = "kb_entries"
     chroma_collection_links: str = "quick_links"
 

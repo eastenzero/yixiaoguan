@@ -198,8 +198,7 @@ async def chat_stream(request: ChatStreamRequest):
     """
     async def sse_generator():
         """SSE 流生成器"""
-        sources_sent = False
-        accumulated_sources = []
+        first_chunk = True
         
         try:
             history = _convert_history(request.history)
@@ -210,21 +209,16 @@ async def chat_stream(request: ChatStreamRequest):
                 history=history,
                 use_kb=request.use_kb,
             ):
-                # 首次返回 sources
-                if not sources_sent:
-                    accumulated_sources = _convert_sources(sources)
-                    sources_sent = True
-                
-                # 构造 SSE 数据包
+                # 构造 SSE 数据包（首次携带 sources，后续为空）
                 payload = {
                     "chunk": chunk_text,
                     "is_end": False,
-                    "sources": accumulated_sources if not sources_sent else [],
+                    "sources": [s.dict() for s in _convert_sources(sources)] if first_chunk else [],
                 }
+                first_chunk = False
                 
                 # 发送 data: {...}\n\n
                 yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n".encode('utf-8')
-                accumulated_sources = []  # 只发送一次
             
             # 发送结束标记
             end_payload = {"chunk": "", "is_end": True, "sources": []}

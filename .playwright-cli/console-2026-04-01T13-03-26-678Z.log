@@ -1,0 +1,7 @@
+[   29116ms] [WARNING] [Vue Router warn]: The `next()` callback in navigation guards is deprecated. Return the value instead of calling `next(value)`. @ http://localhost:5173/node_modules/.vite/deps/vue-router.js?v=d84e71ce:3775
+[   29117ms] [LOG] 🍍 "user" store installed 🆕 @ http://localhost:5173/node_modules/.vite/deps/pinia.js?v=d84e71ce:3798
+[   29119ms] [WARNING] [Vue Router warn]: The `next()` callback in navigation guards is deprecated. Return the value instead of calling `next(value)`. @ http://localhost:5173/node_modules/.vite/deps/vue-router.js?v=d84e71ce:3775
+[  109335ms] [LOG] [LoginView] login payload: {"username":"yu_j_linchuang_23","password":"yujianhua","code":"1234","uuid":"811b9114c879458ca81c5a3b7f0be3a6"} @ http://localhost:5173/src/views/LoginView.vue?t=1775046587973:103
+[  180628ms] [LOG] [LoginView] login payload: {"username":"yu_j_linchuang_23","password":"yujianhua","code":"9k27","uuid":"87bfa2c843f8412f83efab277e7b6b02"} @ http://localhost:5173/src/views/LoginView.vue?t=1775046587973:103
+[  204038ms] [LOG] [LoginView] login payload: {"username":"yu_j_linchuang_23","password":"yujianhua","code":"20","uuid":"f9d662222e924de4a2b3ef9a28133e66"} @ http://localhost:5173/src/views/LoginView.vue?t=1775046587973:103
+[  310950ms] [LOG] [LoginView] login payload: {"username":"yu_j_linchuang_23","password":"yujianhua","code":"7","uuid":"733aca44770a4ecea127e598fdd04eab"} @ http://localhost:5173/src/views/LoginView.vue?t=1775046587973:103

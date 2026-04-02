@@ -148,8 +148,14 @@ class KBVectorStore:
             "entry_id": entry_id,
         }
         if metadata:
-            # 过滤掉 None 值，避免 ChromaDB 序列化问题
-            doc_metadata.update({k: v for k, v in metadata.items() if v is not None})
+            # 过滤掉 None 值，并且 ChromaDB 仅支持 str/int/float/bool，所以列表需转字符串
+            for k, v in metadata.items():
+                if v is None or v == [] or v == "":
+                    continue
+                if isinstance(v, list):
+                    doc_metadata[k] = ",".join(str(i) for i in v)
+                else:
+                    doc_metadata[k] = v
         
         # 存入 ChromaDB
         self._collection.upsert(

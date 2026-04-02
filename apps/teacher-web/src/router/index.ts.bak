@@ -1,0 +1,123 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { public: true }
+    },
+    {
+      path: '/',
+      name: 'Layout',
+      component: () => import('@/layouts/MainLayout.vue'),
+      redirect: '/dashboard',
+      children: [
+        {
+          path: '/dashboard',
+          name: 'Dashboard',
+          component: () => import('@/views/DashboardView.vue'),
+          meta: { title: '工作台' }
+        },
+        {
+          path: '/questions',
+          name: 'Questions',
+          component: () => import('@/views/QuestionsView.vue'),
+          meta: { title: '学生提问' }
+        },
+        {
+          path: '/questions/:id',
+          name: 'QuestionDetail',
+          component: () => import('@/views/QuestionsView.vue'),
+          meta: { title: '提问详情' }
+        },
+        {
+          path: '/approval',
+          name: 'Approval',
+          component: () => import('@/views/ApprovalView.vue'),
+          meta: { title: '空教室审批' }
+        },
+        {
+          path: '/knowledge',
+          name: 'Knowledge',
+          component: () => import('@/views/KnowledgeView.vue'),
+          meta: { title: '知识库管理' }
+        },
+        {
+          path: '/analytics',
+          name: 'Analytics',
+          component: () => import('@/views/AnalyticsView.vue'),
+          meta: { title: '数据看板' }
+        },
+        {
+          path: '/profile',
+          name: 'Profile',
+          component: () => import('@/views/ProfileView.vue'),
+          meta: { title: '个人中心' }
+        }
+      ]
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('@/views/NotFoundView.vue')
+    }
+  ]
+})
+
+// 开发模式：自动设置模拟登录状态
+const isDev = import.meta.env.DEV
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+
+  // 开发模式：自动模拟登录
+  if (isDev && !userStore.isLoggedIn) {
+    userStore.setToken('dev-token')
+    userStore.setUserInfo({
+      userId: 1,
+      userName: 'teacher',
+      nickName: '陈教授',
+      avatar: '',
+      email: 'teacher@example.com',
+      phonenumber: '138****8888',
+      deptName: '计算机学院',
+      roles: ['teacher'],
+      permissions: ['*']
+    })
+  }
+
+  // 设置页面标题
+  if (to.meta.title) {
+    document.title = `${to.meta.title} - 学术智治系统`
+  } else {
+    document.title = '学术智治系统'
+  }
+
+  // 公开页面直接放行
+  if (to.meta.public) {
+    // 已登录用户访问登录页，重定向到首页
+    if (userStore.isLoggedIn && to.path === '/login') {
+      next('/dashboard')
+      return
+    }
+    next()
+    return
+  }
+
+  // 需要登录的页面
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    next('/login')
+    return
+  }
+
+  next()
+})
+
+export default router

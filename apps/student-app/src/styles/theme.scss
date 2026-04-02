@@ -1,0 +1,237 @@
+/**
+ * MD3 颜色系统 - Material Design 3
+ * 医小管学生移动端主题
+ */
+
+// ========== Primary Colors ==========
+$primary-0: #000000;
+$primary-10: #001D33;
+$primary-20: #003354;
+$primary-30: #004A77;
+$primary-40: #00639B;
+$primary-50: #007DBF;
+$primary-60: #3998D5;
+$primary-70: #5AB3F1;
+$primary-80: #9CCAFF;
+$primary-90: #CFE4FF;
+$primary-95: #E8F2FF;
+$primary-99: #FDFCFF;
+$primary-100: #FFFFFF;
+
+// ========== Secondary Colors ==========
+$secondary-0: #000000;
+$secondary-10: #0F1D2A;
+$secondary-20: #243240;
+$secondary-30: #3A4857;
+$secondary-40: #52606F;
+$secondary-50: #6A7889;
+$secondary-60: #8492A3;
+$secondary-70: #9EACBE;
+$secondary-80: #BAC8DA;
+$secondary-90: #D6E4F7;
+$secondary-95: #E8F2FF;
+$secondary-99: #FDFCFF;
+$secondary-100: #FFFFFF;
+
+// ========== Tertiary Colors ==========
+$tertiary-0: #000000;
+$tertiary-10: #231432;
+$tertiary-20: #392949;
+$tertiary-30: #514062;
+$tertiary-40: #69577B;
+$tertiary-50: #837095;
+$tertiary-60: #9E89B0;
+$tertiary-70: #B9A4CB;
+$tertiary-80: #D5BFE8;
+$tertiary-90: #F2DCFF;
+$tertiary-95: #FAEBFF;
+$tertiary-99: #FFFBFF;
+$tertiary-100: #FFFFFF;
+
+// ========== Neutral Colors ==========
+$neutral-0: #000000;
+$neutral-10: #1A1C1E;
+$neutral-20: #2F3033;
+$neutral-30: #46474A;
+$neutral-40: #5E5E62;
+$neutral-50: #76777A;
+$neutral-60: #919093;
+$neutral-70: #ABABAE;
+$neutral-80: #C7C6CA;
+$neutral-90: #E3E2E6;
+$neutral-95: #F1F0F4;
+$neutral-99: #FDFDFD;
+$neutral-100: #FFFFFF;
+
+// ========== Neutral Variant Colors ==========
+$neutral-variant-0: #000000;
+$neutral-variant-10: #181C22;
+$neutral-variant-20: #2D3137;
+$neutral-variant-30: #44474E;
+$neutral-variant-40: #5B5E66;
+$neutral-variant-50: #74777F;
+$neutral-variant-60: #8E9099;
+$neutral-variant-70: #A9ABB4;
+$neutral-variant-80: #C4C6CF;
+$neutral-variant-90: #E1E2EB;
+$neutral-variant-95: #F0F0FA;
+$neutral-variant-99: #FDFDFD;
+$neutral-variant-100: #FFFFFF;
+
+// ========== Error Colors ==========
+$error-0: #000000;
+$error-10: #410002;
+$error-20: #690005;
+$error-30: #93000A;
+$error-40: #BA1A1A;
+$error-50: #DE3730;
+$error-60: #FF5449;
+$error-70: #FF897D;
+$error-80: #FFB4AB;
+$error-90: #FFDAD6;
+$error-95: #FFEDEA;
+$error-99: #FFFBFF;
+$error-100: #FFFFFF;
+
+// ========== Success Colors ==========
+$success-0: #000000;
+$success-10: #002203;
+$success-20: #003908;
+$success-30: #00530F;
+$success-40: #006E1C;
+$success-50: #008A29;
+$success-60: #1DA73F;
+$success-70: #46C258;
+$success-80: #6ADE70;
+$success-90: #89FB89;
+$success-95: #C8FFC6;
+$success-99: #F6FFF1;
+$success-100: #FFFFFF;
+
+// ========== Warning Colors ==========
+$warning-10: #261900;
+$warning-20: #402D00;
+$warning-30: #5C4200;
+$warning-40: #7A5900;
+$warning-50: #997000;
+$warning-60: #B88900;
+$warning-70: #D8A320;
+$warning-80: #F7BE34;
+$warning-90: #FFDF9C;
+$warning-95: #FFF0CF;
+$warning-99: #FFF8F0;
+$warning-100: #FFFFFF;
+
+// ========== Light Theme Tokens ==========
+$md-sys-color-primary: $primary-40;
+$md-sys-color-on-primary: $primary-100;
+$md-sys-color-primary-container: $primary-90;
+$md-sys-color-on-primary-container: $primary-10;
+$md-sys-color-secondary: $secondary-40;
+$md-sys-color-on-secondary: $secondary-100;
+$md-sys-color-secondary-container: $secondary-90;
+$md-sys-color-on-secondary-container: $secondary-10;
+$md-sys-color-tertiary: $tertiary-40;
+$md-sys-color-on-tertiary: $tertiary-100;
+$md-sys-color-tertiary-container: $tertiary-90;
+$md-sys-color-on-tertiary-container: $tertiary-10;
+$md-sys-color-error: $error-40;
+$md-sys-color-on-error: $error-100;
+$md-sys-color-error-container: $error-90;
+$md-sys-color-on-error-container: $error-10;
+$md-sys-color-success: $success-40;
+$md-sys-color-on-success: $success-100;
+$md-sys-color-success-container: $success-90;
+$md-sys-color-on-success-container: $success-10;
+$md-sys-color-warning: $warning-40;
+$md-sys-color-on-warning: $warning-100;
+$md-sys-color-warning-container: $warning-90;
+$md-sys-color-on-warning-container: $warning-10;
+$md-sys-color-surface: $neutral-99;
+$md-sys-color-on-surface: $neutral-10;
+$md-sys-color-surface-variant: $neutral-variant-90;
+$md-sys-color-on-surface-variant: $neutral-variant-30;
+$md-sys-color-outline: $neutral-variant-50;
+$md-sys-color-outline-variant: $neutral-variant-80;
+$md-sys-color-shadow: $neutral-0;
+$md-sys-color-scrim: $neutral-0;
+$md-sys-color-inverse-surface: $neutral-20;
+$md-sys-color-inverse-on-surface: $neutral-95;
+$md-sys-color-inverse-primary: $primary-80;
+
+// ========== Background & Elevation ==========
+$md-sys-color-background: #F5F5F9;
+$md-sys-color-on-background: $neutral-10;
+$md-sys-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+$md-sys-elevation-2: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+$md-sys-elevation-3: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.02);
+
+// ========== Status Colors ==========
+$status-pending: #F7BE34;
+$status-pending-bg: #FFF8E1;
+$status-approved: #4CAF50;
+$status-approved-bg: #E8F5E9;
+$status-rejected: #F44336;
+$status-rejected-bg: #FFEBEE;
+$status-cancelled: #9E9E9E;
+$status-cancelled-bg: #F5F5F5;
+
+// ========== Status Gradient Backgrounds ==========
+$status-gradient-pending: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+$status-gradient-approved: linear-gradient(135deg, #81C784 0%, #4CAF50 100%);
+$status-gradient-rejected: linear-gradient(135deg, #E57373 0%, #F44336 100%);
+
+// ========== Glassmorphism ==========
+$glass-bg: rgba(255, 255, 255, 0.85);
+$glass-bg-dark: rgba(255, 255, 255, 0.75);
+$glass-border: rgba(255, 255, 255, 0.5);
+$glass-backdrop: blur(20px) saturate(180%);
+$glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+// ========== Typography ==========
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+$text-display-large: 600 32px/40px $font-family;
+$text-display-medium: 600 28px/36px $font-family;
+$text-display-small: 600 24px/32px $font-family;
+$text-headline-large: 600 20px/28px $font-family;
+$text-headline-medium: 500 18px/26px $font-family;
+$text-headline-small: 500 16px/24px $font-family;
+$text-title-large: 500 16px/24px $font-family;
+$text-title-medium: 500 14px/20px $font-family;
+$text-title-small: 500 12px/16px $font-family;
+$text-body-large: 400 16px/24px $font-family;
+$text-body-medium: 400 14px/20px $font-family;
+$text-body-small: 400 12px/16px $font-family;
+$text-label-large: 500 14px/20px $font-family;
+$text-label-medium: 500 12px/16px $font-family;
+$text-label-small: 500 11px/16px $font-family;
+
+// ========== Spacing ==========
+$space-0: 0;
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-8: 32px;
+$space-10: 40px;
+$space-12: 48px;
+
+// ========== Border Radius ==========
+$radius-none: 0;
+$radius-xs: 4px;
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 20px;
+$radius-2xl: 24px;
+$radius-full: 9999px;
+
+// ========== Safe Area ==========
+$safe-area-top: env(safe-area-inset-top, 0);
+$safe-area-bottom: env(safe-area-inset-bottom, 0);
+$safe-area-left: env(safe-area-inset-left, 0);
+$safe-area-right: env(safe-area-inset-right, 0);
+$status-bar-height: var(--status-bar-height, 44px);

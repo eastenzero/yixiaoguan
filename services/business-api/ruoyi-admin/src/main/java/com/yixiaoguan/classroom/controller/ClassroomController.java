@@ -30,7 +30,7 @@ public class ClassroomController extends BaseController {
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize) {
-        startPage();
+        // 注意：不调用 startPage()，Service 已通过 LIMIT/OFFSET 手动分页
         Map<String, Object> result = classroomService.selectPage(building, status, pageNum, pageSize);
         return AjaxResult.success(result);
     }
@@ -43,7 +43,7 @@ public class ClassroomController extends BaseController {
     public AjaxResult availableList(
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize) {
-        startPage();
+        // 注意：不调用 startPage()，Service 已通过 LIMIT/OFFSET 手动分页
         Map<String, Object> result = classroomService.selectAvailableList(pageNum, pageSize);
         return AjaxResult.success(result);
     }

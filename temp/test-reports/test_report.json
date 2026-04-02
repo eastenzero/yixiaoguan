@@ -1,0 +1,25 @@
+{
+  "testTime": "2026-04-01T13:13:00.229Z",
+  "testAccount": {
+    "username": "4523570155",
+    "name": "白晓洋",
+    "dept": "放射学院",
+    "class": "2023级医学影像技术本科4班"
+  },
+  "results": {
+    "loginSuccess": false,
+    "questionPageFound": false,
+    "questionSubmitted": false,
+    "errors": [
+      "page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"登录\")')\u001b[22m\n"
+    ]
+  },
+  "screenshots": [
+    "test_result_01_login.png",
+    "test_result_02_captcha.png",
+    "test_result_03_logged_in.png",
+    "test_result_04_question_page.png",
+    "test_result_05_form_filled.png",
+    "test_result_06_submit_result.png"
+  ]
+}

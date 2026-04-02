@@ -54,3 +54,4 @@
 - 向量库使用 ChromaDB（非 pgvector），集合：`kb_entries`（知识库）、`quick_links`（快捷链接）。
 - 开发文档在 `docs/` 各子目录，开发前必须先读对应文档。
 - P0 文档（database/schema-phase1.md）写完后才能启动后端开发。
+- 默认终端为 PowerShell，执行 Shell 命令时注意使用 PowerShell 语法。

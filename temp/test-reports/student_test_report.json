@@ -1,0 +1,12 @@
+{
+  "loginSuccess": false,
+  "questionSubmitted": false,
+  "errors": [
+    "登录失败: 用户不存在/密码错误"
+  ],
+  "screenshots": [
+    "test_01_login.png",
+    "test_02_filled.png",
+    "test_03_result.png"
+  ]
+}

@@ -240,9 +240,18 @@ class RAGChatEngine:
         Yields:
             (文本片段, 引用来源列表) —— 首次 yield 会携带 sources，后续为空列表
         
+        重要修复：
+          1. incremental_output=True：让 DashScope 每次只返回新增 delta，
+             而非累积全文（避免文字叠加重复显示的问题）
+          2. asyncio.to_thread：将同步阻塞迭代器移到线程池执行，
+             避免阻塞 FastAPI 事件循环（解决全量加载后才推送的问题）
+        
         Raises:
             RuntimeError: 模型调用失败
         """
+        import asyncio
+        import queue
+        
         if not settings.dashscope_api_key:
             raise RuntimeError("DashScope API Key 未配置")
         
@@ -251,25 +260,58 @@ class RAGChatEngine:
         
         logger.debug(f"发送流式请求，消息数: {len(messages)}")
         
+        # 使用队列在线程和协程之间传递数据
+        chunk_queue: queue.Queue = queue.Queue()
+        _SENTINEL = object()  # 哨兵值，标记迭代结束
+        
+        def _sync_generate():
+            """在独立线程中运行同步 DashScope 迭代器，结果放入队列"""
+            try:
+                response = Generation.call(
+                    model=self._model,
+                    messages=messages,
+                    result_format="message",
+                    stream=True,
+                    incremental_output=True,  # ← 关键：每次只返回新增 delta
+                )
+                for chunk in response:
+                    chunk_queue.put(chunk)
+            except Exception as exc:
+                chunk_queue.put(exc)
+            finally:
+                chunk_queue.put(_SENTINEL)
+        
+        # 在线程池中启动同步生成，不阻塞事件循环
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, _sync_generate)
+        
+        first_chunk = True
         try:
-            response = Generation.call(
-                model=self._model,
-                messages=messages,
-                result_format="message",
-                stream=True,
-            )
-            
-            first_chunk = True
-            for chunk in response:
+            while True:
+                # 非阻塞等待（每 20ms 轮询一次）
+                try:
+                    item = chunk_queue.get_nowait()
+                except queue.Empty:
+                    await asyncio.sleep(0.02)
+                    continue
+                
+                # 迭代结束
+                if item is _SENTINEL:
+                    break
+                
+                # 传播线程中的异常
+                if isinstance(item, Exception):
+                    raise item
+                
+                chunk = item
                 if chunk.status_code != 200:
                     raise RuntimeError(f"DashScope 流式错误: {chunk.message}")
                 
-                # 提取文本增量
+                # 提取增量文本（incremental_output=True 保证每次只有新增部分）
                 delta = chunk.output.choices[0].message.get("content", "")
                 if delta:
-                    # 首次返回时带上 sources，后续仅返回文本
                     if first_chunk:
-                        yield (delta, sources)
+                        yield (delta, sources)  # 首次携带 sources
                         first_chunk = False
                     else:
                         yield (delta, [])

@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e6]:
+      - img [ref=e9]
+      - heading "学术智治系统" [level=1] [ref=e13]
+      - paragraph [ref=e14]: Faculty Intelligence Platform
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - img [ref=e18]
+          - generic [ref=e20]: 智能问答
+        - generic [ref=e21]:
+          - img [ref=e23]
+          - generic [ref=e25]: 高效审批
+        - generic [ref=e26]:
+          - img [ref=e28]
+          - generic [ref=e30]: 数据驱动
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - heading "欢迎登录" [level=2] [ref=e35]
+        - paragraph [ref=e36]: 请使用您的账号密码登录系统
+      - generic [ref=e37]:
+        - generic [ref=e41]:
+          - img [ref=e44]
+          - textbox "请输入用户名" [ref=e46]: yu_j_linchuang_23
+        - generic [ref=e50]:
+          - img [ref=e53]
+          - textbox "请输入密码" [ref=e56]: yujianhua
+          - img [ref=e131] [cursor=pointer]
+        - generic [ref=e59]:
+          - generic [ref=e61]:
+            - img [ref=e64]
+            - textbox "请输入验证码" [ref=e67]: "20"
+          - img "验证码" [ref=e69] [cursor=pointer]
+        - generic [ref=e70]:
+          - generic [ref=e71] [cursor=pointer]:
+            - generic [ref=e72]:
+              - checkbox "记住我" [checked]
+            - generic [ref=e74]: 记住我
+          - generic [ref=e75] [cursor=pointer]: 忘记密码？
+        - button "登 录" [ref=e76] [cursor=pointer]:
+          - generic [ref=e77]: 登 录
+      - paragraph [ref=e79]: © 2024 学术智治系统 · 高等教育教务管理中台
+  - generic [ref=e80]:
+    - generic "Toggle devtools panel" [ref=e81] [cursor=pointer]:
+      - img [ref=e82]
+    - generic "Toggle Component Inspector" [ref=e87] [cursor=pointer]:
+      - img [ref=e88]
