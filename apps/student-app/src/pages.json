@@ -26,6 +26,12 @@
 			}
 		},
 		{
+			"path": "pages/knowledge/detail",
+			"style": {
+				"navigationBarTitleText": "参考资料"
+			}
+		},
+		{
 			"path": "pages/apply/classroom",
 			"style": {
 				"navigationBarTitleText": "空教室申请"

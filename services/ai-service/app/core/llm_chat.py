@@ -7,7 +7,7 @@ RAG 对话生成引擎（医小管智能问答核心）
 
 import logging
 from typing import List, Dict, Any, Optional, AsyncGenerator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import dashscope
 from dashscope import Generation
@@ -39,6 +39,9 @@ class ChatResponse:
     """非流式对话响应"""
     answer: str
     sources: List[SourceItem]
+    grounded: bool = True
+    guardrail_reason: Optional[str] = None
+    retrieval_stats: Dict[str, Any] = field(default_factory=dict)
 
 
 class RAGChatEngine:
@@ -51,6 +54,7 @@ class RAGChatEngine:
     DEFAULT_CHAT_MODEL = "qwen-plus"
     DEFAULT_TOP_K = 5
     DEFAULT_SIMILARITY_THRESHOLD = 0.5  # 相似度阈值，低于此值的知识不引用
+    FALLBACK_NO_GROUNDING_ANSWER = "很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。"
     
     # 医小管系统人设（背景设定）
     SYSTEM_PROMPT = """你是「医小管」，医学院校园智能服务助手。
@@ -87,7 +91,7 @@ class RAGChatEngine:
         else:
             logger.warning("DashScope API Key 未配置，大模型调用将失败")
     
-    def _search_knowledge(self, query: str, top_k: int = 5) -> List[SearchResult]:
+    def _search_knowledge(self, query: str, top_k: Optional[int] = None) -> List[SearchResult]:
         """
         检索相关知识条目
         
@@ -99,17 +103,50 @@ class RAGChatEngine:
             相似度排序的知识条目列表
         """
         try:
+            top_k = top_k or settings.rag_top_k or self.DEFAULT_TOP_K
             results = vector_store.search_similar(query, top_k=top_k)
             # 过滤低相似度结果
             filtered = [
                 r for r in results 
-                if r.score >= self.DEFAULT_SIMILARITY_THRESHOLD
+                if r.score >= settings.rag_min_score
             ]
             logger.info(f"知识检索完成 [query={query[:30]}...], 命中 {len(filtered)}/{len(results)} 条")
             return filtered
         except Exception as e:
             logger.error(f"知识检索失败: {e}")
             return []
+
+    def _assess_grounding(self, results: List[SearchResult]) -> tuple[bool, str, Dict[str, Any]]:
+        """评估检索结果是否满足防幻觉强约束门槛"""
+        scores = [r.score for r in results]
+        source_count = len(results)
+        best_score = round(max(scores), 4) if scores else 0.0
+        avg_score = round(sum(scores) / source_count, 4) if source_count > 0 else 0.0
+
+        retrieval_stats = {
+            "source_count": source_count,
+            "best_score": best_score,
+            "avg_score": avg_score,
+            "threshold_min_score": settings.rag_min_score,
+            "threshold_min_best_score": settings.rag_min_best_score,
+            "threshold_min_avg_score": settings.rag_min_avg_score,
+            "threshold_min_source_count": settings.rag_min_source_count,
+            "top_k": settings.rag_top_k,
+        }
+
+        if source_count == 0:
+            return False, "no_sources", retrieval_stats
+
+        if source_count < settings.rag_min_source_count:
+            return False, "insufficient_sources", retrieval_stats
+
+        if best_score < settings.rag_min_best_score:
+            return False, "best_score_too_low", retrieval_stats
+
+        if avg_score < settings.rag_min_avg_score:
+            return False, "avg_score_too_low", retrieval_stats
+
+        return True, "ok", retrieval_stats
     
     def _build_sources(self, results: List[SearchResult]) -> List[SourceItem]:
         """将检索结果转换为来源引用列表"""
@@ -128,23 +165,28 @@ class RAGChatEngine:
         query: str, 
         history: List[ChatMessage], 
         use_kb: bool = True
-    ) -> tuple[List[Dict[str, str]], List[SourceItem]]:
+    ) -> tuple[List[Dict[str, str]], List[SourceItem], bool, str, Dict[str, Any]]:
         """
         构建发送给大模型的消息列表
         
         Returns:
-            (messages列表, 引用来源列表)
+            (messages列表, 引用来源列表, 是否满足强约束, 强约束原因, 检索统计)
         """
         messages: List[Dict[str, str]] = []
         sources: List[SourceItem] = []
+        grounded = True
+        guardrail_reason = "ok"
+        retrieval_stats: Dict[str, Any] = {"use_kb": use_kb}
         
         # 1. 系统消息（人设 + 背景知识）
         if use_kb:
             # 检索知识库
-            kb_results = self._search_knowledge(query, top_k=self.DEFAULT_TOP_K)
+            kb_results = self._search_knowledge(query, top_k=settings.rag_top_k)
             sources = self._build_sources(kb_results)
+            grounded, guardrail_reason, retrieval_stats = self._assess_grounding(kb_results)
+            retrieval_stats["use_kb"] = True
             
-            if kb_results:
+            if grounded and kb_results:
                 # 组装背景知识上下文
                 context_parts = []
                 for i, result in enumerate(kb_results, 1):
@@ -160,11 +202,14 @@ class RAGChatEngine:
                 # 当使用 RAG 时，用户消息只保留问题（已包含在 system prompt 中）
                 user_content = query
             else:
-                # 知识库无命中，退化为纯净对话
+                # 未通过强约束时不拼接背景上下文，后续由上层执行拒答短路
                 system_content = self.SYSTEM_PROMPT
                 user_content = query
         else:
             # 纯净模式，不查知识库
+            grounded = False
+            guardrail_reason = "kb_disabled"
+            retrieval_stats = {"use_kb": False}
             system_content = self.SYSTEM_PROMPT
             user_content = query
         
@@ -180,7 +225,7 @@ class RAGChatEngine:
         if not history or history[-1].role != "user" or history[-1].content != query:
             messages.append({"role": "user", "content": user_content})
         
-        return messages, sources
+        return messages, sources, grounded, guardrail_reason, retrieval_stats
     
     def chat(
         self, 
@@ -206,7 +251,22 @@ class RAGChatEngine:
             raise RuntimeError("DashScope API Key 未配置")
         
         history = history or []
-        messages, sources = self._build_messages(query, history, use_kb)
+        messages, sources, grounded, guardrail_reason, retrieval_stats = self._build_messages(query, history, use_kb)
+
+        if use_kb and not grounded:
+            logger.info(
+                "RAG 强约束触发拒答 [query=%s..., reason=%s, stats=%s]",
+                query[:30],
+                guardrail_reason,
+                retrieval_stats,
+            )
+            return ChatResponse(
+                answer=self.FALLBACK_NO_GROUNDING_ANSWER,
+                sources=sources,
+                grounded=False,
+                guardrail_reason=guardrail_reason,
+                retrieval_stats=retrieval_stats,
+            )
         
         logger.debug(f"发送非流式请求，消息数: {len(messages)}")
         
@@ -216,13 +276,20 @@ class RAGChatEngine:
                 messages=messages,
                 result_format="message",
                 stream=False,
+                temperature=settings.rag_temperature,
             )
             
             if response.status_code != 200:
                 raise RuntimeError(f"DashScope API 错误: {response.message}")
             
             answer = response.output.choices[0].message.content
-            return ChatResponse(answer=answer, sources=sources)
+            return ChatResponse(
+                answer=answer,
+                sources=sources,
+                grounded=grounded,
+                guardrail_reason=guardrail_reason,
+                retrieval_stats=retrieval_stats,
+            )
             
         except Exception as e:
             logger.error(f"大模型调用失败: {e}")
@@ -233,7 +300,7 @@ class RAGChatEngine:
         query: str, 
         history: Optional[List[ChatMessage]] = None,
         use_kb: bool = True,
-    ) -> AsyncGenerator[tuple[str, List[SourceItem]], None]:
+    ) -> AsyncGenerator[tuple[str, List[SourceItem], Dict[str, Any]], None]:
         """
         流式对话（SSE 风格生成器）
         
@@ -256,7 +323,23 @@ class RAGChatEngine:
             raise RuntimeError("DashScope API Key 未配置")
         
         history = history or []
-        messages, sources = self._build_messages(query, history, use_kb)
+        messages, sources, grounded, guardrail_reason, retrieval_stats = self._build_messages(query, history, use_kb)
+
+        guardrail_meta: Dict[str, Any] = {
+            "grounded": grounded,
+            "guardrail_reason": guardrail_reason,
+            "retrieval_stats": retrieval_stats,
+        }
+
+        if use_kb and not grounded:
+            logger.info(
+                "流式 RAG 强约束触发拒答 [query=%s..., reason=%s, stats=%s]",
+                query[:30],
+                guardrail_reason,
+                retrieval_stats,
+            )
+            yield (self.FALLBACK_NO_GROUNDING_ANSWER, sources, guardrail_meta)
+            return
         
         logger.debug(f"发送流式请求，消息数: {len(messages)}")
         
@@ -273,6 +356,7 @@ class RAGChatEngine:
                     result_format="message",
                     stream=True,
                     incremental_output=True,  # ← 关键：每次只返回新增 delta
+                    temperature=settings.rag_temperature,
                 )
                 for chunk in response:
                     chunk_queue.put(chunk)
@@ -311,10 +395,10 @@ class RAGChatEngine:
                 delta = chunk.output.choices[0].message.get("content", "")
                 if delta:
                     if first_chunk:
-                        yield (delta, sources)  # 首次携带 sources
+                        yield (delta, sources, guardrail_meta)  # 首次携带 sources + 强约束元信息
                         first_chunk = False
                     else:
-                        yield (delta, [])
+                        yield (delta, [], {})
                         
         except Exception as e:
             logger.error(f"流式生成失败: {e}")

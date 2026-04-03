@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     dashscope_chat_model: str = "qwen-plus"
     dashscope_embedding_model: str = "text-embedding-v3"
 
+    # -- RAG 防幻觉强约束 --
+    rag_top_k: int = 5
+    rag_min_score: float = 0.55
+    rag_min_best_score: float = 0.62
+    rag_min_avg_score: float = 0.58
+    rag_min_source_count: int = 2
+    rag_temperature: float = 0.2
+
     # -- ChromaDB --
     # 使用绝对路径避免工作目录问题
     chroma_persist_dir: str = r"C:\Users\Administrator\Documents\code\yixiaoguan\services\ai-service\data\chroma"

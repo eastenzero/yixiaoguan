@@ -87,7 +87,7 @@
               v-for="(source, si) in msg.sources"
               :key="source.entry_id || si"
               class="source-item"
-              @click="handleLinkClick(source.url || '')"
+              @click="handleSourceClick(source)"
             >
               <text class="source-num">{{ si + 1 }}.</text>
               <text class="source-title">{{ source.title }}</text>
@@ -170,11 +170,38 @@
         </button>
       </view>
     </view>
+
+    <view v-if="sourcePreview.visible" class="source-preview-mask" @click="closeSourcePreview">
+      <view class="source-preview-panel" @click.stop>
+        <view class="source-preview-header">
+          <text class="source-preview-label">参考摘要</text>
+          <text class="source-preview-score" v-if="sourcePreview.score !== undefined">
+            相关度 {{ Math.round(sourcePreview.score * 100) }}%
+          </text>
+        </view>
+
+        <text class="source-preview-title">{{ sourcePreview.title }}</text>
+        <text class="source-preview-content">{{ sourcePreview.content }}</text>
+
+        <view class="source-preview-actions">
+          <button
+            v-if="sourcePreview.entryId"
+            class="preview-btn preview-btn-primary"
+            @click="openSourceDetailFromPreview"
+          >
+            查看完整资料
+          </button>
+          <button class="preview-btn preview-btn-ghost" @click="closeSourcePreview">
+            知道了
+          </button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import MarkdownIt from 'markdown-it'
 import IconSend from '@/components/icons/IconSend.vue'
@@ -202,6 +229,7 @@ function renderMarkdown(content: string): string {
 interface Source {
   entry_id: string
   title: string
+  content?: string
   url: string        // 备用外链（当前 AI 服务暂不提供）
   score?: number
 }
@@ -223,6 +251,19 @@ const isTyping = ref(false)
 const scrollTop = ref(0)
 const safeAreaBottom = ref(0)
 const copiedId = ref<string | null>(null)
+const sourcePreview = ref<{
+  visible: boolean
+  entryId: string
+  title: string
+  content: string
+  score?: number
+}>({
+  visible: false,
+  entryId: '',
+  title: '',
+  content: '',
+  score: undefined
+})
 
 // ============ 快捷问题 ============
 const quickQuestions = [
@@ -390,6 +431,7 @@ async function streamResponse(userContent: string) {
               pendingSources = data.sources.map((s: any) => ({
                 entry_id: s.entry_id || '',
                 title: s.title || '未知来源',
+                content: s.content || '',
                 url: s.url || '',
                 score: s.score
               }))
@@ -418,6 +460,7 @@ async function streamResponse(userContent: string) {
             pendingSources = data.sources.map((s: any) => ({
               entry_id: s.entry_id || '',
               title: s.title || '未知来源',
+              content: s.content || '',
               url: s.url || '',
               score: s.score
             }))
@@ -505,6 +548,84 @@ async function playChunks(
 function getConversationId(): string {
   // 从第一条消息生成或使用存储的 ID
   return uni.getStorageSync('chat_conversation_id') || `conv-${Date.now()}`
+}
+
+function normalizeEntryId(rawEntryId: string): number | null {
+  if (!rawEntryId) return null
+  const parsed = Number(rawEntryId)
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+  return parsed
+}
+
+function buildKnowledgeDetailUrl(source: Source, entryId: number): string {
+  const title = encodeURIComponent(source.title || '')
+  const summary = encodeURIComponent((source.content || '').slice(0, 300))
+  const score = source.score !== undefined ? source.score : ''
+  return `/pages/knowledge/detail?id=${entryId}&title=${title}&summary=${summary}&score=${score}`
+}
+
+function navigateToPage(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    uni.navigateTo({
+      url,
+      success: () => resolve(),
+      fail: (error) => reject(error)
+    })
+  })
+}
+
+function showSourcePreview(source: Source) {
+  sourcePreview.value = {
+    visible: true,
+    entryId: source.entry_id || '',
+    title: source.title || '参考资料',
+    content: source.content || '暂未获取到摘要内容，可稍后重试查看详情。',
+    score: source.score
+  }
+}
+
+function closeSourcePreview() {
+  sourcePreview.value.visible = false
+}
+
+async function openSourceDetailFromPreview() {
+  const source = sourcePreview.value
+  const entryId = normalizeEntryId(source.entryId)
+  if (!entryId) {
+    closeSourcePreview()
+    return
+  }
+  try {
+    await navigateToPage(
+      `/pages/knowledge/detail?id=${entryId}&title=${encodeURIComponent(source.title)}&summary=${encodeURIComponent(source.content)}&score=${source.score ?? ''}`
+    )
+    closeSourcePreview()
+  } catch {
+    uni.showToast({
+      title: '详情页暂不可用',
+      icon: 'none'
+    })
+  }
+}
+
+async function handleSourceClick(source: Source) {
+  const entryId = normalizeEntryId(source.entry_id)
+
+  if (entryId) {
+    try {
+      await navigateToPage(buildKnowledgeDetailUrl(source, entryId))
+      return
+    } catch (error) {
+      console.warn('来源详情跳转失败，尝试降级展示：', error)
+    }
+  }
+
+  if (source.url) {
+    handleLinkClick(source.url)
+    return
+  }
+
+  showSourcePreview(source)
 }
 
 // ============ Markdown 链接解析 ============
@@ -687,6 +808,7 @@ function scrollToBottom() {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+  background: linear-gradient(180deg, #e1e7e6 0%, #e8eceb 100%);
 }
 
 // ============ 空状态 ============
@@ -810,16 +932,16 @@ function scrollToBottom() {
   word-break: break-word;
 
   &.user {
-    background: white;
+    background: linear-gradient(135deg, #006a64 0%, #007c75 100%);
     border-radius: 18px 18px 4px 18px;
-    color: $md-sys-color-on-background;
+    color: #ffffff;
   }
 
   &.assistant {
-    background: linear-gradient(135deg, #e8f5f4 0%, #f0f9f7 100%);
-    border: 1px solid rgba(0, 106, 100, 0.08);
+    background: #ffffff;
     border-radius: 4px 18px 18px 18px;
     color: $md-sys-color-on-background;
+    box-shadow: 0 6px 16px rgba(23, 29, 28, 0.06);
   }
 }
 
@@ -933,31 +1055,50 @@ function scrollToBottom() {
 // ============ 来源引用 ============
 .message-sources {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 8px;
-  margin-left: 12px;
-  padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
+  margin-left: 4px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 12px;
 
   .sources-header {
     display: flex;
     align-items: center;
     gap: 4px;
     font: $text-label-small;
-    color: $neutral-50;
+    color: #5b5e66;
   }
 
   .source-item {
-    font: $text-label-small;
-    color: $primary-40;
-    text-decoration: underline;
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(0, 106, 100, 0.06);
+    transition: all 0.2s ease;
+
+    .source-num {
+      font: $text-label-small;
+      color: #006a64;
+      flex-shrink: 0;
+    }
+
+    .source-title {
+      font: $text-label-medium;
+      color: #004f4a;
+      text-decoration: underline;
+      text-decoration-color: rgba(0, 106, 100, 0.35);
+      text-underline-offset: 2px;
+    }
 
     &:active {
-      opacity: 0.7;
+      transform: scale(0.98);
+      background: rgba(0, 106, 100, 0.12);
     }
   }
 }
@@ -1119,6 +1260,90 @@ function scrollToBottom() {
   &:disabled {
     opacity: 0.6;
   }
+}
+
+.source-preview-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.source-preview-panel {
+  width: 100%;
+  border-radius: 20px 20px 0 0;
+  background: #ffffff;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0));
+  box-shadow: 0 -8px 24px rgba(23, 29, 28, 0.12);
+}
+
+.source-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.source-preview-label {
+  font: $text-label-medium;
+  color: #006a64;
+}
+
+.source-preview-score {
+  font: $text-label-small;
+  color: #5b5e66;
+}
+
+.source-preview-title {
+  display: block;
+  font: $text-title-medium;
+  color: #1a1c1e;
+  margin-bottom: 8px;
+}
+
+.source-preview-content {
+  display: block;
+  font: $text-body-medium;
+  color: #2f3033;
+  line-height: 1.6;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.source-preview-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.preview-btn {
+  flex: 1;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 999px;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font: $text-label-large;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.preview-btn-primary {
+  background: #006a64;
+  color: #ffffff;
+}
+
+.preview-btn-ghost {
+  background: rgba(0, 106, 100, 0.08);
+  color: #006a64;
 }
 
 // ============ 动画 ============

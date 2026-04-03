@@ -1,0 +1,10 @@
+expected_batch,expected_material_id,old_conflict_kb_id,target_new_kb_id,current_file_kb_id,current_material_id,status,decision_reason,next_action
+BATCH-A1,MAT-20260324-0024,KB-20260324-0061,KB-20260324-0061,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A1,MAT-20260324-0025,KB-20260324-0062,KB-20260324-0062,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A1,MAT-20260324-0026,KB-20260324-0063,KB-20260324-0063,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A1,MAT-20260324-0027,KB-20260324-0064,KB-20260324-0064,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A1,MAT-20260324-0028,KB-20260324-0065,KB-20260324-0065,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A1,MAT-20260324-0029,KB-20260324-0066,KB-20260324-0066,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A1,MAT-20260324-0055,KB-20260324-0067,KB-20260324-0067,,,need_rebuild,A1队列所需材料，草稿目录无对应实物,rebuild_from_source
+BATCH-A2,MAT-20260324-0116,KB-REX-0001,KB-REX-0001,,,need_rebuild,KB-REX-*规则类条目禁止重命名,manual_review
+BATCH-A2,MAT-20260324-0118,KB-REX-0002,KB-REX-0002,,,need_rebuild,KB-REX-*规则类条目禁止重命名,manual_review

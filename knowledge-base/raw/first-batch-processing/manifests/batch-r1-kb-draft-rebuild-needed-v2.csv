@@ -1,0 +1,22 @@
+﻿source_batch,material_id,old_kb_id,target_new_kb_id,source_path,status,decision_reason,next_action
+BATCH-A3,MAT-20260324-0050,KB-20260324-0061,KB-20260324-0105,,need_rebuild,old_kb_id=KB-20260324-0061 一对多冲突，已分配 KB-20260324-0082,rebuild_from_source
+BATCH-A3,MAT-20260324-0051,KB-20260324-0062,KB-20260324-0106,,need_rebuild,old_kb_id=KB-20260324-0062 一对多冲突，已分配 KB-20260324-0083,rebuild_from_source
+BATCH-A3,MAT-20260324-0052,KB-20260324-0063,KB-20260324-0107,,need_rebuild,old_kb_id=KB-20260324-0063 一对多冲突，已分配 KB-20260324-0084,rebuild_from_source
+BATCH-A3,MAT-20260324-0053,KB-20260324-0064,KB-20260324-0108,,need_rebuild,old_kb_id=KB-20260324-0064 一对多冲突，已分配 KB-20260324-0085,rebuild_from_source
+BATCH-A3,MAT-20260324-0054,KB-20260324-0065,KB-20260324-0109,,need_rebuild,old_kb_id=KB-20260324-0065 一对多冲突，已分配 KB-20260324-0086,rebuild_from_source
+BATCH-A3,MAT-20260324-0056,KB-20260324-0066,KB-20260324-0110,,need_rebuild,old_kb_id=KB-20260324-0066 一对多冲突，已分配 KB-20260324-0087,rebuild_from_source
+BATCH-A3,MAT-20260324-0057,KB-20260324-0067,KB-20260324-0111,,need_rebuild,old_kb_id=KB-20260324-0067 一对多冲突，已分配 KB-20260324-0088,rebuild_from_source
+BATCH-A3,MAT-20260324-0058,KB-20260324-0068,KB-20260324-0112,,need_rebuild,old_kb_id=KB-20260324-0068 一对多冲突，已分配 KB-20260324-0089,rebuild_from_source
+BATCH-A3,MAT-20260324-0059,KB-20260324-0069,KB-20260324-0113,,need_rebuild,old_kb_id=KB-20260324-0069 一对多冲突，已分配 KB-20260324-0090,rebuild_from_source
+BATCH-A3,MAT-20260324-0060,KB-20260324-0070,KB-20260324-0114,,need_rebuild,old_kb_id=KB-20260324-0070 一对多冲突，已分配 KB-20260324-0091,rebuild_from_source
+BATCH-A3,MAT-20260324-0061,KB-20260324-0071,KB-20260324-0115,,need_rebuild,old_kb_id=KB-20260324-0071 一对多冲突，已分配 KB-20260324-0092,rebuild_from_source
+BATCH-A2,MAT-20260324-0116,KB-REX-0001,KB-REX-0001,,need_rebuild,KB-REX-* 规则类条目禁止重命名,manual_review
+BATCH-A3,MAT-CP-001,KB-20260324-0072,KB-20260324-0116,,need_rebuild,old_kb_id=KB-20260324-0072 一对多冲突，已分配 KB-20260324-0093,rebuild_from_source
+BATCH-A2,MAT-20260324-0118,KB-REX-0002,KB-REX-0002,,need_rebuild,KB-REX-* 规则类条目禁止重命名,manual_review
+BATCH-A3,MAT-CP-002,KB-20260324-0073,KB-20260324-0117,,need_rebuild,old_kb_id=KB-20260324-0073 一对多冲突，已分配 KB-20260324-0094,rebuild_from_source
+BATCH-A3,MAT-CP-003,KB-20260324-0074,KB-20260324-0118,,need_rebuild,old_kb_id=KB-20260324-0074 一对多冲突，已分配 KB-20260324-0095,rebuild_from_source
+BATCH-A3,MAT-CP-004,KB-20260324-0075,KB-20260324-0119,,need_rebuild,old_kb_id=KB-20260324-0075 一对多冲突，已分配 KB-20260324-0096,rebuild_from_source
+BATCH-A3,MAT-CP-005,KB-20260324-0076,KB-20260324-0120,,need_rebuild,old_kb_id=KB-20260324-0076 一对多冲突，已分配 KB-20260324-0097,rebuild_from_source
+BATCH-A3,MAT-CP-006,KB-20260324-0077,KB-20260324-0121,,need_rebuild,old_kb_id=KB-20260324-0077 一对多冲突，已分配 KB-20260324-0098,rebuild_from_source
+BATCH-A3,MAT-CP-007,KB-20260324-0078,KB-20260324-0122,,need_rebuild,old_kb_id=KB-20260324-0078 一对多冲突，已分配 KB-20260324-0099,rebuild_from_source
+BATCH-A3,MAT-CP-008,KB-20260324-0079,KB-20260324-0123,,need_rebuild,old_kb_id=KB-20260324-0079 一对多冲突，已分配 KB-20260324-0100,rebuild_from_source

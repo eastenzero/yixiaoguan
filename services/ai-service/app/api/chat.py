@@ -11,7 +11,7 @@ RAG 问答接口路由
 
 import logging
 import json
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -52,6 +52,9 @@ class ChatResponseData(BaseModel):
     """非流式响应数据体"""
     answer: str = Field(..., description="AI 回答内容")
     sources: List[SourceItemDTO] = Field(default=[], description="引用的知识来源")
+    grounded: bool = Field(default=True, description="是否通过知识依据强约束")
+    guardrail_reason: Optional[str] = Field(default=None, description="强约束判定原因")
+    retrieval_stats: Dict[str, Any] = Field(default_factory=dict, description="检索统计信息")
 
 
 class ChatResponse(BaseModel):
@@ -148,6 +151,9 @@ async def chat(request: ChatRequest):
         response_data = ChatResponseData(
             answer=result.answer,
             sources=_convert_sources(result.sources),
+            grounded=result.grounded,
+            guardrail_reason=result.guardrail_reason,
+            retrieval_stats=result.retrieval_stats,
         )
         
         return ChatResponse(code=0, msg="success", data=response_data)
@@ -204,7 +210,7 @@ async def chat_stream(request: ChatStreamRequest):
             history = _convert_history(request.history)
             
             # 调用流式生成
-            async for chunk_text, sources in rag_engine.chat_stream(
+            async for chunk_text, sources, guardrail_meta in rag_engine.chat_stream(
                 query=request.query,
                 history=history,
                 use_kb=request.use_kb,
@@ -215,6 +221,12 @@ async def chat_stream(request: ChatStreamRequest):
                     "is_end": False,
                     "sources": [s.dict() for s in _convert_sources(sources)] if first_chunk else [],
                 }
+
+                if first_chunk and guardrail_meta:
+                    payload["grounded"] = guardrail_meta.get("grounded", True)
+                    payload["guardrail_reason"] = guardrail_meta.get("guardrail_reason")
+                    payload["retrieval_stats"] = guardrail_meta.get("retrieval_stats", {})
+
                 first_chunk = False
                 
                 # 发送 data: {...}\n\n

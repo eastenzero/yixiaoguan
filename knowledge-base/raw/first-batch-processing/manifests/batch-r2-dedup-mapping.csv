@@ -1,0 +1,7 @@
+duplicate_rule_id,canonical_rule_id,decision_reason
+RULE-A1-011,RULE-A1-010,evidence_status相同(部分)，material_id非空(0040>0039)，rule_task_id更大
+RULE-A1-016,RULE-A1-015,evidence_status相同(部分)，material_id均为空，rule_task_id更大
+RULE-A1-024,RULE-A1-015,evidence_status相同(部分)，material_id均为空，rule_task_id更大
+RULE-A1-026,RULE-A1-023,evidence_status相同(部分)，material_id均为空，rule_task_id更大
+RULE-A1-027,RULE-A1-015,evidence_status相同(部分)，material_id均为空，rule_task_id更大
+RULE-A1-029,RULE-A1-028,evidence_status相同(部分)，material_id均为空，rule_task_id更大
