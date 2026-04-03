@@ -1,6 +1,7 @@
 .secrets/
 
 node_modules/
+**/node_modules/
 .env
 
 # Python
@@ -30,6 +31,10 @@ wheels/
 
 # ChromaDB data files (large binary files)
 services/ai-service/data/chroma/
+_references/
+knowledge-base/raw/first-batch-processing/converted/pdf/
+services/business-api/**/target/
+*.jar
 
 # OS
 .DS_Store
