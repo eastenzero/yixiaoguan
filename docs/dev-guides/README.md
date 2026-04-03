@@ -2,6 +2,35 @@
 
 本目录存放面向开发者的操作指引，是 AI 辅助开发时的重要上下文来源。
 
+---
+
+## 目录地图
+
+### 永久参考文档（根目录）
+
+| 文件 | 用途 |
+|------|------|
+| `ai-antipatterns.md` | AI 错题本，记录反复出现的错误模式，下发任务前必读 |
+| `ai-prompt-guide.md` | Prompt 工程指南，定义五件套结构和最佳实践 |
+| `commander-verification-sop.md` | 指挥官 L1 验收 SOP 模板 |
+| `AGENT_AUTH_GUIDE.md` / `AGENT_LOGIN_GUIDE.md` | Agent 登录与认证说明 |
+| `backend-roadmap.md` | 后端开发路线图 |
+| `local-setup.md` | 本地环境搭建说明 |
+
+### prompts/ — 任务执行提示词（按阶段分类）
+
+```
+prompts/
+├── (PROMPT-A ~ PROMPT-R2)   前端/后端开发提示词（历史存档）
+├── kb-repair/               知识库修复阶段提示词（R1~R5，2026-04 执行完毕）
+└── kb-expansion/            知识库扩量阶段提示词（新批次 B1+）
+```
+
+**命名约定**：`<阶段编号>-<任务简述>-prompt-<日期>.md`  
+例：`r3-queue-sync-prompt-2026-04-03.md`、`batch-b1-competition-eval-discovery-prompt-2026-04-03.md`
+
+---
+
 ## 待写文档
 
 - [ ] `local-setup.md` — **本地环境搭建**（Docker Compose、数据库初始化、环境变量）
