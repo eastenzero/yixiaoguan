@@ -36,6 +36,12 @@ knowledge-base/raw/first-batch-processing/converted/pdf/
 services/business-api/**/target/
 *.jar
 
+# IDE local settings
+.claude/
+
+# Embedded git repos (use submodule if needed)
+teb-starter-kit/
+
 # OS
 .DS_Store
 Thumbs.db
