@@ -1,0 +1,118 @@
+你是T3代码修复代理。执行p5b双修复任务。
+
+必读文件（执行前先读）：
+1. .tasks/phase-5-e2e/p5b-multiround-history/_task.md（任务规范和验收标准）
+2. .globalrules（Maven/Java路径，编译时必须用）
+3. services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/ai/service/impl/AiCoordinatorServiceImpl.java（主改动文件）
+4. services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/ai/dto/ChatStreamRequest.java（确认history字段类型和格式）
+5. services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/conversation/service/IYxMessageService.java（确认查询消息历史的方法签名）
+
+scope（仅允许写入）：
+- services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/ai/service/impl/AiCoordinatorServiceImpl.java
+- apps/student-app/src/pages/chat/index.vue（仅在必须时修改）
+
+out_of_scope（禁止修改）：
+- services/ai-service/
+- apps/teacher-web/
+- knowledge-base/
+- scripts/
+
+---
+
+## 修复一：办事意图 sdfmu.edu.cn 兜底
+
+当前问题：AiCoordinatorServiceImpl.java 第170行 default case 将未实现的办事意图降级为 handleChatIntent（RAG），导致用户问"我想预约教室"时看到拒答而非官网链接。
+
+需要做的改动（修改 handleServiceIntent 的 default 分支）：
+
+将：
+```java
+default:
+    // 未知办事意图降级为聊天
+    handleChatIntent(userId, conversationId, originalMessage, session);
+```
+
+改为：
+```java
+default:
+    // 未实现的办事意图 - 官网兜底
+    sendAiReply(userId, conversationId,
+            "我理解您想通过医小管办理相关事务。目前该功能正在与学校系统对接中，您可以先通过学校官网查看相关业务：https://www.sdfmu.edu.cn/",
+            session);
+    break;
+```
+
+同时，BOOK_CLASSROOM 分支在参数缺失时发送追问是合理的，保持不变。但在 handleBookClassroom 捕获异常后的错误回复中，补充官网链接：
+
+在 catch 块中，将：
+```java
+sendAiReply(userId, conversationId,
+        "抱歉，提交申请时出现错误：" + e.getMessage() + "\n请稍后重试或联系管理员。", session);
+```
+改为：
+```java
+sendAiReply(userId, conversationId,
+        "抱歉，提交申请时出现错误：" + e.getMessage() + "\n请稍后重试，或通过学校官网办理：https://www.sdfmu.edu.cn/", session);
+```
+
+## 修复二：多轮对话 history 传递（DEBT-04）
+
+当前问题：handleChatIntent 第89行 new ChatStreamRequest(query) 没有传 history，每轮对话无上下文。
+
+修复步骤：
+
+1. 先读 ChatStreamRequest.java，确认 history 字段类型（通常是 List<Map<String,String>> 或 List<HistoryItem>），以及 role 字段的值（"user"/"assistant" 还是其他）。
+
+2. 先读 IYxMessageService.java，找查询历史消息的方法（可能叫 getMessagesByConversationId、listMessages 等），确认方法签名。
+
+3. 在 handleChatIntent 中，构造 ChatStreamRequest 之前，查询最近 6 条消息作为 history：
+
+示意代码（需根据实际接口调整）：
+```java
+// 查询最近6条历史消息（不含当前这条）
+List<YxMessage> recentMessages = messageService.getRecentMessages(conversationId, 6);
+
+// 构造 history（格式参照 ChatStreamRequest.history 的元素类型）
+List<Map<String, String>> history = new ArrayList<>();
+for (YxMessage msg : recentMessages) {
+    Map<String, String> item = new HashMap<>();
+    item.put("role", msg.getSenderType() == 1 ? "user" : "assistant");
+    item.put("content", msg.getContent() != null ? msg.getContent() : "");
+    history.add(item);
+}
+
+// 构造请求，传入 history
+ChatStreamRequest request = new ChatStreamRequest(query);
+request.setHistory(history);
+```
+
+注意：
+- history 中必须只包含有实际内容的消息（过滤 content 为空的）
+- 如果 ChatStreamRequest 构造器已支持 history 参数，直接用；否则用 setter
+- role 字段的值必须与 ai-service 接口定义一致（读 ChatStreamRequest.java 确认）
+
+---
+
+## 编译验证（执行改动后必须运行）
+
+读 .globalrules 中的 Maven 路径，执行编译：
+```
+mvn compile -pl ruoyi-admin
+```
+（使用 .globalrules 中指定的 IntelliJ Maven 路径和 JAVA_HOME）
+
+若编译失败，修复编译错误后再次编译，直到无报错为止。
+
+前端（apps/student-app）：若 chat/index.vue 有修改则运行 npm run build；若未修改则跳过。
+
+---
+
+## 最终输出
+
+STEP-PLAN / STEP-EXECUTED / STEP-CHECK / BLOCKERS
+
+STEP-CHECK 需验证：
+1. AiCoordinatorServiceImpl.java 中 default case 含 sdfmu.edu.cn ✓/✗
+2. AiCoordinatorServiceImpl.java 中 history 非空列表 ✓/✗
+3. mvn compile -pl ruoyi-admin 无报错 ✓/✗
+4. history 长度上限 ≤6 条 ✓/✗
