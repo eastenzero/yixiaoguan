@@ -55,11 +55,11 @@ services:
       DASHSCOPE_EMBEDDING_MODEL: ${DASHSCOPE_EMBEDDING_MODEL:-text-embedding-v3}
       CHROMA_PERSIST_DIR: /app/data/chroma
       BUSINESS_API_BASE_URL: http://host.docker.internal:8080
-      DEBUG: ${DEBUG:-false}
+      DEBUG: "false"
     ports:
       - "8000:8000" # 注意：生产环境此端口不对外暴露，仅 business-api 内网访问
     volumes:
-      - chroma_data:/app/data/chroma
+      - ../services/ai-service/data/chroma:/app/data/chroma
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,6 +75,4 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
-    driver: local
-  chroma_data:
     driver: local

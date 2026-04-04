@@ -4,19 +4,19 @@
  */
 
 // ========== Primary Colors ==========
-$primary-0: #000000;
-$primary-10: #001D33;
-$primary-20: #003354;
-$primary-30: #004A77;
-$primary-40: #00639B;
-$primary-50: #007DBF;
-$primary-60: #3998D5;
-$primary-70: #5AB3F1;
-$primary-80: #9CCAFF;
-$primary-90: #CFE4FF;
-$primary-95: #E8F2FF;
-$primary-99: #FDFCFF;
-$primary-100: #FFFFFF;
+$primary-0:   #000000;
+$primary-10:  #002020;
+$primary-20:  #003735;
+$primary-30:  #004f4c;
+$primary-40:  #006a64;
+$primary-50:  #008580;
+$primary-60:  #00a29c;
+$primary-70:  #3cbfb9;
+$primary-80:  #5edcd4;
+$primary-90:  #a0f0ea;
+$primary-95:  #d0f8f4;
+$primary-99:  #f2fffe;
+$primary-100: #ffffff;
 
 // ========== Secondary Colors ==========
 $secondary-0: #000000;
@@ -159,9 +159,22 @@ $md-sys-color-inverse-surface: $neutral-20;
 $md-sys-color-inverse-on-surface: $neutral-95;
 $md-sys-color-inverse-primary: $primary-80;
 
+// ========== Convenience Aliases ==========
+$primary:                    $primary-40;
+$on-primary:                 $md-sys-color-on-primary;
+$primary-container:          $md-sys-color-primary-container;
+$on-primary-container:       $md-sys-color-on-primary-container;
+
 // ========== Background & Elevation ==========
 $md-sys-color-background: #F5F5F9;
 $md-sys-color-on-background: $neutral-10;
+
+// Surface container 层级（Tonal Stacking 设计原则）
+$md-sys-color-surface-container-lowest:  #ffffff;
+$md-sys-color-surface-container-low:     #f1f0f4;
+$md-sys-color-surface-container:         #ebeaee;
+$md-sys-color-surface-container-high:    #e5e4e8;
+$md-sys-color-surface-container-highest: #dfdee2;
 $md-sys-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
 $md-sys-elevation-2: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
 $md-sys-elevation-3: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.02);

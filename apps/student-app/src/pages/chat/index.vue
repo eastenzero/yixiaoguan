@@ -2,7 +2,7 @@
   <view class="chat-page">
     <!-- 顶部导航栏 -->
     <view class="navbar">
-      <text class="title">AI 助手</text>
+      <text class="title">医小管</text>
     </view>
 
     <!-- 消息列表 -->
@@ -16,10 +16,10 @@
       <!-- 空状态 -->
       <view v-if="!messages.length" class="empty-state">
         <view class="empty-icon">
-          <IconSparkles :size="48" color="#006a64" />
+          <IconSparkles :size="48" color="#ffffff" />
         </view>
-        <text class="empty-title">学术助手</text>
-        <text class="empty-desc">同学你好！我是学术亭智能助手。关于校园生活、选课安排、奖学金申请或办事流程，你都可以问我。</text>
+        <text class="empty-title">医小管</text>
+        <text class="empty-desc">同学你好！我是医小管智能助手。关于校园生活、选课安排、奖学金申请或办事流程，你都可以问我。</text>
         
         <!-- 快捷问题 -->
         <view class="quick-chips">
@@ -50,7 +50,7 @@
         <!-- 消息内容区 -->
         <view class="message-content">
           <!-- AI 名称标签 -->
-          <text v-if="msg.role === 'assistant'" class="sender-name">学术助手</text>
+          <text v-if="msg.role === 'assistant'" class="sender-name">医小管</text>
 
           <!-- 消息气泡 -->
           <view class="message-bubble" :class="msg.role">
@@ -385,7 +385,6 @@ async function streamResponse(userContent: string) {
       },
       body: JSON.stringify({
         query: userContent,
-        history: [],
         use_kb: true
       })
     })
@@ -590,14 +589,13 @@ function closeSourcePreview() {
 
 async function openSourceDetailFromPreview() {
   const source = sourcePreview.value
-  const entryId = normalizeEntryId(source.entryId)
-  if (!entryId) {
+  if (!source.entryId) {
     closeSourcePreview()
     return
   }
   try {
     await navigateToPage(
-      `/pages/knowledge/detail?id=${entryId}&title=${encodeURIComponent(source.title)}&summary=${encodeURIComponent(source.content)}&score=${source.score ?? ''}`
+      `/pages/knowledge/detail?id=${encodeURIComponent(source.entryId)}&title=${encodeURIComponent(source.title)}&summary=${encodeURIComponent(source.content)}&score=${source.score ?? ''}`
     )
     closeSourcePreview()
   } catch {
@@ -609,11 +607,11 @@ async function openSourceDetailFromPreview() {
 }
 
 async function handleSourceClick(source: Source) {
-  const entryId = normalizeEntryId(source.entry_id)
-
-  if (entryId) {
+  if (source.entry_id) {
     try {
-      await navigateToPage(buildKnowledgeDetailUrl(source, entryId))
+      await navigateToPage(
+        `/pages/knowledge/detail?id=${encodeURIComponent(source.entry_id)}&title=${encodeURIComponent(source.title || '')}&summary=${encodeURIComponent((source.content || '').slice(0, 300))}&score=${source.score ?? ''}`
+      )
       return
     } catch (error) {
       console.warn('来源详情跳转失败，尝试降级展示：', error)
@@ -791,10 +789,9 @@ function scrollToBottom() {
   justify-content: center;
   height: 44px;
   padding-top: var(--status-bar-height, 44px);
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
 
   .title {
@@ -808,7 +805,7 @@ function scrollToBottom() {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background: linear-gradient(180deg, #e1e7e6 0%, #e8eceb 100%);
+  background: $md-sys-color-background;
 }
 
 // ============ 空状态 ============
@@ -822,8 +819,8 @@ function scrollToBottom() {
   .empty-icon {
     width: 80px;
     height: 80px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #e8f5f4 0%, #f0f9f7 100%);
+    border-radius: $radius-xl;
+    background: linear-gradient(135deg, #006a64 0%, #008a83 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -860,9 +857,10 @@ function scrollToBottom() {
     gap: 6px;
     padding: 10px 16px;
     background: white;
-    border-radius: 20px;
+    border-radius: $radius-full;
+    border: 1px solid $primary-40;
     font: $text-body-small;
-    color: $md-sys-color-on-background;
+    color: $primary-40;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     transition: all 0.2s ease;
 
@@ -876,6 +874,7 @@ function scrollToBottom() {
 // ============ 消息项 ============
 .message-item {
   display: flex;
+  align-items: flex-start;
   margin-bottom: 20px;
   animation: fadeInUp 0.3s ease-out;
 
@@ -1060,16 +1059,17 @@ function scrollToBottom() {
   gap: 8px;
   margin-top: 8px;
   margin-left: 4px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.78);
+  padding: 12px 14px;
+  background: #ffffff;
   border-radius: 12px;
+  box-shadow: $md-sys-elevation-1;
 
   .sources-header {
     display: flex;
     align-items: center;
     gap: 4px;
     font: $text-label-small;
-    color: #5b5e66;
+    color: $md-sys-color-on-surface-variant;
   }
 
   .source-item {
@@ -1077,28 +1077,33 @@ function scrollToBottom() {
     align-items: center;
     gap: 4px;
     width: 100%;
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-radius: 8px;
-    background: rgba(0, 106, 100, 0.06);
+    background: $md-sys-color-surface-container-low;
     transition: all 0.2s ease;
 
     .source-num {
       font: $text-label-small;
-      color: #006a64;
+      color: $primary-40;
       flex-shrink: 0;
     }
 
     .source-title {
+      flex: 1;
       font: $text-label-medium;
-      color: #004f4a;
-      text-decoration: underline;
-      text-decoration-color: rgba(0, 106, 100, 0.35);
-      text-underline-offset: 2px;
+      color: $md-sys-color-on-surface;
+    }
+
+    &::after {
+      content: '›';
+      font-size: 16px;
+      color: $md-sys-color-outline;
+      margin-left: 4px;
     }
 
     &:active {
       transform: scale(0.98);
-      background: rgba(0, 106, 100, 0.12);
+      background: $md-sys-color-surface-container;
     }
   }
 }
@@ -1209,8 +1214,7 @@ function scrollToBottom() {
   flex-shrink: 0;
   padding: 12px 16px;
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: $md-sys-color-surface;
 }
 
 .input-wrapper {
@@ -1278,8 +1282,11 @@ function scrollToBottom() {
   width: 100%;
   border-radius: 20px 20px 0 0;
   background: #ffffff;
-  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0));
+  padding: 18px 16px 0;
   box-shadow: 0 -8px 24px rgba(23, 29, 28, 0.12);
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .source-preview-header {
@@ -1308,17 +1315,20 @@ function scrollToBottom() {
 
 .source-preview-content {
   display: block;
+  flex: 1;
+  min-height: 0;
   font: $text-body-medium;
   color: #2f3033;
   line-height: 1.6;
-  max-height: 220px;
   overflow-y: auto;
 }
 
 .source-preview-actions {
+  flex-shrink: 0;
   display: flex;
   gap: 10px;
   margin-top: 16px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0));
 }
 
 .preview-btn {

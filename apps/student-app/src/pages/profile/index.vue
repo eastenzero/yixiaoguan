@@ -77,7 +77,7 @@
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </view>
-        <view class="history-list">
+        <view class="history-list" v-if="aiHistory.length > 0">
           <view class="history-item" v-for="item in aiHistory" :key="item.id" @click="goToChat">
             <text class="item-question">{{ item.question }}</text>
             <text class="item-answer" line-clamp-1>{{ item.answer }}</text>
@@ -86,6 +86,9 @@
               <text class="item-tag" :class="item.tagClass">{{ item.tag }}</text>
             </view>
           </view>
+        </view>
+        <view class="history-empty" v-else>
+          <text class="empty-text">暂无历史记录</text>
         </view>
       </view>
 
@@ -247,11 +250,8 @@ const userDeptAndGrade = computed(() => {
 
 const userAvatar = computed(() => (userStore.userInfo as any)?.avatar || '')
 
-// AI 助手历史数据
-const aiHistory = ref([
-  { id: 1, question: '如何申请跨专业学术交流项目？', answer: '您好！根据学校规定，跨专业学术交流项目需要在每学期开学后两周内提交申请...', time: '2小时前', tag: '学业咨询', tagClass: 'tag-primary' },
-  { id: 2, question: '图书馆数字化资源访问权限', answer: '在校外访问图书馆资源需要通过学校VPN或者使用CARSI联盟认证...', time: '昨天', tag: '资源获取', tagClass: 'tag-secondary' }
-])
+// AI 助手历史数据（从 API 获取，初始为空）
+const aiHistory = ref([])
 
 // 常用服务数据
 const favoriteServices = ref([
@@ -265,7 +265,7 @@ const goToQuestions = () => {
 }
 
 const goToApplyStatus = () => {
-  uni.switchTab({ url: '/pages/apply/status' })
+  uni.navigateTo({ url: '/pages/apply/status' })
 }
 
 const goToChat = () => {
@@ -682,6 +682,19 @@ page {
   &.tag-secondary {
     background-color: rgba($info, 0.1);
     color: $info;
+  }
+}
+
+// AI 历史空状态
+.history-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx 0;
+  
+  .empty-text {
+    font-size: 28rpx;
+    color: $on-surface-variant;
   }
 }
 

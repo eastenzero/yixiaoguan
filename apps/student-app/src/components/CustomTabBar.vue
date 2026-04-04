@@ -32,10 +32,10 @@ const emit = defineEmits<{
 }>()
 
 const tabs = [
-  { key: 'home' as const, label: 'Home', icon: IconHome },
-  { key: 'assistant' as const, label: 'Assistant', icon: IconBot },
-  { key: 'services' as const, label: 'Services', icon: IconLayoutGrid },
-  { key: 'profile' as const, label: 'Profile', icon: IconUser }
+  { key: 'home' as const, label: '首页', icon: IconHome },
+  { key: 'assistant' as const, label: '智能问答', icon: IconBot },
+  { key: 'services' as const, label: '事务导办', icon: IconLayoutGrid },
+  { key: 'profile' as const, label: '我的', icon: IconUser }
 ]
 
 const handleSwitchTab = (key: 'home' | 'assistant' | 'services' | 'profile') => {

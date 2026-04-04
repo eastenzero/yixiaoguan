@@ -19,7 +19,7 @@
     <!-- AI 输入区 - 药丸形 + 大阴影 -->
     <view class="ai-input-bar staggered-2" @click="goToChatWithQuery('')">
       <view class="ai-badge">AI</view>
-      <text class="input-placeholder">问问你的AI学术助教...</text>
+      <text class="input-placeholder">问问医小管AI助手...</text>
       <view class="send-btn-round">
         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
           <path d="M5 12h14"/>
@@ -271,7 +271,7 @@ const goToClassroomApply = () => {
 
 // 跳转到申请进度
 const goToApplyStatus = () => {
-  uni.switchTab({ url: '/pages/apply/status' })
+  uni.navigateTo({ url: '/pages/apply/status' })
 }
 
 // 跳转到个人中心
@@ -281,7 +281,7 @@ const goToProfile = () => {
 
 // 跳转到服务页面
 const goToServices = () => {
-  uni.switchTab({ url: '/pages/apply/status' })
+  uni.switchTab({ url: '/pages/services/index' })
 }
 
 // 功能开发中提示
@@ -371,8 +371,11 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-// MD3 颜色变量
-$primary: #006a64;
+// 导入主题变量
+@import '@/styles/theme.scss';
+
+// MD3 颜色变量 - 使用主题 token
+$primary: $primary-40;
 $primary-container: #00A79D;
 $on-primary: #ffffff;
 $on-primary-container: #00201e;

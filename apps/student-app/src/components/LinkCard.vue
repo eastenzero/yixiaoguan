@@ -62,7 +62,9 @@ const handleClick = () => {
 </script>
 
 <style scoped lang="scss">
-$primary: #006a64;
+// 导入主题变量
+@import '@/styles/theme.scss';
+
 $on-surface: #171d1c;
 $on-surface-variant: #5a635f;
 $surface-container-low: #eff5f3;

@@ -60,7 +60,9 @@ const handleClick = () => {
 </script>
 
 <style scoped lang="scss">
-$primary: #006a64;
+// 导入主题变量
+@import '@/styles/theme.scss';
+
 $on-surface: #171d1c;
 $on-surface-variant: #5a635f;
 $surface-container-lowest: #ffffff;
@@ -90,9 +92,9 @@ $surface-container-lowest: #ffffff;
   
   // 渐变背景 - 空教室
   &.bg-gradient-teal {
-    background: linear-gradient(135deg, #00A79D 0%, #006a64 100%);
+    background: linear-gradient(135deg, $primary-60 0%, $primary-40 100%);
     color: #ffffff;
-    box-shadow: 0 12rpx 40rpx rgba(0, 106, 100, 0.25);
+    box-shadow: 0 12rpx 40rpx rgba($primary-40, 0.25);
   }
   
   // 渐变背景 - 申请进度
