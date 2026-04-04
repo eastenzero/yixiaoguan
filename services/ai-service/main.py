@@ -17,7 +17,7 @@ from app.api import chat, links, kb, cluster, health, agent
 
 # -- 结构化日志配置 --
 logging.basicConfig(
-    level=logging.INFO if not settings.debug else logging.DEBUG,
+    level=logging.INFO if not settings.app_debug else logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ ChromaDB 初始化失败: {e}")
         # 不阻断启动，允许在运行时重试
     
-    logger.info(f"📡 服务配置: 调试模式={settings.debug}, 向量库={settings.chroma_persist_dir}")
+    logger.info(f"📡 服务配置: 调试模式={settings.app_debug}, 向量库={settings.chroma_persist_dir}")
     
     yield
     

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # -- 服务 --
     app_name: str = "医小管 AI 服务"
-    debug: bool = False
+    app_debug: bool = False
 
     # -- DashScope（阿里云大模型） --
     dashscope_api_key: str = ""
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # -- RAG 防幻觉强约束 --
     rag_top_k: int = 5
     rag_min_score: float = 0.55
-    rag_min_best_score: float = 0.62
+    rag_min_best_score: float = 0.611
     rag_min_avg_score: float = 0.58
     rag_min_source_count: int = 2
     rag_temperature: float = 0.2

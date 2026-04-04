@@ -12,6 +12,7 @@ import os
 import sys
 import re
 import json
+import yaml
 from pathlib import Path
 from datetime import datetime
 
@@ -35,6 +36,10 @@ else:
 from app.core.kb_vectorize import vector_store
 from app.core.config import settings
 
+# 引入 chunker 的 MarkdownTextSplitter
+sys.path.insert(0, str(AI_SERVICE_PATH / "app" / "core"))
+from chunker import MarkdownTextSplitter
+
 
 def parse_frontmatter(content: str) -> tuple[dict, str]:
     """
@@ -47,29 +52,29 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
         if len(parts) >= 3:
             yaml_content = parts[1].strip()
             body = parts[2].strip()
-            
-            # 简单解析 YAML（只处理 key: value 格式）
-            metadata = {}
-            for line in yaml_content.split('\n'):
-                line = line.strip()
-                if ':' in line and not line.startswith('#'):
-                    key, value = line.split(':', 1)
-                    key = key.strip()
-                    value = value.strip().strip('"').strip("'")
-                    metadata[key] = value
-            
+            try:
+                metadata = yaml.safe_load(yaml_content) or {}
+                if not isinstance(metadata, dict):
+                    metadata = {}
+            except yaml.YAMLError:
+                metadata = {}
+                for line in yaml_content.splitlines():
+                    if line.startswith('title:'):
+                        metadata['title'] = line[6:].strip().strip('"').strip("'")
+                        break
             return metadata, body
     
     return {}, content
 
 
-def ingest_kb_entry(file_path: Path, dry_run: bool = False) -> dict:
+def ingest_kb_entry(file_path: Path, dry_run: bool = False, splitter: MarkdownTextSplitter = None) -> dict:
     """
-    将单个知识条目入库
+    将单个知识条目入库（支持分块）
     
     Args:
         file_path: Markdown 文件路径
         dry_run: 是否为测试模式（不入库）
+        splitter: MarkdownTextSplitter 实例
     
     Returns:
         处理结果信息
@@ -103,8 +108,9 @@ def ingest_kb_entry(file_path: Path, dry_run: bool = False) -> dict:
 注意事项：{extract_section(body, '注意事项')}
 """
         
-        # 构建元数据
-        extra_metadata = {
+        # 构建基础元数据
+        base_metadata = {
+            "title": title,
             "category": metadata.get('category', '未分类'),
             "audience": metadata.get('audience', '全体学生'),
             "rule_task_id": metadata.get('rule_task_id', ''),
@@ -122,14 +128,55 @@ def ingest_kb_entry(file_path: Path, dry_run: bool = False) -> dict:
         }
         
         if not dry_run:
-            # 执行向量化入库
-            vector_store.upsert_kb_entry(
-                entry_id=entry_id,
-                title=title,
-                content=vector_content,
-                metadata=extra_metadata,
+            # 使用 chunker 对内容进行分块
+            if splitter is None:
+                splitter = MarkdownTextSplitter(chunk_size=800, chunk_overlap=100)
+            
+            chunks = splitter.split(
+                text=vector_content,
+                source_path=str(file_path),
+                base_metadata=base_metadata
             )
-            result["message"] = "入库成功"
+            
+            # 逐个 chunk 入库
+            chunk_ids = []
+            chunk_count = len(chunks)
+            
+            for chunk in chunks:
+                # 生成 chunk ID: {entry_id}__chunk_{index}
+                chunk_id = f"{entry_id}__chunk_{chunk.index}"
+                chunk_ids.append(chunk_id)
+                
+                # 构建 chunk 的 metadata，包含 chunk_index
+                chunk_metadata = {
+                    **chunk.metadata,
+                    "entry_id": entry_id,
+                    "chunk_index": chunk.index,
+                    "chunk_total": chunk_count,
+                }
+                
+                # 组合标题和 chunk 内容进行向量化
+                chunk_text = f"{title}\n\n{chunk.content}".strip()
+                
+                # 生成向量并入库存储
+                try:
+                    embedding = vector_store.generate_embedding(chunk_text)
+                    vector_store._collection.upsert(
+                        ids=[chunk_id],
+                        embeddings=[embedding],
+                        documents=[chunk_text],
+                        metadatas=[chunk_metadata],
+                    )
+                except Exception as e:
+                    return {
+                        "entry_id": entry_id,
+                        "status": "error",
+                        "error": f"Chunk {chunk.index} 入库失败: {str(e)}",
+                    }
+            
+            result["message"] = f"入库成功，共 {chunk_count} 个 chunks"
+            result["chunk_count"] = chunk_count
+            result["chunk_ids"] = chunk_ids[:3]  # 仅记录前3个用于调试
         else:
             result["message"] = "测试模式，未实际入库"
             result["preview"] = vector_content[:500] + "..." if len(vector_content) > 500 else vector_content
@@ -179,6 +226,11 @@ def main():
         print(f"❌ 初始化失败: {e}")
         sys.exit(1)
     
+    # 初始化 chunker
+    print("📝 初始化 MarkdownTextSplitter...")
+    splitter = MarkdownTextSplitter(chunk_size=800, chunk_overlap=100)
+    print("✅ Chunker 初始化完成")
+    
     # 查找知识库文件
     kb_dir = Path(__file__).parent.parent / "knowledge-base" / "entries" / "first-batch-drafts"
     if not kb_dir.exists():
@@ -199,7 +251,7 @@ def main():
     if dry_run:
         print("\n🧪 测试模式 - 预览前3个文件:")
         for md_file in md_files[:3]:
-            result = ingest_kb_entry(md_file, dry_run=True)
+            result = ingest_kb_entry(md_file, dry_run=True, splitter=splitter)
             print(f"\n条目: {result['entry_id']}")
             print(f"标题: {result['title']}")
             print(f"内容长度: {result['content_length']} 字符")
@@ -208,7 +260,7 @@ def main():
         return
     
     if not skip_confirm:
-        print("\n⚠️  即将向量化并入库 60 个知识条目")
+        print(f"\n⚠️  即将向量化并入库 {len(md_files)} 个知识条目")
         print("使用 --yes 参数跳过此确认")
         # 非交互环境，默认继续
         print("自动继续...\n")
@@ -221,16 +273,19 @@ def main():
     
     success_count = 0
     error_count = 0
+    total_chunks = 0
     errors = []
     
     for i, md_file in enumerate(md_files, 1):
         print(f"[{i}/{len(md_files)}] {md_file.name} ... ", end="", flush=True)
         
-        result = ingest_kb_entry(md_file, dry_run=dry_run)
+        result = ingest_kb_entry(md_file, dry_run=dry_run, splitter=splitter)
         
         if result['status'] == 'success':
-            print(f"✅ {result['message']}")
+            chunk_info = f" ({result.get('chunk_count', 1)} chunks)" if 'chunk_count' in result else ""
+            print(f"✅ {result['message']}{chunk_info}")
             success_count += 1
+            total_chunks += result.get('chunk_count', 1)
         else:
             print(f"❌ 错误: {result.get('error', '未知错误')}")
             error_count += 1
@@ -241,6 +296,7 @@ def main():
     print(f"\n📊 入库完成!")
     print(f"   成功: {success_count} 条")
     print(f"   失败: {error_count} 条")
+    print(f"   总 chunks: {total_chunks} 个")
     
     if errors:
         print(f"\n❌ 失败的条目:")

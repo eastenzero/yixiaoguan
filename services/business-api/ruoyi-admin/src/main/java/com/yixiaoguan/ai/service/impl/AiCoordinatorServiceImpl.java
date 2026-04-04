@@ -85,8 +85,37 @@ public class AiCoordinatorServiceImpl implements IAiCoordinatorService {
     private void handleChatIntent(Long userId, Long conversationId, String query, WebSocketSession session) {
         log.info("[AiCoordinator] 进入聊天分支 - conversationId:{}", conversationId);
 
-        // 构造请求（可扩展传入历史记录）
-        ChatStreamRequest request = new ChatStreamRequest(query);
+        // 查询最近6条历史消息（不含当前这条）
+        List<YxMessage> historyMessages = messageService.selectHistory(conversationId, userId);
+        
+        // 构造 history（取最近6条，过滤空内容，排除系统消息）
+        List<ChatMessageDTO> history = new ArrayList<>();
+        if (historyMessages != null && !historyMessages.isEmpty()) {
+            // 倒序遍历取最近6条（列表是正序，从旧到新）
+            int start = Math.max(0, historyMessages.size() - 6);
+            for (int i = start; i < historyMessages.size(); i++) {
+                YxMessage msg = historyMessages.get(i);
+                // 过滤空内容
+                if (msg.getContent() == null || msg.getContent().trim().isEmpty()) {
+                    continue;
+                }
+                // 排除系统消息（senderType=4）
+                if (msg.getSenderType() == 4) {
+                    continue;
+                }
+                // 映射 role：1-学生/3-教师 → user，2-AI → assistant
+                String role;
+                if (msg.getSenderType() == 2) {
+                    role = "assistant";
+                } else {
+                    role = "user";
+                }
+                history.add(new ChatMessageDTO(role, msg.getContent()));
+            }
+        }
+        
+        // 构造请求，传入 history
+        ChatStreamRequest request = new ChatStreamRequest(query, history);
 
         // 先落库用户消息
         saveMessage(conversationId, 1, userId, query, 1);
@@ -155,14 +184,23 @@ public class AiCoordinatorServiceImpl implements IAiCoordinatorService {
                 handleBookClassroom(userId, conversationId, intentResponse, session);
                 break;
             case SUBMIT_REPAIR_REQUEST:
+                // 报修申请 - 官网兜底
+                sendAiReply(userId, conversationId,
+                        "我理解您想要提交报修申请。目前该功能正在与学校系统对接中，您可以先通过学校官网办理：https://www.sdfmu.edu.cn/",
+                        session);
+                break;
             case QUERY_APPLICATION_STATUS:
-                // 预留的其他办事意图
-                sendSystemMessage(session, conversationId,
-                        "该业务功能正在开发中，请先通过网页端办理。", "SERVICE_NOT_IMPLEMENTED");
+                // 查询申请状态 - 官网兜底
+                sendAiReply(userId, conversationId,
+                        "我理解您想要查询申请状态。目前该功能正在与学校系统对接中，您可以先通过学校官网办理：https://www.sdfmu.edu.cn/",
+                        session);
                 break;
             default:
-                // 未知办事意图降级为聊天
-                handleChatIntent(userId, conversationId, originalMessage, session);
+                // 未实现的办事意图 - 官网兜底
+                sendAiReply(userId, conversationId,
+                        "我理解您想通过医小管办理相关事务。目前该功能正在与学校系统对接中，您可以先通过学校官网查看相关业务：https://www.sdfmu.edu.cn/",
+                        session);
+                break;
         }
     }
 
@@ -217,7 +255,7 @@ public class AiCoordinatorServiceImpl implements IAiCoordinatorService {
         } catch (Exception e) {
             log.error("[AiCoordinator] 提交教室申请失败: {}", e.getMessage(), e);
             sendAiReply(userId, conversationId,
-                    "抱歉，提交申请时出现错误：" + e.getMessage() + "\n请稍后重试或联系管理员。", session);
+                    "抱歉，提交申请时出现错误：" + e.getMessage() + "\n请稍后重试，或通过学校官网办理：https://www.sdfmu.edu.cn/", session);
         }
     }
 

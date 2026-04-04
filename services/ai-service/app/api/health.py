@@ -58,7 +58,7 @@ async def health_check():
         "status": "healthy" if settings.dashscope_api_key else "warning",
         "message": "配置加载正常" if settings.dashscope_api_key else "DashScope API Key 未配置",
         "details": {
-            "debug": settings.debug,
+            "debug": settings.app_debug,
             "embedding_model": settings.dashscope_embedding_model,
             "chroma_collection": settings.chroma_collection_kb,
         },
