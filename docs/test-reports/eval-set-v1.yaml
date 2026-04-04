@@ -1,0 +1,172 @@
+# 医小馆 RAG 检索质量评测集 v1
+# 生成时间: 2026-04-04
+# 总题数: 32
+# 分布: hit=14 / reject=8 / boundary=5 / life-reject=5
+
+# ==================== 应命中 (hit) - 14题 ====================
+
+- id: "eval-001"
+  question: "我想申请国家励志奖学金，需要满足啥条件？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0002", "KB-20260324-0054"]
+
+- id: "eval-002"
+  question: "助学金评审在一网通办系统里怎么操作啊？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0007", "KB-20260324-0022"]
+
+- id: "eval-003"
+  question: "新生心理测评啥时候开始，要怎么登录系统？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0009", "KB-20260324-0010"]
+
+- id: "eval-004"
+  question: "校园卡丢了怎么办，去哪补办？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0012", "KB-20260324-0018"]
+
+- id: "eval-005"
+  question: "第二课堂积分怎么认定，多少分能换学分？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0013", "KB-20260324-0019"]
+
+- id: "eval-006"
+  question: "毕业生档案去向核对了发现有错误咋改？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0016"]
+
+- id: "eval-007"
+  question: "我想当兵，毕业生应征入伍有什么政策？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0020"]
+
+- id: "eval-008"
+  question: "勤工助学岗位怎么申请，一个月最多能干多久？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0008"]
+
+- id: "eval-009"
+  question: "家庭经济困难认定要在系统里怎么填？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0027", "KB-20260324-0029", "KB-20260324-0056"]
+
+- id: "eval-010"
+  question: "学信网学籍注册完了，在哪能看到自己的学籍信息？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0004"]
+
+- id: "eval-011"
+  question: "综合素质测评成绩是怎么算的，德育占多少分？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0060", "KB-20260324-0105"]
+
+- id: "eval-012"
+  question: "外研社英语比赛今年有啥赛项，怎么报名？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0041", "KB-20260324-0111"]
+
+- id: "eval-013"
+  question: "入团申请书怎么写，有啥格式要求？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0109"]
+
+- id: "eval-014"
+  question: "体测免测申请要怎么弄，需要医院证明吗？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0036", "KB-20260324-0107"]
+
+# ==================== 应拒答 (reject) - 8题 ====================
+
+- id: "eval-015"
+  question: "明天天气怎么样？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-016"
+  question: "北京大学图书馆几点开门？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-017"
+  question: "帮我写一份Java简历"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-018"
+  question: "清华大学今年的考研分数线是多少？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-019"
+  question: "马斯克最近又发了什么推特？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-020"
+  question: "推荐几部最近好看的电影"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-021"
+  question: "怎么制作红烧肉？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-022"
+  question: "iPhone 16多少钱？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+# ==================== 边界情况 (boundary) - 5题 ====================
+
+- id: "eval-023"
+  question: "学校附近有什么好吃的？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+- id: "eval-024"
+  question: "辅导员办公室在哪栋楼？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+- id: "eval-025"
+  question: "图书馆能借几本书，借多久？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+- id: "eval-026"
+  question: "校医院上班时间是什么时候？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+- id: "eval-027"
+  question: "学校食堂有哪些档口？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+# ==================== 生活服务类应拒答 (life-reject) - 5题 ====================
+
+- id: "eval-028"
+  question: "宿舍水管坏了，怎么报修？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-029"
+  question: "电费在哪交，怎么充值？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-030"
+  question: "宿舍WiFi密码是多少，网连不上找谁？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-031"
+  question: "热水供应时间是几点到几点？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-032"
+  question: "校园卡充值的机器在哪，能现金充值吗？"
+  expected_behavior: "reject"
+  expected_entry_ids: []

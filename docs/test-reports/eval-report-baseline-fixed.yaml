@@ -1,0 +1,523 @@
+metrics:
+  total: 32
+  recall_at_5: 0.9286
+  avg_recall_at_5: 0.7976
+  reject_accuracy: 1.0
+  life_reject_accuracy: 1.0
+  hit_count: 14
+  hit_correct: 13
+  reject_count: 13
+  boundary_count: 5
+  life_reject_count: 5
+  reject_correct: 18
+  life_reject_correct: 5
+  category_stats:
+    hit:
+      total: 14
+      correct: 13
+      avg_recall_at_5: 0.7976190476190476
+    reject:
+      total: 13
+      correct: 13
+      avg_recall_at_5: 0.0
+    boundary:
+      total: 5
+      correct: 5
+      avg_recall_at_5: 0.0
+details:
+- id: eval-001
+  question: 我想申请国家励志奖学金，需要满足啥条件？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0002
+  - KB-20260324-0054
+  actual_entry_ids:
+  - KB-20260324-0050__chunk_0
+  - KB-20260324-0051__chunk_0
+  - KB-20260324-0049__chunk_0
+  - KB-20260324-0002__chunk_0
+  - KB-20260324-0048__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 0.5
+  correct_reject: false
+  error: null
+  answer_preview: "你好！申请国家励志奖学金需同时满足以下条件（依据最新评审规则）：\n\n✅ **学籍要求**：具有本校全日制学籍的在校本科生；\
+    \  \n✅ **年级要求**：须为全日制二年级及以上本科生（2025级新生不参与本年度评审）；  \n✅ **困难认定**：已被学校认定为家庭经济困难学生，且在“家庭经济困难认定在册”名单中；\
+    \  \n✅ **学业成绩**：学业成绩排名须符合当年评审通知规定的具体要求（通常有明确排名比..."
+- id: eval-002
+  question: 助学金评审在一网通办系统里怎么操作啊？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0007
+  - KB-20260324-0022
+  actual_entry_ids:
+  - KB-20260324-0007__chunk_0
+  - KB-20260324-0055__chunk_0
+  - KB-20260324-0022__chunk_0
+  - KB-20260324-0026__chunk_0
+  - KB-20260324-0126__chunk_2
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "助学金评审在一网通办系统中按以下流程操作：\n\n✅ **整体流程**：  \n“院系设岗名额 → 班级评议提交 → 院系评审提交”，三步均为**一次性操作，提交后不可修改或补提**。\n\
+    \n✅ **具体步骤**：  \n1. **院系账号先配置名额**：  \n　　- 登录一网通办系统，进入国家助学金评审模块；  \n　　- 根据学校下达的总名额，为各班级分配助学金名额（不得超总额）。\n\
+    \n2. **班级账号开展..."
+- id: eval-003
+  question: 新生心理测评啥时候开始，要怎么登录系统？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0009
+  - KB-20260324-0010
+  actual_entry_ids:
+  - KB-20260324-0010__chunk_0
+  - KB-20260324-0009__chunk_0
+  - KB-20260324-0011__chunk_0
+  - KB-20260324-0016__chunk_0
+  - KB-20260324-0121__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "根据学校安排，2025级新生心理健康测评时间为：**即日起至10月31日**，请在此期限内完成。\n\n登录方式如下：  \n\
+    ✅ 通过网页端访问：`xinli.univs.cn`  \n✅ 或使用微信搜索并进入对应小程序（名称未在背景知识中明确列出，建议关注学校官方通知或学生手册指引）\
+    \  \n\n登录时请注意：  \n- 必须使用**与学校导入平台信息一致的手机号**；  \n- 登录后需完善个人信息、阅读并勾选..."
+- id: eval-004
+  question: 校园卡丢了怎么办，去哪补办？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0012
+  - KB-20260324-0018
+  actual_entry_ids:
+  - KB-20260324-0017__chunk_0
+  - KB-20260324-0012__chunk_0
+  - KB-20260324-0015__chunk_0
+  - KB-20260324-0031__chunk_0
+  - KB-20260324-0004__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 0.5
+  correct_reject: false
+  error: null
+  answer_preview: "校园卡丢失后，请立即挂失，再通过以下两种方式之一补办：\n\n✅ **自助补卡**：  \n- 前往校内自助补卡机（学生与教职工可用点位可能不同）；\
+    \  \n- 输入校园卡号、消费密码，刷本人二代身份证核验；  \n- 使用校园卡余额支付补卡费（**余额须不少于10元**）；  \n- 支付成功后即时出卡，当场取走。\n\
+    \n✅ **人工补卡**：  \n- 前往校园卡服务中心人工窗口办理（具体地点请参考校园公告或咨询..."
+- id: eval-005
+  question: 第二课堂积分怎么认定，多少分能换学分？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0013
+  - KB-20260324-0019
+  actual_entry_ids:
+  - KB-20260324-0013__chunk_0
+  - KB-20260324-0018__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 0.5
+  correct_reject: false
+  error: null
+  answer_preview: "第二课堂积分认定流程如下：\n\n✅ 认定方式：  \n- 学生需通过「齐鲁第二课堂系统」记录参与的各类活动；  \n- 每学年完成班级小组认定，并公示3天；\
+    \  \n- 经学院审核后报送备案；  \n- 所有环节须在每学年开学后两个月内完成。\n\n✅ 学分转换规则：  \n- **30积分可转换8个拓展培养学分**；\
+    \  \n- 各模块（如思想成长、社会实践、志愿服务等）设有最低积分要求，未达最低分则无法完成全部8学..."
+- id: eval-006
+  question: 毕业生档案去向核对了发现有错误咋改？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0016
+  actual_entry_ids:
+  - KB-20260324-0015__chunk_0
+  - KB-20260324-0031__chunk_0
+  - KB-20260324-0030__chunk_0
+  - KB-20260324-0023__chunk_0
+  - KB-20260324-0044__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: false
+  recall_at_5: 0.0
+  correct_reject: false
+  error: null
+  answer_preview: "您好，医小管来帮您解答！\n\n如果毕业生在档案去向核对中发现错误，需根据**错误类型**分类处理：\n\n✅ **档案接收信息错误**（如接收单位名称、地址、联系人等）：\
+    \  \n→ 可由**学院直接在省网修改**。\n\n✅ **基础信息错误**（如姓名、身份证号、毕业时间等）：  \n→ 需按错误类型，在**省网或国网系统中修正**（学院就业工作管理员操作）。\n\
+    \n❌ **生源地错误**：  \n→ **不可由学..."
+- id: eval-007
+  question: 我想当兵，毕业生应征入伍有什么政策？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0020
+  actual_entry_ids:
+  - KB-20260324-0020__chunk_0
+  - KB-20260324-0034__chunk_0
+  - KB-20260324-0032__chunk_0
+  - KB-20260324-0033__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "你好！恭喜你有志投身国防事业 \U0001F31F  \n根据学院提供的政策说明，**毕业生应征入伍**需按以下流程和政策执行：\n\
+    \n✅ **基本流程**：  \n- 先登录**全国征兵网**完成**兵役登记**和**应征报名**；  \n- 按**应征地安排**参加**体格检查**与**政治考核**；\
+    \  \n- 通过后参加**役前教育训练**；  \n- 最终由征兵部门**择优批准入伍并起运**。\n\n\U0001F4C5 **报名时间参考（以..."
+- id: eval-008
+  question: 勤工助学岗位怎么申请，一个月最多能干多久？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0008
+  actual_entry_ids:
+  - KB-20260324-0008__chunk_0
+  - KB-20260324-0033__chunk_0
+  - KB-20260324-0034__chunk_0
+  - KB-20260324-0032__chunk_0
+  - KB-20260324-0055__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "你好！我是医小管，很高兴为你解答～  \n\n关于**校内勤工助学岗位申请**和**工作时长限制**，依据学校现行规定：\n\n\
+    ✅ **怎么申请？**  \n按“**单位申报设岗—学生申请审核—用工录用—考核发放报酬**”流程进行：  \n- 用工单位先提交设岗申请（学期岗每学期初申报；短期岗需**提前3天**申请；寒暑假岗位需**提前1–2周**申报）；\
+    \  \n- 学生填写《学生申请表》，经**辅导员、学院审..."
+- id: eval-009
+  question: 家庭经济困难认定要在系统里怎么填？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0027
+  - KB-20260324-0029
+  - KB-20260324-0056
+  actual_entry_ids:
+  - KB-20260324-0027__chunk_0
+  - KB-20260324-0056__chunk_0
+  - KB-20260324-0057__chunk_0
+  - KB-20260324-0028__chunk_0
+  - KB-20260324-0128__chunk_1
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 0.6667
+  correct_reject: false
+  error: null
+  answer_preview: "您好，医小管为您解答：\n\n家庭经济困难认定需通过学校“一网通办”系统办理，具体填写步骤如下：\n\n✅ **操作流程**：\
+    \  \n1. 登录“一网通办”系统（使用学号及初始密码，如遗忘请咨询辅导员）；  \n2. 进入【家庭经济困难认定申请】模块（或搜索“家庭经济困难认定”）；\
+    \  \n3. 按页面指引逐步填写家庭经济情况，包括家庭成员、收入、支出、致困原因等信息；  \n4. 上传所需证明材料的电子版（如村/..."
+- id: eval-010
+  question: 学信网学籍注册完了，在哪能看到自己的学籍信息？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0004
+  actual_entry_ids:
+  - KB-20260324-0004__chunk_0
+  - KB-20260324-0003__chunk_0
+  - KB-20260324-0001__chunk_0
+  - KB-20260324-0030__chunk_0
+  - KB-20260324-0015__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "您完成学信网学籍注册后，可登录学信网，进入「学籍」页面查看本人学籍信息。  \n根据背景知识[1]：  \n- 登录学信网账号后，进入「学籍」页面；\
+    \  \n- 确认是否注册成功，并核验页面是否显示您的学籍信息。\n\n温馨提示：请确保已实名注册且手机号可正常接收验证码，以便顺利登录和查看。"
+- id: eval-011
+  question: 综合素质测评成绩是怎么算的，德育占多少分？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0060
+  - KB-20260324-0105
+  actual_entry_ids:
+  - KB-20260324-0060__chunk_0
+  - KB-20260324-0105__chunk_0
+  grounded: false
+  guardrail_reason: best_score_too_low
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-012
+  question: 外研社英语比赛今年有啥赛项，怎么报名？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0041
+  - KB-20260324-0111
+  actual_entry_ids:
+  - KB-20260324-0040__chunk_0
+  - KB-20260324-0111__chunk_0
+  - KB-20260324-0041__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "根据现有信息，2025年外研社·国才杯英语能力大赛校级选拔赛的**具体参赛组别、报名截止时间和材料要求以当年通知为准**，需关注辅导员发布的正式通知。\n\
+    \n报名方式为：  \n✅ 向**辅导员或班委提交报名信息**（含姓名、学号、参赛组别等）；  \n✅ 报名前请确认自身是否符合组别要求（如年级、专业等限制，详见通知）；\
+    \  \n✅ 可能需提前准备参赛材料（如演讲稿、朗读材料等），具体以通知为准。\n\n目前背..."
+- id: eval-013
+  question: 入团申请书怎么写，有啥格式要求？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0109
+  actual_entry_ids:
+  - KB-20260324-0109__chunk_0
+  - KB-20260324-0136__chunk_0
+  - KB-20260324-0117__chunk_0
+  - KB-20260324-0035__chunk_0
+  - KB-20260324-0124__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: '根据提供的背景知识，关于「入团申请书撰写规范」仅列出了标题，但未提供具体内容（如格式要求、标准答复、办理流程、所需材料、时间节点及注意事项等）。
+
+
+    因此，很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。'
+- id: eval-014
+  question: 体测免测申请要怎么弄，需要医院证明吗？
+  expected_behavior: hit
+  expected_entry_ids:
+  - KB-20260324-0036
+  - KB-20260324-0107
+  actual_entry_ids:
+  - KB-20260324-0036__chunk_0
+  - KB-20260324-0107__chunk_0
+  - KB-20260324-0039__chunk_0
+  - KB-20260324-0110__chunk_0
+  grounded: true
+  guardrail_reason: ok
+  hit_expected_in_top5: true
+  recall_at_5: 1.0
+  correct_reject: false
+  error: null
+  answer_preview: "是的，体测免测申请需要医院证明。\n\n根据规定：  \n✅ 因伤病、残疾等确实无法参加体质健康测试的学生，须下载填写《免予执行国家学生体质健康标准申请表》（附件2），注明申请理由并**本人签字**；\
+    \  \n✅ 同时须附**县级及以上医院出具的诊断证明原件**，且证明中需明确注明“不适宜参加体质健康测试”的具体原因；  \n✅ 提交至辅导员，由辅导员转交学院教务或体育部门审核；\
+    \  \n✅ 审核通过后，方可免于..."
+- id: eval-015
+  question: 明天天气怎么样？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-016
+  question: 北京大学图书馆几点开门？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-017
+  question: 帮我写一份Java简历
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-018
+  question: 清华大学今年的考研分数线是多少？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-019
+  question: 马斯克最近又发了什么推特？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-020
+  question: 推荐几部最近好看的电影
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-021
+  question: 怎么制作红烧肉？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-022
+  question: iPhone 16多少钱？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-023
+  question: 学校附近有什么好吃的？
+  expected_behavior: boundary
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-024
+  question: 辅导员办公室在哪栋楼？
+  expected_behavior: boundary
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-025
+  question: 图书馆能借几本书，借多久？
+  expected_behavior: boundary
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-026
+  question: 校医院上班时间是什么时候？
+  expected_behavior: boundary
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-027
+  question: 学校食堂有哪些档口？
+  expected_behavior: boundary
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-028
+  question: 宿舍水管坏了，怎么报修？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-029
+  question: 电费在哪交，怎么充值？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-030
+  question: 宿舍WiFi密码是多少，网连不上找谁？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-031
+  question: 热水供应时间是几点到几点？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids: []
+  grounded: false
+  guardrail_reason: no_sources
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。
+- id: eval-032
+  question: 校园卡充值的机器在哪，能现金充值吗？
+  expected_behavior: reject
+  expected_entry_ids: []
+  actual_entry_ids:
+  - KB-20260324-0012__chunk_0
+  - KB-20260324-0017__chunk_0
+  grounded: false
+  guardrail_reason: best_score_too_low
+  hit_expected_in_top5: true
+  recall_at_5: 0.0
+  correct_reject: true
+  error: null
+  answer_preview: 很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。

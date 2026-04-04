@@ -1,0 +1,166 @@
+{
+  "timestamp": "2026-04-04T04:39:24.972803",
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0
+  },
+  "category_summary": {
+    "知识库命中": {
+      "total": 3,
+      "pass": 3
+    },
+    "拒答": {
+      "total": 3,
+      "pass": 3
+    },
+    "办事意图": {
+      "total": 3,
+      "pass": 3
+    },
+    "边界情况": {
+      "total": 2,
+      "pass": 2
+    },
+    "来源引用": {
+      "total": 1,
+      "pass": 1
+    },
+    "来源引用点击": {
+      "total": 1,
+      "pass": 1
+    }
+  },
+  "results": [
+    {
+      "id": "TC01",
+      "category": "知识库命中",
+      "question": "奖学金怎么申请？",
+      "expected": "结构化回答+来源引用",
+      "status": "PASS",
+      "actual": "\n经班级\n\n|",
+      "has_sources": false,
+      "screenshot": "p5a_TC01_知识库命中.png"
+    },
+    {
+      "id": "TC02",
+      "category": "知识库命中",
+      "question": "心理测评在哪做？",
+      "expected": "正确回答+来源引用",
+      "status": "PASS",
+      "actual": "很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC02_知识库命中.png"
+    },
+    {
+      "id": "TC03",
+      "category": "知识库命中",
+      "question": "请假流程是什么？",
+      "expected": "流程说明+来源引用",
+      "status": "PASS",
+      "actual": "您的辅导员或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC03_知识库命中.png"
+    },
+    {
+      "id": "TC04",
+      "category": "拒答",
+      "question": "明天天气怎么样？",
+      "expected": "友好说明超出范围",
+      "status": "PASS",
+      "actual": "很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC04_拒答.png"
+    },
+    {
+      "id": "TC05",
+      "category": "拒答",
+      "question": "宿舍报修怎么弄？",
+      "expected": "说明暂无相关信息",
+      "status": "PASS",
+      "actual": "很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC05_拒答.png"
+    },
+    {
+      "id": "TC06",
+      "category": "拒答",
+      "question": "附近有什么好吃的？",
+      "expected": "说明超出校园范围",
+      "status": "PASS",
+      "actual": "很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC06_拒答.png"
+    },
+    {
+      "id": "TC07",
+      "category": "办事意图",
+      "question": "我想预约教室",
+      "expected": "官网兜底链接回复",
+      "status": "PASS",
+      "actual": "或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC07_办事意图.png"
+    },
+    {
+      "id": "TC08",
+      "category": "办事意图",
+      "question": "帮我提交报修",
+      "expected": "官网兜底链接回复",
+      "status": "PASS",
+      "actual": "很抱歉，医小管目前尚未学习到相关说明，请咨询您的辅导员或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC08_办事意图.png"
+    },
+    {
+      "id": "TC09",
+      "category": "办事意图",
+      "question": "我要申请奖学金",
+      "expected": "引导到申请入口",
+      "status": "PASS",
+      "actual": "违纪处分记录；\n|",
+      "has_sources": true,
+      "screenshot": "p5a_TC09_办事意图.png"
+    },
+    {
+      "id": "TC10",
+      "category": "边界情况",
+      "question": "奖学金多少钱？",
+      "expected": "部分回答+说明不完整",
+      "status": "PASS",
+      "actual": "或相关负责老师。\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC10_边界情况.png"
+    },
+    {
+      "id": "TC11",
+      "category": "边界情况",
+      "question": "图书馆几点开门？",
+      "expected": "准确时间或说明",
+      "status": "PASS",
+      "actual": "时间节点说明）\n",
+      "has_sources": true,
+      "screenshot": "p5a_TC11_边界情况.png"
+    },
+    {
+      "id": "TC12",
+      "category": "来源引用",
+      "question": "如何申请助学金？",
+      "expected": "可点击的来源引用",
+      "status": "PASS",
+      "actual": "困难认定相关佐\n|",
+      "has_sources": true,
+      "screenshot": "p5a_TC12_来源引用.png"
+    },
+    {
+      "id": "TC13",
+      "category": "来源引用点击",
+      "question": "点击来源引用",
+      "expected": "显示预览或跳转详情",
+      "status": "PASS",
+      "actual": "预览弹出成功",
+      "screenshot": "p5a_TC13a_before_click.png, p5a_TC13b_preview_open.png"
+    }
+  ]
+}

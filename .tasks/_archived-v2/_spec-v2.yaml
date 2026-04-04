@@ -1,0 +1,478 @@
+# ===================================================================
+# 医小馆 (YiXiaoGuan) — T0 架构师需求规格 v2
+# 日期: 2026-04-03
+# 作者: T0 Architect (Cascade)
+# 状态: 用户已确认，可交付 T1 分解
+# ===================================================================
+#
+# 背景摘要:
+#   项目是校园 AI 助手，核心功能两个：
+#   1. 基于知识库的高度定制化校园信息问答
+#   2. 基于对话内容的智能功能入口推荐（路由）
+#
+#   当前问题：AI 回答不准确（早期严重幻觉，修复后勉强可答但缺乏针对性）
+#   根因：知识库数据质量差 + 覆盖面窄 → 向量化质量差 → RAG 回答不靠谱 → 智能路由也失效
+#   代码层面（ai-service RAG 管道、business-api 网关、student-app 前端）工程质量可以，
+#   问题在数据，不在代码。
+#
+# 修复策略: 自底向上，每层修好后验证再往上走
+# ===================================================================
+
+project: 医小馆 (YiXiaoGuan)
+version: spec-v2
+date: 2026-04-03
+author: T0-Architect
+status: user_confirmed
+
+# ===================================================================
+# 当前状态快照（T0 实际探查结果）
+# ===================================================================
+current_state:
+  knowledge_base:
+    total_entries: 90
+    location: knowledge-base/entries/first-batch-drafts/
+    file_range: "KB-20260324-0001~0060, 0101~0130, KB-REX-0001~0002"
+    id_gap: "0061-0100 缺失（R1 修复重映射导致的空洞）"
+    formal_categories_populated: false  # 8 个正式分类目录全空
+    category_distribution:
+      奖助贷补: 34
+      心理与测评: 12
+      就业与毕业: 12
+      事务申请与审批: 11
+      竞赛与第二课堂: 8
+      入学与学籍: 8
+      证件与校园服务: 5
+      生活服务: 0  # 关键缺口！
+
+  vectorization:
+    chromadb_data_exists: true
+    chromadb_path: services/ai-service/data/chroma/
+    chromadb_sqlite_size_mb: 3
+    consistency_verified: false  # 未验证 ChromaDB 内容是否与 .md 文件一致
+    chunker_integrated: false    # chunker.py 写了 300 行但 batch_ingest_kb.py 没用
+
+  docker:
+    volume_fix_applied: true  # TASK-8 已执行，docker-compose.yml 第 62 行是 bind mount
+    chroma_persist_dir_env: "/app/data/chroma"
+    host_bind_mount: "../services/ai-service/data/chroma:/app/data/chroma"
+
+  raw_materials:
+    original_zip: "C:\\Users\\Administrator\\Documents\\yixiaoguan\\数据库部分材料.zip"
+    original_zip_size_mb: 488
+    converted_markdown_count: 55
+    converted_markdown_path: knowledge-base/raw/first-batch-processing/converted/markdown/
+
+  reference_designs:
+    status: recovered  # 用户从外部目录找回，已归档到 _references/前端参考/
+    location: _references/前端参考/
+    total_files: 81
+    contents:
+      student_mobile: "stitch_ (1)/学生移动端/ — 8 屏 screen.png + code.html + jade_scholar 子项目"
+      teacher_web: "stitch_/ — 5 屏 screen.png + code.html + academic_meridian 子项目"
+      teacher_mobile: "stitch_classroom_approval/ — 7 屏 screen.png + code.html + DESIGN.md"
+      teacher_web_code: "zip (2)/ — React + Vite + TypeScript 参考代码"
+      student_mobile_code: "zip (3)/ — React + Vite + TypeScript 参考代码"
+    design_system: "The Scholastic Atelier（学术亭），主色 Teal #00685D"
+    note: "_references/ 在 .gitignore 中，不被 Git 追踪"
+
+  student_handbook:
+    status: recovered  # 用户手动用 MinerU 转换的学生手册
+    location: knowledge-base/raw/student-handbook-mineru/
+    source_pdf: "医小管知识库二次修改版.pdf"
+    main_markdown: knowledge-base/raw/student-handbook-mineru/full.md
+    total_lines: 2148
+    key_sections:
+      - "八.学工办事流程 — 入学/奖学金/勤工助学/困难认定/助学贷款/学费减免/入团入党/毕业/校园卡补办/心理评测/学生证补办"
+      - "十.学校各职能部门 — 缴费流程事项/银行卡使用说明/心理健康中心/图书馆"
+    value: |
+      这份学生手册是知识库扩量的重要素材，覆盖了部分生活服务缺口
+      （缴费流程、校园卡补办、学生证补办）。可直接用于生成新的知识条目，
+      部分解除了 F-L0-G4 的外部阻塞。
+
+  conversion_workflow:
+    status: exists  # 完整的格式转换工作流已定版并有脚本
+    docs:
+      - docs/project-docs/11-格式转换执行方案.md
+      - docs/project-docs/12-MinerU API与格式转换交接说明.md
+    scripts:
+      - scripts/mineru_api_extract.py   # MinerU API (PDF→MD)
+      - scripts/first_batch_convert.ps1  # 批量转换 (doc/docx/xls/xlsx/pdf)
+      - scripts/retry_doc_conversion.ps1 # 失败重试
+    pipeline: "docx→pandoc→MD | doc→WordCOM→docx→pandoc→MD | pdf→MinerU API→MD | xlsx→ExcelCOM→CSV"
+
+  life_services_gap:
+    gap_analysis_file: knowledge-base/raw/first-batch-processing/manifests/batch-b1-life-services-gap-analysis.csv
+    source_request_file: knowledge-base/raw/first-batch-processing/manifests/batch-b1-life-services-source-request.csv
+    gaps_identified: 7  # LIFE-01~07, 全部 P0 严重缺口
+    source_requests_pending: 10
+    blocked_by: "需要用户联系学校后勤管理处/信息中心/学生工作部获取原始材料"
+
+  student_app:
+    chat_page: apps/student-app/src/pages/chat/index.vue
+    features_implemented:
+      - 快捷问题 chips（可一键发送）
+      - SSE 流式打字机效果
+      - 来源引用（可点击，混合策略：跳详情→弹层摘要→外链兜底）
+      - Markdown 渲染（markdown-it）
+      - 消息复制
+    features_missing:
+      - 功能入口推荐按钮（参考图核心差距）
+      - 多轮对话历史传递（history 始终为空）
+
+  intent_extraction:
+    implemented: true
+    intents: [book_classroom, submit_repair_request, query_application_status]
+    school_api_connected: false  # 学校官网接口未对接
+    fallback_strategy: "Q6 方案 — 统一兜底到 https://www.sdfmu.edu.cn/"
+
+# ===================================================================
+# 地基模块定义（Foundation Modules）
+# ===================================================================
+#
+# 依赖图:
+#   [L0] 知识库原始数据
+#     ↓
+#   [L1] 向量化入库管道
+#     ↓
+#   [L2] RAG 检索引擎
+#     ↓
+#   [L3] 功能入口推荐（可与 L0-L2 并行）
+#     ↓
+#   [L4] 端到端验证
+#
+# ===================================================================
+
+foundation_modules:
+
+  # ─────────────────────────────────────────────────────────────────
+  # L0: 知识库数据层
+  # ─────────────────────────────────────────────────────────────────
+  - id: F-L0
+    name: 知识库数据治理
+    risk: critical
+    depends_on: []
+
+    goals:
+      - id: F-L0-G1
+        title: 验证现有 90 条草稿的入库状态与内容质量
+        description: |
+          ChromaDB 中有数据（chroma.sqlite3 3MB），但不确定：
+          1. 是否全部 90 条都已入库
+          2. 向量内容是否与最新修复后的 .md 文件一致
+          3. 编号空洞（0061-0100）的旧向量是否残留
+          需运行验证脚本对比 ChromaDB 实际条目与磁盘文件。
+        done_criterion: |
+          - 输出 ChromaDB 实际 entry_id 列表
+          - 与 first-batch-drafts/*.md 文件名做 diff
+          - 标注：多余条目（需删）/ 缺失条目（需补）/ 一致条目
+          - 如不一致，执行全量清空 + 重新入库
+        priority: P0
+
+      - id: F-L0-G2
+        title: 统一知识条目格式规范
+        description: |
+          当前模板 (knowledge-entry-template.md) 与实际条目格式不一致：
+          - 模板用 h1(#)，实际条目用 h2(##)
+          - 模板有 answer/summary 字段，实际无
+          - 入库脚本 batch_ingest_kb.py 硬编码提取 ## 标题的 section
+          统一决策：以实际条目格式（##）为准，更新模板。
+        done_criterion: |
+          - knowledge-entry-template.md 更新为 ## 格式
+          - 所有 90 条目格式一致性脚本校验通过
+          - batch_ingest_kb.py 的 extract_section 与格式匹配
+        priority: P0
+
+      - id: F-L0-G3
+        title: 知识条目内容质量人工抽查
+        description: |
+          90 条全部由 AI 从学校原始材料自动生成。
+          内容可能存在：政策过时、关键细节缺失、流程步骤错误。
+          需要用户或其同事对照原始材料抽查。
+        done_criterion: |
+          - 随机抽取 ≥15 条（覆盖每个分类 ≥2 条）
+          - 核对标准答复与原始材料是否一致
+          - 发现错误的条目修正或标记 status=needs_review
+        priority: P1
+        owner: "用户（需人工参与，AI 无法判断学校政策正确性）"
+
+      - id: F-L0-G4
+        title: 生活服务高频问题扩量（B2 批次）
+        description: |
+          当前知识库 0 条生活服务条目。
+          gap-analysis 已识别 7 个 P0 缺口：
+          电费缴纳(LIFE-01)、报修服务(LIFE-02)、水电管理(LIFE-03)、
+          校园卡(LIFE-04)、一卡通(LIFE-05)、网络服务(LIFE-06)、宿舍管理(LIFE-07)。
+          source-request 已列出 10 项需从学校各部门获取的材料。
+        done_criterion: |
+          - 从学校各部门获取 ≥5 个主题的原始材料
+          - 每个主题生成 ≥2 条知识条目
+          - 总计新增 ≥15 条生活服务类条目
+        priority: P1
+        blocked_by:
+          - "部分解除：学生手册(full.md)已覆盖缴费流程/校园卡补办/学生证补办"
+          - "仍阻塞：报修/水电/网络/宿舍管理需联系学校部门获取材料"
+          - "参考清单：batch-b1-life-services-source-request.csv"
+        owner: "T1（从学生手册提取条目）+ 用户（补充材料的学校沟通）"
+        note: |
+          学生手册 knowledge-base/raw/student-handbook-mineru/full.md 可直接用于
+          生成 LIFE-04(校园卡)、缴费流程 等条目，无需等待学校部门。
+          转换工作流已就绪：scripts/mineru_api_extract.py + scripts/first_batch_convert.ps1
+
+  # ─────────────────────────────────────────────────────────────────
+  # L1: 向量化入库管道
+  # ─────────────────────────────────────────────────────────────────
+  - id: F-L1
+    name: 向量化入库管道优化
+    risk: high
+    depends_on: [F-L0-G1, F-L0-G2]
+
+    goals:
+      - id: F-L1-G1
+        title: 集成 chunker 到入库流程
+        description: |
+          batch_ingest_kb.py 当前将整条目拼成一大段文本入库，
+          完全没用已有的 MarkdownTextSplitter（chunker.py 300 行代码未引用）。
+          长条目作为单个向量降低检索精度。
+          需改为：按 heading 切分 + 大段再切 + 带 chunk_index 入库。
+        done_criterion: |
+          - batch_ingest_kb.py 引用 chunker.py 的 MarkdownTextSplitter
+          - 单条目生成 1~N 个 chunk，每个 chunk 独立向量
+          - ChromaDB 中 ID 格式 {entry_id}__chunk_{index}
+          - 旧的整条目向量已清理
+        priority: P0
+        key_files:
+          - scripts/batch_ingest_kb.py
+          - services/ai-service/app/core/chunker.py
+          - services/ai-service/app/core/kb_vectorize.py
+
+      - id: F-L1-G2
+        title: 全量重新入库 + 验证
+        description: |
+          L0 格式统一 + L1 chunker 集成后，清空 ChromaDB 全量重入库。
+        done_criterion: |
+          - ChromaDB kb_entries 集合条目数 > 90（因为 chunk 拆分）
+          - 抽样 5 条验证 metadata 正确
+          - API /kb/stats 返回正确统计
+        priority: P1
+        blocked_by: [F-L1-G1]
+
+  # ─────────────────────────────────────────────────────────────────
+  # L2: RAG 检索质量调优
+  # ─────────────────────────────────────────────────────────────────
+  - id: F-L2
+    name: RAG 检索质量调优
+    risk: medium
+    depends_on: [F-L1]
+
+    goals:
+      - id: F-L2-G1
+        title: 构建检索质量评测集
+        description: |
+          建立 30 对 (question, expected_entry_ids) 黄金标准集：
+          1. 应命中（问题在 KB 范围内）≥12 对
+          2. 应拒答（问题完全无关）≥8 对
+          3. 边界情况（相关但信息不足）≥5 对
+          4. 生活服务类（当前无覆盖，应拒答）≥5 对
+        done_criterion: |
+          - 评测集 YAML/JSON 文件 ≥30 对
+          - 可被自动化评测脚本读取执行
+        priority: P1
+
+      - id: F-L2-G2
+        title: 阈值调参
+        description: |
+          基于评测集调优 config.py 中的 RAG 参数：
+          rag_min_score / rag_min_best_score / rag_min_avg_score / rag_min_source_count。
+          当前值在 90 条库中可能过严（min_source_count=2, min_best_score=0.62）。
+        done_criterion: |
+          - 评测集 Recall@5 ≥ 0.85
+          - 拒答准确率 ≥ 0.90
+          - 参数调整记录在 .env 或配置说明中
+        priority: P1
+        blocked_by: [F-L2-G1]
+        key_files:
+          - services/ai-service/app/core/config.py
+          - services/ai-service/app/core/llm_chat.py
+
+  # ─────────────────────────────────────────────────────────────────
+  # L3: 功能入口推荐（与 L0-L2 无依赖，可并行）
+  # ─────────────────────────────────────────────────────────────────
+  - id: F-L3
+    name: 功能入口兜底方案
+    risk: low
+    depends_on: []
+
+    goals:
+      - id: F-L3-G1
+        title: 办事意图兜底到学校官网
+        description: |
+          当 IntentExtractor 识别到办事意图时，不走后端业务逻辑（学校接口未对接），
+          而是返回友好提示 + 学校官网链接 https://www.sdfmu.edu.cn/
+          示例："我理解您想要 XXX。目前该功能正在与学校系统对接中，
+          您可以先通过学校官网办理：https://www.sdfmu.edu.cn/"
+          后期学校接口打通后只需更新 URL 映射。
+        done_criterion: |
+          - AiCoordinatorServiceImpl.handleServiceIntent 方法修改
+          - 3 个办事意图均返回带官网链接的友好提示
+          - 前端正确渲染链接（可点击打开）
+          - 测试："我想预约教室" → 收到官网兜底回复
+        priority: P1
+        effort: "小（约 1-2 小时）"
+        key_files:
+          - services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/ai/service/impl/AiCoordinatorServiceImpl.java
+
+  # ─────────────────────────────────────────────────────────────────
+  # L4: 端到端验证 + 收尾
+  # ─────────────────────────────────────────────────────────────────
+  - id: F-L4
+    name: 端到端验证与收尾
+    risk: low
+    depends_on: [F-L2, F-L3]
+
+    goals:
+      - id: F-L4-G1
+        title: 全链路功能验证
+        description: |
+          覆盖场景：
+          1. 知识库问答（应命中 + 结构化回答）
+          2. 拒答场景（超出知识库范围 → 友好拒绝）
+          3. 办事意图（识别 → 官网兜底链接）
+          4. 来源引用（可点击 → 详情或弹层摘要）
+        done_criterion: |
+          - 至少 10 个测试用例通过
+          - 有截图存档
+        priority: P2
+
+      - id: F-L4-G2
+        title: 多轮对话历史传递
+        description: |
+          当前 AiCoordinatorServiceImpl 构造 ChatStreamRequest 时 history 为空，
+          前端 chat/index.vue 也传 history: []。多轮追问上下文丢失。
+        done_criterion: |
+          - business-api 从数据库取最近 N 条消息传入 history
+          - 多轮追问测试通过
+        priority: P3
+        key_files:
+          - services/business-api/ruoyi-admin/src/main/java/com/yixiaoguan/ai/service/impl/AiCoordinatorServiceImpl.java
+          - apps/student-app/src/pages/chat/index.vue
+
+      - id: F-L4-G3
+        title: 参考设计图归档
+        status: done  # T0 已完成
+        description: |
+          前端参考设计图已从外部目录找回并归档到 _references/前端参考/。
+          包含学生移动端(8屏)、教师网页端(5屏)、教师移动端(7屏)
+          + 2 套 React/Vite 参考代码。
+          README 已创建：_references/README.md
+        done_criterion: |
+          - ✅ _references/前端参考/ 已归档 81 个文件
+          - ✅ _references/README.md 已创建
+        priority: P3
+
+# ===================================================================
+# 风险登记
+# ===================================================================
+risks:
+  - id: RISK-01
+    title: 知识库内容准确性无法由 AI 验证
+    impact: critical
+    mitigation: "必须人工抽查（F-L0-G3），AI 生成的条目可能包含错误的政策细节"
+    owner: 用户
+
+  - id: RISK-02
+    title: 生活服务类原始材料依赖学校部门配合
+    impact: high
+    status: confirmed_blocked
+    mitigation: |
+      batch-b1-life-services-source-request.csv 已列出 10 项材料需求，
+      涉及后勤管理处、信息中心、学生工作部。全部 status=pending。
+      建议优先联系信息中心（校园卡/网络），最容易拿到材料。
+    owner: 用户
+
+  - id: RISK-03
+    title: ChromaDB 现有数据可能与文件不一致
+    impact: medium
+    mitigation: "F-L0-G1 运行对比验证脚本确认"
+
+  - id: RISK-04
+    title: 知识库修复链条过长可能有残留错误
+    impact: medium
+    mitigation: |
+      R1→R2→R3→R4→R5→R5b→REX 七步修复链，每步由不同 AI 执行。
+      F-L0-G1 验证时需加入全量一致性检查。
+
+  - id: RISK-05
+    title: 参考设计图丢失
+    impact: low
+    status: resolved
+    mitigation: |
+      已从 C:\Users\Administrator\Documents\code\前端参考 找回完整参考图。
+      已归档到 _references/前端参考/（81 个文件，含 3 套设计 + 2 套参考代码）。
+      注意：_references/ 在 .gitignore 中，换机器需手动复制。
+
+# ===================================================================
+# 技术债登记
+# ===================================================================
+tech_debt:
+  - id: DEBT-01
+    title: "chunker.py 写了但没用"
+    description: "写了 300 行 MarkdownTextSplitter，但 batch_ingest_kb.py 完全没引用"
+    fix_in: F-L1-G1
+
+  - id: DEBT-02
+    title: "模板与实际格式不一致"
+    description: "knowledge-entry-template.md 用 #(h1)，实际条目用 ##(h2)"
+    fix_in: F-L0-G2
+
+  - id: DEBT-03
+    title: "quick_links 集合无数据"
+    description: "架构设计了 quick_links 向量集合做链接推荐，但无入库脚本或数据"
+    fix_in: "后续迭代"
+
+  - id: DEBT-04
+    title: "多轮对话 history 始终为空"
+    description: "ChatStreamRequest 构造时 history=[]，多轮追问上下文丢失"
+    fix_in: F-L4-G2
+
+# ===================================================================
+# 执行计划
+# ===================================================================
+execution_order:
+  phase_1_verify:
+    name: "验证 — 数据现状 + 格式统一"
+    goals: [F-L0-G1, F-L0-G2]
+    estimated_effort: "1 天"
+    parallelizable_with: [phase_1b_fallback]
+
+  phase_1b_fallback:
+    name: "兜底 — 办事意图官网链接（可并行）"
+    goals: [F-L3-G1]
+    estimated_effort: "1-2 小时"
+    parallelizable_with: [phase_1_verify]
+    note: "改造成本极低，独立于数据治理，可立即动手"
+
+  phase_2_rebuild:
+    name: "重建 — 向量化管道 + 重入库"
+    goals: [F-L1-G1, F-L1-G2]
+    estimated_effort: "1-2 天"
+
+  phase_3_tune:
+    name: "调优 — 检索质量 + 人工抽查"
+    goals: [F-L2-G1, F-L2-G2, F-L0-G3]
+    estimated_effort: "2-3 天"
+
+  phase_4_expand:
+    name: "扩量 — 生活服务（部分解除阻塞）"
+    goals: [F-L0-G4]
+    estimated_effort: "3-5 天（不含等待学校的时间）"
+    partially_unblocked_by: "学生手册 full.md 已覆盖缴费/校园卡/学生证等"
+    still_blocked_by: "报修/水电/网络/宿舍管理仍需学校部门材料"
+    note: |
+      Phase 4 可拆为两步：
+      4a. 从学生手册 full.md 提取可用条目（无外部依赖，可立即执行）
+      4b. 等学校材料到手后补充剩余主题
+
+  phase_5_e2e:
+    name: "验证 — 端到端"
+    goals: [F-L4-G1, F-L4-G2, F-L4-G3]
+    estimated_effort: "1-2 天"
