@@ -875,6 +875,7 @@ function scrollToBottom() {
 .message-item {
   display: flex;
   align-items: flex-start;
+  flex-shrink: 0;
   margin-bottom: 20px;
   animation: fadeInUp 0.3s ease-out;
 
@@ -929,6 +930,7 @@ function scrollToBottom() {
   padding: 12px 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   word-break: break-word;
+  flex-shrink: 0;
 
   &.user {
     background: linear-gradient(135deg, #006a64 0%, #007c75 100%);
@@ -947,6 +949,7 @@ function scrollToBottom() {
 .message-text {
   font: $text-body-medium;
   line-height: 1.6;
+  min-height: 0;
 }
 
 // ============ Markdown 渲染样式 ============
@@ -1136,6 +1139,7 @@ function scrollToBottom() {
 .typing-indicator {
   display: flex;
   align-items: flex-start;
+  flex-shrink: 0;
   margin-bottom: 20px;
   animation: fadeIn 0.3s ease-out;
 
