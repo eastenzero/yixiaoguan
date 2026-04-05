@@ -1,0 +1,51 @@
+task_id: "fix-0-captcha-disabled"
+verification_time: "2026-04-05 23:50:00"
+verifier: "T2-Foreman"
+
+scope_compliance: "PASS"
+scope_violations: []
+scope_notes: |
+  T3 只修改了允许的文件：
+  - temp/check_captcha_config.py (新建)
+  - .tasks/bugfix-login-userdata/fix-0-captcha-disabled/_report.md (新建)
+  未触碰 out_of_scope 中的任何文件。
+
+verification:
+  L0: "PASS - _report.md 存在且包含 captchaImage 实际返回 JSON"
+  L0_evidence: |
+    文件存在：.tasks/bugfix-login-userdata/fix-0-captcha-disabled/_report.md
+    包含完整的 captchaImage 返回：{"msg":"操作成功","code":200,"captchaEnabled":false}
+  
+  L1: "PASS - 临时脚本语法检查通过"
+  L1_evidence: |
+    执行 python temp/check_captcha_config.py 成功，无语法错误
+  
+  L2: "PASS - curl http://localhost:8080/captchaImage 返回 captchaEnabled=false"
+  L2_evidence: |
+    独立验证命令：python temp/check_captcha_config.py
+    实际输出：
+    === 检查数据库配置 ===
+    config_key: sys.account.captchaEnabled
+    config_value: false
+    
+    === 检查 API 接口 ===
+    执行: curl http://192.168.100.165:8080/captchaImage
+    返回: {"msg":"操作成功","code":200,"captchaEnabled":false}
+    captchaEnabled: False
+    
+    ✅ 验证码已关闭 (captchaEnabled=false)
+
+consistency_with_report: "一致"
+consistency_notes: |
+  T3 报告中的所有声称均与 T2 独立验证结果一致：
+  - 数据库配置值：false ✓
+  - API 接口返回值：false ✓
+  - 无阻塞问题 ✓
+
+result: "PASS"
+recommendation: "可标记 done，执行本地 commit"
+
+additional_notes: |
+  - T3 创建了可复用的验证脚本 temp/check_captcha_config.py
+  - 验证码门禁已解除，不阻塞后续登录验证任务
+  - 前置条件已满足，可继续 FIX-1 和 FIX-2 任务
