@@ -291,8 +291,9 @@ const handleLogout = () => {
 </script>
 
 <style scoped lang="scss">
+@use '@/styles/theme.scss' as *;
+
 // MD3 颜色变量
-$primary: #006a64;
 $primary-container: #00A79D;
 $on-primary: #ffffff;
 $on-primary-container: #00201e;

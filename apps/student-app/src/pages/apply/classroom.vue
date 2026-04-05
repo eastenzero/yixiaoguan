@@ -402,7 +402,6 @@ page {
 }
 
 // 颜色变量（遵循设计规范）
-$primary: #006a64;
 $primary-container: #8bf2e8;
 $on-primary: #ffffff;
 $on-primary-container: #00201d;

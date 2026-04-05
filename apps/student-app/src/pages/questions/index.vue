@@ -273,7 +273,6 @@ page {
 }
 
 // 设计规范颜色
-$primary: #006a64;
 $primary-container: #00A79D;
 $surface: #f0f7f5;
 $surface-container-low: #eff5f3;

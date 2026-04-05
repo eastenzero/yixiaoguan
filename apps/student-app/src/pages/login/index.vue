@@ -294,7 +294,7 @@ onMounted(() => {
 .login-btn {
   width: 100%;
   height: 96rpx;
-  background: #006a64;
+  background: $primary;
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 500;

@@ -36,7 +36,7 @@ const statusClass = computed(() => {
 </script>
 
 <style scoped lang="scss">
-$primary: #006a64;
+@use '@/styles/theme.scss' as *;
 
 .status-badge {
   display: inline-flex;

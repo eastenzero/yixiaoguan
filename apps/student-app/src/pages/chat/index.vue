@@ -3,6 +3,12 @@
     <!-- 顶部导航栏 -->
     <view class="navbar">
       <text class="title">医小管</text>
+      <!-- 新增历史按钮 -->
+      <view class="nav-actions">
+        <view class="history-btn" @click="goToHistory">
+          <text class="icon">📋</text>
+        </view>
+      </view>
     </view>
 
     <!-- 消息列表 -->
@@ -181,7 +187,10 @@
         </view>
 
         <text class="source-preview-title">{{ sourcePreview.title }}</text>
-        <text class="source-preview-content">{{ sourcePreview.content }}</text>
+        <view 
+          class="source-preview-content markdown-body" 
+          v-html="renderMarkdown(sourcePreview.content)"
+        ></view>
 
         <view class="source-preview-actions">
           <button
@@ -201,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import MarkdownIt from 'markdown-it'
 import IconSend from '@/components/icons/IconSend.vue'
@@ -211,6 +220,12 @@ import IconBot from '@/components/icons/IconBot.vue'
 import IconUser from '@/components/icons/IconUser.vue'
 import IconSparkles from '@/components/icons/IconSparkles.vue'
 import IconBookOpen from '@/components/icons/IconBookOpen.vue'
+import { 
+  createConversation, 
+  getHistory, 
+  sendMessage as sendMessageAPI,
+  getSuggestions
+} from '@/api/chat'
 
 // ============ Markdown 渲染器 ============
 const md = new MarkdownIt({
@@ -251,6 +266,7 @@ const isTyping = ref(false)
 const scrollTop = ref(0)
 const safeAreaBottom = ref(0)
 const copiedId = ref<string | null>(null)
+const conversationId = ref<number | null>(null)
 const sourcePreview = ref<{
   visible: boolean
   entryId: string
@@ -266,12 +282,14 @@ const sourcePreview = ref<{
 })
 
 // ============ 快捷问题 ============
-const quickQuestions = [
+const DEFAULT_QUESTIONS = [
   '请假流程是什么？',
   '如何申请奖学金？',
   '图书馆几点开门？',
   '成绩怎么查询？'
 ]
+
+const quickQuestions = ref<string[]>(DEFAULT_QUESTIONS)
 
 // ============ 计算属性 ============
 const canSend = computed(() => {
@@ -279,45 +297,50 @@ const canSend = computed(() => {
 })
 
 // ============ 生命周期 ============
-onLoad(() => {
+onLoad((options: any) => {
   // 获取安全区域高度
   const systemInfo = uni.getSystemInfoSync()
   safeAreaBottom.value = systemInfo.safeAreaInsets?.bottom || 0
   
-  // 加载历史消息
-  loadHistory()
+  // 如有 conversationId 参数则加载历史消息
+  if (options?.conversationId) {
+    conversationId.value = parseInt(options.conversationId)
+    loadHistory()
+  }
+})
+
+onMounted(async () => {
+  try {
+    // 从远程获取快捷问题
+    const suggestions = await getSuggestions()
+    if (suggestions && suggestions.length > 0) {
+      quickQuestions.value = suggestions
+    }
+  } catch (error) {
+    console.warn('获取快捷问题失败，使用默认列表', error)
+    // 保持 fallback
+  }
 })
 
 // ============ 历史消息加载 ============
 async function loadHistory() {
+  if (!conversationId.value) return
+  
   try {
-    const { data, statusCode } = await uni.request({
-      url: '/api/chat/history?limit=50',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${uni.getStorageSync('token') || ''}`
-      }
-    }) as any
-    
-    // API 不存在时不报错（404）
-    if (statusCode === 404) {
-      console.log('历史消息 API 未实现，跳过加载')
-      return
-    }
-    
-    if (data && Array.isArray(data.data)) {
-      messages.value = data.data.map((m: any) => ({
+    const history = await getHistory(conversationId.value)
+    if (history && Array.isArray(history)) {
+      messages.value = history.map((m: any) => ({
         id: m.id || String(Date.now() + Math.random()),
         role: m.role || 'assistant',
         content: m.content || '',
         sources: m.sources || [],
-        timestamp: m.timestamp || Date.now()
+        timestamp: m.timestamp ? new Date(m.timestamp).getTime() : Date.now()
       }))
       scrollToBottom()
     }
   } catch (error) {
-    // 静默处理，不显示错误（首次使用或 API 未实现）
-    console.log('历史消息加载:', error)
+    console.error('加载历史消息失败:', error)
+    // 优雅处理，不显示错误（首次使用或 API 未实现）
   }
 }
 
@@ -326,10 +349,28 @@ async function loadMoreHistory() {
   // P1 功能：后续可实现分页加载
 }
 
+// ============ 跳转到历史页面 ============
+const goToHistory = () => {
+  uni.navigateTo({
+    url: '/pages/chat/history'
+  })
+}
+
 // ============ 发送消息 ============
 async function sendMessage() {
   const content = inputMessage.value.trim()
   if (!content || isStreaming.value) return
+
+  // 如果没有 conversationId，先创建会话
+  if (!conversationId.value) {
+    try {
+      const conv = await createConversation(content.slice(0, 20))
+      conversationId.value = conv.id
+    } catch (error) {
+      console.error('创建会话失败:', error)
+      // 继续执行，不阻塞对话
+    }
+  }
 
   // 添加用户消息
   const userMessage: Message = {
@@ -342,8 +383,34 @@ async function sendMessage() {
   inputMessage.value = ''
   scrollToBottom()
 
+  // 保存用户消息到后端
+  if (conversationId.value) {
+    try {
+      await sendMessageAPI(conversationId.value, {
+        role: 'user',
+        content: content
+      })
+    } catch (error) {
+      console.error('保存用户消息失败:', error)
+      // 不影响前端显示
+    }
+  }
+
   // 开始流式响应
-  await streamResponse(content)
+  const aiResponse = await streamResponse(content)
+  
+  // AI 回复完成后保存到后端
+  if (conversationId.value && aiResponse) {
+    try {
+      await sendMessageAPI(conversationId.value, {
+        role: 'assistant',
+        content: aiResponse
+      })
+    } catch (error) {
+      console.error('保存 AI 消息失败:', error)
+      // 不影响前端显示
+    }
+  }
 }
 
 // ============ 快捷问题发送 ============
@@ -355,7 +422,7 @@ function sendQuickQuestion(question: string) {
 }
 
 // ============ SSE 流式响应 ============
-async function streamResponse(userContent: string) {
+async function streamResponse(userContent: string): Promise<string> {
   isStreaming.value = true
   isTyping.value = true
 
@@ -368,6 +435,8 @@ async function streamResponse(userContent: string) {
     timestamp: Date.now(),
     isStreaming: true
   }
+
+  let finalContent = ''
 
   try {
     // 延迟一点显示 AI 消息（更自然的体验）
@@ -470,10 +539,11 @@ async function streamResponse(userContent: string) {
 
     // ======================================================
     // 前端打字机效果
-    // 所有 chunk 已接收完毕（DashScope 每个 chunk 是累积全文）
-    // 逐步播放，每个 chunk 显示一小段时间再更新
+    // 所有 chunk 已接收完毕（DashScope incremental_output=True → 增量 delta）
+    // playChunks 内部累积后逐步播放，每帧显示一小段时间再更新
     // ======================================================
     await playChunks(aiMessage, allChunks, pendingSources)
+    finalContent = allChunks.join('')
 
   } catch (error: any) {
     console.error('Stream error:', error)
@@ -504,11 +574,14 @@ async function streamResponse(userContent: string) {
         isStreaming: false
       })
     }
+    finalContent = errorMsg
     scrollToBottom()
   } finally {
     isStreaming.value = false
     isTyping.value = false
   }
+
+  return finalContent
 }
 
 // ============ 前端打字机效果驱动函数 ============
@@ -530,9 +603,11 @@ async function playChunks(
     getReactiveMsg().sources = sources
   }
   
-  // 对于 Dashscope，由于都是增量累积全文，只需模拟进度
+  // DashScope incremental_output=True → 每个 chunk 是增量 delta，需前端累积
+  let accumulated = ''
   for (let i = 0; i < chunks.length; i++) {
-    getReactiveMsg().content = chunks[i]
+    accumulated += chunks[i]
+    getReactiveMsg().content = accumulated
     scrollToBottom()
     
     // 我们控制最快 30ms 一帧的播放速度，给 Vue 渲染喘息时间
@@ -573,7 +648,7 @@ function navigateToPage(url: string): Promise<void> {
   })
 }
 
-function showSourcePreview(source: Source) {
+function showSourcePreviewPopup(source: Source) {
   sourcePreview.value = {
     visible: true,
     entryId: source.entry_id || '',
@@ -607,23 +682,30 @@ async function openSourceDetailFromPreview() {
 }
 
 async function handleSourceClick(source: Source) {
+  // 优先跳知识详情页
   if (source.entry_id) {
-    try {
-      await navigateToPage(
-        `/pages/knowledge/detail?id=${encodeURIComponent(source.entry_id)}&title=${encodeURIComponent(source.title || '')}&summary=${encodeURIComponent((source.content || '').slice(0, 300))}&score=${source.score ?? ''}`
-      )
-      return
-    } catch (error) {
-      console.warn('来源详情跳转失败，尝试降级展示：', error)
+    const entryId = normalizeEntryId(source.entry_id)
+    if (entryId) {
+      try {
+        await navigateToPage(buildKnowledgeDetailUrl(source, entryId))
+        return
+      } catch (error) {
+        console.warn('来源详情跳转失败，尝试降级展示：', error)
+      }
     }
   }
-
+  
+  // 降级：弹层显示摘要
+  if (source.content) {
+    showSourcePreviewPopup(source)
+    return
+  }
+  
+  // 兜底：外链
   if (source.url) {
     handleLinkClick(source.url)
     return
   }
-
-  showSourcePreview(source)
 }
 
 // ============ Markdown 链接解析 ============
@@ -793,10 +875,38 @@ function scrollToBottom() {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   flex-shrink: 0;
+  position: relative;
 
   .title {
     font: $text-headline-medium;
     color: $md-sys-color-on-background;
+  }
+
+  .nav-actions {
+    position: absolute;
+    right: 16px;
+    display: flex;
+    align-items: center;
+  }
+
+  .history-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-lg;
+    background: rgba(0, 106, 100, 0.08);
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: scale(0.92);
+      background: rgba(0, 106, 100, 0.15);
+    }
+
+    .icon {
+      font-size: 18px;
+    }
   }
 }
 
@@ -820,7 +930,7 @@ function scrollToBottom() {
     width: 80px;
     height: 80px;
     border-radius: $radius-xl;
-    background: linear-gradient(135deg, #006a64 0%, #008a83 100%);
+    background: linear-gradient(135deg, $primary 0%, #008a83 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -935,7 +1045,7 @@ function scrollToBottom() {
   flex-shrink: 0;
 
   &.user {
-    background: linear-gradient(135deg, #006a64 0%, #007c75 100%);
+    background: linear-gradient(135deg, $primary 0%, #007c75 100%);
     border-radius: 18px 18px 4px 18px;
     color: #ffffff;
   }
@@ -965,7 +1075,7 @@ function scrollToBottom() {
 
   :deep(p) { margin: 0 0 8px 0; &:last-child { margin-bottom: 0; } }
 
-  :deep(strong), :deep(b) { font-weight: 600; color: #006a64; }
+  :deep(strong), :deep(b) { font-weight: 600; color: $primary; }
 
   :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
     font-weight: 600;
@@ -985,7 +1095,7 @@ function scrollToBottom() {
     padding: 2px 5px;
     font-family: 'Menlo', 'Monaco', monospace;
     font-size: 12px;
-    color: #006a64;
+    color: $primary;
   }
 
   :deep(pre) {
@@ -1304,7 +1414,7 @@ function scrollToBottom() {
 
 .source-preview-label {
   font: $text-label-medium;
-  color: #006a64;
+  color: $primary;
 }
 
 .source-preview-score {
@@ -1327,6 +1437,41 @@ function scrollToBottom() {
   color: #2f3033;
   line-height: 1.6;
   overflow-y: auto;
+
+  // Markdown 样式穿透
+  :deep(p) { margin: 0 0 8px 0; &:last-child { margin-bottom: 0; } }
+  :deep(strong), :deep(b) { font-weight: 600; }
+  :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
+    font-weight: 600;
+    margin: 12px 0 6px 0;
+    line-height: 1.4;
+  }
+  :deep(h1) { font-size: 18px; }
+  :deep(h2) { font-size: 16px; }
+  :deep(h3) { font-size: 15px; }
+  :deep(ul), :deep(ol) { margin: 6px 0; padding-left: 20px; }
+  :deep(li) { margin: 3px 0; line-height: 1.6; }
+  :deep(code) {
+    background: rgba(0, 106, 100, 0.1);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-family: 'Menlo', 'Monaco', monospace;
+    font-size: 12px;
+  }
+  :deep(pre) {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    padding: 12px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+  :deep(a) { color: $primary-40; text-decoration: underline; }
+  :deep(blockquote) {
+    border-left: 3px solid rgba(0, 106, 100, 0.4);
+    padding-left: 12px;
+    margin: 8px 0;
+    color: $md-sys-color-on-surface-variant;
+  }
 }
 
 .source-preview-actions {
@@ -1353,13 +1498,13 @@ function scrollToBottom() {
 }
 
 .preview-btn-primary {
-  background: #006a64;
+  background: $primary;
   color: #ffffff;
 }
 
 .preview-btn-ghost {
   background: rgba(0, 106, 100, 0.08);
-  color: #006a64;
+  color: $primary;
 }
 
 // ============ 动画 ============

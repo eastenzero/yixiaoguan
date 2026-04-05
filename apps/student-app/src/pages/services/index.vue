@@ -14,6 +14,18 @@
       <text class="hero-subtitle">高效处理您的校园行政事务</text>
     </view>
 
+    <!-- 统计卡片区域 -->
+    <view class="stats-section">
+      <view class="stat-card">
+        <text class="stat-number">{{ pendingApplications }}</text>
+        <text class="stat-label">进行中的申请</text>
+      </view>
+      <view class="stat-card">
+        <text class="stat-number">{{ pendingNotifications }}</text>
+        <text class="stat-label">待处理通知</text>
+      </view>
+    </view>
+
     <!-- 服务矩阵 Grid -->
     <view class="services-section">
       <view class="services-grid">
@@ -42,7 +54,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, onMounted } from 'vue'
+import { getMyApplications } from '@/api/apply'
+import { useUserStore } from '@/stores/user'
 import IconDoorOpen from '@/components/icons/IconDoorOpen.vue'
 import IconClipboardList from '@/components/icons/IconClipboardList.vue'
 import IconFileSignature from '@/components/icons/IconFileSignature.vue'
@@ -58,6 +72,10 @@ interface Service {
   active: boolean
   path?: string
 }
+
+const userStore = useUserStore()
+const pendingApplications = ref<number | string>('--')
+const pendingNotifications = ref<number | string>(0)
 
 const services = ref<Service[]>([
   {
@@ -115,6 +133,25 @@ function handleServiceClick(service: Service) {
     })
   }
 }
+
+onMounted(async () => {
+  try {
+    const userId = userStore.userInfo?.id
+    if (!userId) {
+      pendingApplications.value = '--'
+      return
+    }
+
+    // 获取待审批（处理中）的申请数量，status=0 表示待审批
+    const res = await getMyApplications(userId, { status: 0 })
+    // PageResult 结构: { code, msg, data: { total, rows, ... } }
+    const rows = res.data?.rows || []
+    pendingApplications.value = rows.length || 0
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+    pendingApplications.value = '--'
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -183,6 +220,38 @@ function handleServiceClick(service: Service) {
   display: block;
   font-size: 28rpx;
   color: $neutral-50;
+}
+
+// 统计卡片区域
+.stats-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+  padding: 0 32rpx 32rpx;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, $primary 0%, #008c82 100%);
+  border-radius: 24rpx;
+  padding: 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-number {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
 }
 
 // 服务矩阵区

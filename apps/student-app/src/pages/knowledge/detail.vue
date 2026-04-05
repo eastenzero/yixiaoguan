@@ -20,6 +20,13 @@
         <text>知识详情暂不可用，已为你展示引用摘要。</text>
       </view>
 
+      <!-- 标签展示 -->
+      <view v-if="displayTags.length > 0" class="tags-section">
+        <view class="tags-list">
+          <text v-for="tag in displayTags" :key="tag.id" class="tag-item">{{ tag.name }}</text>
+        </view>
+      </view>
+
       <view v-if="renderedContent" class="detail-card markdown-body" v-html="renderedContent"></view>
       <view v-else-if="renderedFallbackSummary" class="detail-card markdown-body" v-html="renderedFallbackSummary"></view>
       <view v-else class="detail-card plain-content">
@@ -34,7 +41,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import MarkdownIt from 'markdown-it'
 import { getKnowledgeEntryDetail } from '@/api/knowledge'
-import type { KnowledgeEntry } from '@/types/knowledge'
+import type { KnowledgeEntry, KnowledgeTag } from '@/types/knowledge'
 
 const md = new MarkdownIt({
   html: false,
@@ -50,6 +57,7 @@ const entry = ref<KnowledgeEntry | null>(null)
 const fallbackTitle = ref('')
 const fallbackSummary = ref('')
 const fallbackScore = ref<number | null>(null)
+const fallbackTags = ref<KnowledgeTag[]>([])
 
 const displayTitle = computed(() => {
   return entry.value?.title || fallbackTitle.value || '参考资料'
@@ -64,6 +72,10 @@ const displayScore = computed(() => {
     return null
   }
   return fallbackScore.value
+})
+
+const displayTags = computed(() => {
+  return entry.value?.tags || fallbackTags.value || []
 })
 
 const renderedContent = computed(() => {
@@ -101,6 +113,20 @@ function parseScore(raw: unknown): number | null {
   return parsed
 }
 
+function parseTags(raw: unknown): KnowledgeTag[] {
+  if (typeof raw !== 'string') return []
+  try {
+    const decoded = decodeURIComponent(raw)
+    const parsed = JSON.parse(decoded)
+    if (Array.isArray(parsed)) {
+      return parsed.filter(t => t && typeof t.id === 'number' && typeof t.name === 'string')
+    }
+  } catch {
+    // ignore
+  }
+  return []
+}
+
 async function loadDetail() {
   if (!entryId.value) {
     loadFailed.value = true
@@ -109,8 +135,14 @@ async function loadDetail() {
   }
 
   try {
-    entry.value = await getKnowledgeEntryDetail(entryId.value)
-    loadFailed.value = false
+    const result = await getKnowledgeEntryDetail(entryId.value)
+    if (result) {
+      entry.value = result
+      loadFailed.value = false
+    } else {
+      // API 返回 404 或 null，使用 fallback
+      loadFailed.value = true
+    }
   } catch (error) {
     console.warn('知识详情加载失败，使用摘要降级展示：', error)
     loadFailed.value = true
@@ -124,6 +156,7 @@ onLoad((options) => {
   fallbackTitle.value = decodeText(options?.title)
   fallbackSummary.value = decodeText(options?.summary)
   fallbackScore.value = parseScore(options?.score)
+  fallbackTags.value = parseTags(options?.tags)
 
   loadDetail()
 })
@@ -157,7 +190,7 @@ onLoad((options) => {
 .hero-card {
   padding: 16px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #006a64 0%, #05857d 100%);
+  background: linear-gradient(135deg, $primary 0%, #05857d 100%);
   color: #ffffff;
 
   .hero-label {
@@ -196,6 +229,22 @@ onLoad((options) => {
   text {
     font: $text-label-medium;
     color: #005a55;
+  }
+}
+
+.tags-section {
+  .tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tag-item {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font: $text-label-small;
+    background: rgba(0, 106, 100, 0.1);
+    color: $primary;
   }
 }
 
@@ -252,7 +301,7 @@ onLoad((options) => {
     padding: 2px 5px;
     font-size: 12px;
     font-family: 'Menlo', 'Monaco', monospace;
-    color: #006a64;
+    color: $primary;
   }
 
   :deep(pre) {
@@ -269,7 +318,7 @@ onLoad((options) => {
   }
 
   :deep(a) {
-    color: #006a64;
+    color: $primary;
     text-decoration: underline;
   }
 

@@ -44,7 +44,8 @@ const handleSwitchTab = (key: 'home' | 'assistant' | 'services' | 'profile') => 
 </script>
 
 <style scoped lang="scss">
-$primary: #006a64;
+@use '@/styles/theme.scss' as *;
+
 $on-surface-variant: #5a635f;
 $surface-container-lowest: #ffffff;
 
