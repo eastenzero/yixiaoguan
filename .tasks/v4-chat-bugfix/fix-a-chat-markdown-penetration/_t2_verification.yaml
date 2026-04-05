@@ -1,0 +1,57 @@
+---
+task_id: "fix-a-chat-markdown-penetration"
+verified_by: "T2-Reviewer"
+verified_at: "2026-04-06 01:15:00"
+
+scope_compliance: "PASS"
+scope_violations: []
+
+verification:
+  L0:
+    status: "PASS"
+    evidence: |
+      - chat/index.vue 第 958-1010 行：.markdown-body 子选择器已全部穿透
+      - 覆盖元素完整：:deep(p), :deep(h1-h4), :deep(ul), :deep(ol), :deep(li),
+        :deep(code), :deep(pre), :deep(a), :deep(blockquote), :deep(hr),
+        :deep(strong), :deep(b)
+      - 特殊选择器：:deep(> *:first-child), :deep(> *:last-child), :deep(pre) :deep(code)
+      - v-html 渲染路径保留：第 68 行 v-html="renderMarkdown(msg.content)"
+  
+  L1:
+    status: "PASS"
+    evidence: |
+      命令: npm run build:h5 (cwd: apps/student-app)
+      输出: DONE  Build complete.
+      错误: 0 (仅 Sass 弃用警告，与本次修改无关)
+  
+  L2:
+    status: "PASS"
+    evidence: |
+      - <script> 逻辑层未修改：renderMarkdown 函数保持不变（第 223-226 行）
+      - pages.json 未修改
+      - SSE、来源引用、快捷问题发送逻辑保持不变
+  
+  L3:
+    status: "PENDING"
+    evidence: "需 H5 环境验证 AI 气泡高度自适应，段落/列表/加粗/链接完整显示"
+
+consistency_with_report: "一致"
+result: "PASS"
+recommendation: "可标记 done，L3 留待集成测试验证"
+
+modified_files:
+  - path: "apps/student-app/src/pages/chat/index.vue"
+    summary: "将 .markdown-body 的所有子元素选择器改为 :deep() 穿透写法，覆盖 p/h1-h4/ul/ol/li/code/pre/a/blockquote/hr/strong/b"
+
+out_of_scope_check:
+  - checked: "apps/student-app/src/pages/chat/index.vue <script>"
+    result: "未修改"
+  - checked: "apps/student-app/src/pages.json"
+    result: "未修改"
+  - checked: "services/**"
+    result: "未修改"
+
+risk_assessment:
+  - risk_id: "RISK-1"
+    mitigation: ":deep() 穿透方案已应用，若 H5 环境不生效则需改用 unscoped style 块"
+---

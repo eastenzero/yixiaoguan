@@ -960,26 +960,26 @@ function scrollToBottom() {
   line-height: 1.7;
   word-break: break-word;
 
-  > *:first-child { margin-top: 0 !important; }
-  > *:last-child  { margin-bottom: 0 !important; }
+  :deep(> *:first-child) { margin-top: 0 !important; }
+  :deep(> *:last-child)  { margin-bottom: 0 !important; }
 
-  p { margin: 0 0 8px 0; &:last-child { margin-bottom: 0; } }
+  :deep(p) { margin: 0 0 8px 0; &:last-child { margin-bottom: 0; } }
 
-  strong, b { font-weight: 600; color: #006a64; }
+  :deep(strong), :deep(b) { font-weight: 600; color: #006a64; }
 
-  h1, h2, h3, h4 {
+  :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
     font-weight: 600;
     margin: 12px 0 6px 0;
     line-height: 1.4;
   }
-  h1 { font-size: 18px; }
-  h2 { font-size: 16px; }
-  h3 { font-size: 15px; }
+  :deep(h1) { font-size: 18px; }
+  :deep(h2) { font-size: 16px; }
+  :deep(h3) { font-size: 15px; }
 
-  ul, ol { margin: 6px 0; padding-left: 20px; }
-  li { margin: 3px 0; line-height: 1.6; }
+  :deep(ul), :deep(ol) { margin: 6px 0; padding-left: 20px; }
+  :deep(li) { margin: 3px 0; line-height: 1.6; }
 
-  code {
+  :deep(code) {
     background: rgba(0, 106, 100, 0.1);
     border-radius: 4px;
     padding: 2px 5px;
@@ -988,25 +988,25 @@ function scrollToBottom() {
     color: #006a64;
   }
 
-  pre {
+  :deep(pre) {
     background: rgba(0, 0, 0, 0.04);
     border-radius: 8px;
     padding: 12px;
     overflow-x: auto;
     margin: 8px 0;
-    code { background: transparent; padding: 0; color: inherit; }
+    :deep(code) { background: transparent; padding: 0; color: inherit; }
   }
 
-  a { color: $primary-40; text-decoration: underline; }
+  :deep(a) { color: $primary-40; text-decoration: underline; }
 
-  blockquote {
+  :deep(blockquote) {
     border-left: 3px solid rgba(0, 106, 100, 0.4);
     padding-left: 12px;
     margin: 8px 0;
     color: $md-sys-color-on-surface-variant;
   }
 
-  hr { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 10px 0; }
+  :deep(hr) { border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 10px 0; }
 }
 
 // ============ 旧版 Markdown 链接样式（兼容保留） ============
