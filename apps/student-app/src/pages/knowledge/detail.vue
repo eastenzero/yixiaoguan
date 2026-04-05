@@ -21,6 +21,7 @@
       </view>
 
       <view v-if="renderedContent" class="detail-card markdown-body" v-html="renderedContent"></view>
+      <view v-else-if="renderedFallbackSummary" class="detail-card markdown-body" v-html="renderedFallbackSummary"></view>
       <view v-else class="detail-card plain-content">
         <text>{{ displaySummary || '暂无可展示内容' }}</text>
       </view>
@@ -68,6 +69,11 @@ const displayScore = computed(() => {
 const renderedContent = computed(() => {
   const content = entry.value?.content || ''
   return content ? md.render(content) : ''
+})
+
+const renderedFallbackSummary = computed(() => {
+  const summary = fallbackSummary.value
+  return summary ? md.render(summary) : ''
 })
 
 const showFallbackNotice = computed(() => {
@@ -213,33 +219,34 @@ onLoad((options) => {
   font-size: 14px;
   line-height: 1.7;
   color: $neutral-20;
+  word-break: break-word;
 
-  > *:first-child { margin-top: 0 !important; }
-  > *:last-child { margin-bottom: 0 !important; }
+  :deep(> *:first-child) { margin-top: 0 !important; }
+  :deep(> *:last-child) { margin-bottom: 0 !important; }
 
-  p { margin: 0 0 10px 0; }
+  :deep(p) { margin: 0 0 10px 0; }
 
-  h1, h2, h3 {
+  :deep(h1), :deep(h2), :deep(h3), :deep(h4) {
     margin: 14px 0 8px 0;
     line-height: 1.45;
     color: #005a55;
     font-weight: 600;
   }
 
-  h1 { font-size: 18px; }
-  h2 { font-size: 16px; }
-  h3 { font-size: 15px; }
+  :deep(h1) { font-size: 18px; }
+  :deep(h2) { font-size: 16px; }
+  :deep(h3) { font-size: 15px; }
 
-  ul, ol {
+  :deep(ul), :deep(ol) {
     margin: 8px 0;
     padding-left: 18px;
   }
 
-  li {
+  :deep(li) {
     margin: 4px 0;
   }
 
-  code {
+  :deep(code) {
     background: rgba(0, 106, 100, 0.1);
     border-radius: 4px;
     padding: 2px 5px;
@@ -248,25 +255,25 @@ onLoad((options) => {
     color: #006a64;
   }
 
-  pre {
+  :deep(pre) {
     background: rgba(23, 29, 28, 0.05);
     border-radius: 8px;
     padding: 12px;
     overflow-x: auto;
 
-    code {
+    :deep(code) {
       background: transparent;
       padding: 0;
       color: inherit;
     }
   }
 
-  a {
+  :deep(a) {
     color: #006a64;
     text-decoration: underline;
   }
 
-  blockquote {
+  :deep(blockquote) {
     margin: 8px 0;
     padding-left: 10px;
     border-left: 3px solid rgba(0, 106, 100, 0.35);
