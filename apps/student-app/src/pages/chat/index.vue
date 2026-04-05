@@ -916,6 +916,8 @@ function scrollToBottom() {
   display: flex;
   flex-direction: column;
   max-width: 75%;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .sender-name {
@@ -949,7 +951,7 @@ function scrollToBottom() {
 .message-text {
   font: $text-body-medium;
   line-height: 1.6;
-  min-height: 0;
+  min-height: auto;
 }
 
 // ============ Markdown 渲染样式 ============
