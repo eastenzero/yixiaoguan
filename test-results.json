@@ -1,0 +1,44 @@
+[
+  {
+    "ac": "AC-1",
+    "test": "Single navbar, input visible",
+    "expected": "navbar count = 1, input visible",
+    "actual": "navbar count = 1, input visible = true",
+    "status": "PASS"
+  },
+  {
+    "ac": "AC-2",
+    "test": "AI bubble height adaptive",
+    "expected": "bubble height > 50px (multi-line)",
+    "actual": "bubble height = 48px, messages = 4",
+    "status": "FAIL"
+  },
+  {
+    "ac": "AC-3",
+    "test": "Markdown rendering",
+    "expected": ".markdown-body exists",
+    "actual": "markdown-body count = no",
+    "status": "PENDING"
+  },
+  {
+    "ac": "AC-4",
+    "test": "Knowledge page markdown rendering",
+    "expected": ".markdown-body with h1/ul",
+    "actual": "markdown=0, h=0, ul=0, plain=1",
+    "status": "FAIL"
+  },
+  {
+    "ac": "AC-5",
+    "test": "Knowledge page content readable",
+    "expected": "markdown rendered, not plain text",
+    "actual": "markdown=0, plain=1",
+    "status": "PARTIAL"
+  },
+  {
+    "ac": "AC-7",
+    "test": "Existing features (quick questions, copy)",
+    "expected": "features present",
+    "actual": "quick=0, copy=1",
+    "status": "PENDING"
+  }
+]
