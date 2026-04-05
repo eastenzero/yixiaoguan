@@ -1,6 +1,6 @@
 ---
 id: "fix-d-login-userinfo-mapping"
-status: "completed
+status: "completed"
 tier: "T2"
 completed_at: "2026-04-06 01:02:30"
 ---

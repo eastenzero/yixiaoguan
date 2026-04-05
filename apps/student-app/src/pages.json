@@ -16,7 +16,8 @@
 		{
 			"path": "pages/chat/index",
 			"style": {
-				"navigationBarTitleText": "AI 咨询"
+				"navigationBarTitleText": "AI 咨询",
+				"navigationStyle": "custom"
 			}
 		},
 		{
