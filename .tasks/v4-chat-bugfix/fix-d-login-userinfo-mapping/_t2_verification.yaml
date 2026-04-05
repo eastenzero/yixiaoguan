@@ -1,0 +1,52 @@
+---
+task_id: "fix-d-login-userinfo-mapping"
+verified_by: "T2-Reviewer"
+verified_at: "2026-04-06 01:15:00"
+
+scope_compliance: "PASS"
+scope_violations: []
+
+verification:
+  L0:
+    status: "PASS"
+    evidence: |
+      - login/index.vue 第 144-158 行：setUserInfo 使用双字段兜底映射
+        id: ruoyiUser.id ?? ruoyiUser.userId
+        username: ruoyiUser.username ?? ruoyiUser.userName
+        realName: ruoyiUser.realName ?? ruoyiUser.nickName ?? ...
+      - auth.ts 第 54-70 行：UserInfoResult 接口已兼容双版本字段
+        id?, userId?, username?, userName?, realName?, nickName?
+  
+  L1:
+    status: "PASS"
+    evidence: |
+      命令: npm run build:h5 (cwd: apps/student-app)
+      输出: DONE  Build complete.
+      错误: 0 (仅 Sass 弃用警告，与本次修改无关)
+  
+  L2:
+    status: "PENDING"
+    evidence: "需 H5 环境登录后验证 userStore.userInfo.id 有值"
+  
+  L3:
+    status: "PENDING"
+    evidence: "需 H5 环境验证进入'我的申请'不触发 401 回跳"
+
+consistency_with_report: "一致"
+result: "PASS"
+recommendation: "可标记 done，L2/L3 留待集成测试验证"
+
+modified_files:
+  - path: "apps/student-app/src/api/auth.ts"
+    summary: "更新 UserInfoResult 接口，兼容 id/userId、username/userName、realName/nickName 双版本字段"
+  - path: "apps/student-app/src/pages/login/index.vue"
+    summary: "更新 setUserInfo 映射逻辑，使用 ?? 运算符实现双字段兜底"
+
+out_of_scope_check:
+  - checked: "apps/student-app/src/pages/apply/**"
+    result: "未修改"
+  - checked: "apps/student-app/src/utils/request.ts"
+    result: "未修改"
+  - checked: "services/**"
+    result: "未修改"
+---

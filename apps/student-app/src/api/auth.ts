@@ -53,9 +53,16 @@ export interface LoginResult {
 
 export interface UserInfoResult {
   user: {
-    userId: number
-    userName: string
-    nickName: string
+    // 兼容 yx_user 版本 (id/username/realName) 和 RuoYi 旧版本 (userId/userName/nickName)
+    id?: number
+    userId?: number
+    username?: string
+    userName?: string
+    realName?: string
+    nickName?: string
+    avatar?: string
+    email?: string
+    phonenumber?: string
     [key: string]: any
   }
   roles: string[]

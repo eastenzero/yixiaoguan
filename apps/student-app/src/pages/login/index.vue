@@ -141,14 +141,15 @@ const handleLogin = async () => {
     // 2. 保存 token
     userStore.setToken(loginRes.token)
     
-    // 3. 获取用户信息，将 RuoYi 字段映射为项目 UserInfo 格式
+    // 3. 获取用户信息，兼容映射 yx_user 版本和 RuoYi 旧版本字段
     const userInfoRes = await getUserInfo(loginRes.token)
     const ruoyiUser = userInfoRes.user
     userStore.setUserInfo({
-      id: ruoyiUser.userId,
-      username: ruoyiUser.userName,
-      realName: ruoyiUser.nickName || ruoyiUser.userName,
-      nickName: ruoyiUser.nickName,
+      // 双字段兜底：优先 yx_user 版本 (id/username/realName)，兼容 RuoYi 旧版本 (userId/userName/nickName)
+      id: ruoyiUser.id ?? ruoyiUser.userId,
+      username: ruoyiUser.username ?? ruoyiUser.userName,
+      realName: ruoyiUser.realName ?? ruoyiUser.nickName ?? ruoyiUser.username ?? ruoyiUser.userName,
+      nickName: ruoyiUser.nickName ?? ruoyiUser.realName,
       avatarUrl: ruoyiUser.avatar,
       email: ruoyiUser.email,
       phone: ruoyiUser.phonenumber,
