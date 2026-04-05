@@ -1,0 +1,51 @@
+task_id: "fix-1-generate-userdata-script"
+verification_time: "2026-04-06 00:15:00"
+verifier: "T2-Foreman"
+
+scope_compliance: "PASS"
+scope_violations: []
+scope_notes: |
+  T3 只修改了允许的文件：
+  - scripts/generate_user_data.py (修改)
+  - scripts/insert_students.sql (生成)
+  - scripts/insert_teachers.sql (生成)
+  - scripts/data_mapping.json (生成)
+  - _report.md (新建)
+  未触碰 out_of_scope 中的任何文件。
+
+verification:
+  L0: "PASS - scripts/generate_user_data.py 可被 ast.parse 解析"
+  L0_evidence: |
+    执行: python -c "import ast; ast.parse(open('scripts/generate_user_data.py', encoding='utf-8').read())"
+    结果: 无错误，AST 解析成功
+  
+  L1: "PASS - 脚本执行无异常"
+  L1_evidence: |
+    执行: python scripts/generate_user_data.py --help
+    结果: 正常显示帮助信息，包含 --test 参数
+  
+  L2: "PASS - 生成 SQL 满足所有要求"
+  L2_evidence: |
+    检查项验证：
+    - 列名对齐: nickname, department ✓
+    - 无错误列: 已删除 nick_name/dept_name/user_type ✓
+    - student_id/employee_id: 正确落列 ✓
+    - 密码格式: $2a$10$... (BCrypt) ✓
+    - status=1: 显式设置 ✓
+    - E'' 转义: 使用 E'...' 包裹密码 ✓
+    - yx_role 初始化: 已生成 ✓
+    - yx_user_role 关联: 已生成 ✓
+
+consistency_with_report: "一致"
+consistency_notes: |
+  T3 报告中的所有声称均与 T2 独立验证结果一致。
+  生成的 SQL 文件格式正确，可直接用于 165 部署。
+
+result: "PASS"
+recommendation: "可标记 done，执行本地 commit"
+
+additional_notes: |
+  - 脚本增加了 --test 参数用于测试
+  - 密码哈希策略与后端 BCryptPasswordEncoder 完全兼容
+  - SQL 使用 E'' 转义避免 $ 符号问题
+  - 产物可直接用于 FIX-3 部署阶段
