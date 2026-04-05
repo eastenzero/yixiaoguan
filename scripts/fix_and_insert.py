@@ -2,6 +2,7 @@
 """
 修复并执行SQL插入脚本
 """
+import bcrypt
 import json
 import psycopg2
 import random
@@ -85,7 +86,8 @@ def fix_and_insert_students():
             if len(fields) < 11:
                 continue
             username = fields[0].strip("'")
-            password = fields[1].strip("'")
+            password_plain = fields[1].strip("'")
+            password = bcrypt.hashpw(password_plain.encode(), bcrypt.gensalt()).decode()
             real_name = fields[2].strip("'")
             nickname = fields[3].strip("'")
             department = fields[5].strip("'")
@@ -179,7 +181,8 @@ def fix_and_insert_teachers():
             if len(fields) < 9:
                 continue
             username = fields[0].strip("'")
-            password = fields[1].strip("'")
+            password_plain = fields[1].strip("'")
+            password = bcrypt.hashpw(password_plain.encode(), bcrypt.gensalt()).decode()
             real_name = fields[2].strip("'")
             nickname = fields[3].strip("'")
             department = fields[5].strip("'")

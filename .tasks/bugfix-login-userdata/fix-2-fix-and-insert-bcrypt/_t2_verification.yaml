@@ -1,0 +1,45 @@
+task_id: "fix-2-fix-and-insert-bcrypt"
+verification_time: "2026-04-06 00:15:00"
+verifier: "T2-Foreman"
+
+scope_compliance: "PASS"
+scope_violations: []
+scope_notes: |
+  T3 只修改了允许的文件：
+  - scripts/fix_and_insert.py (修改)
+  - _report.md (新建)
+  未触碰 out_of_scope 中的任何文件。
+
+verification:
+  L0: "PASS - scripts/fix_and_insert.py 存在且可 ast.parse"
+  L0_evidence: |
+    执行: python -m py_compile scripts/fix_and_insert.py
+    结果: 无错误，语法检查通过
+  
+  L1: "PASS - 文件中存在 bcrypt.hashpw 调用，覆盖学生与教师两段逻辑"
+  L1_evidence: |
+    执行: Select-String -Pattern "bcrypt\.hashpw" -Path scripts/fix_and_insert.py
+    结果: 找到 2 处调用
+    - Line 90: 学生插入逻辑
+    - Line 185: 教师插入逻辑
+  
+  L2: "PASS - bcrypt 库可用，脚本运行入口不抛 ImportError"
+  L2_evidence: |
+    执行: python -c "import bcrypt; print('bcrypt 库可用')"
+    结果: bcrypt 库可用
+    
+    验证 import 语句存在:
+    - Line 5: import bcrypt
+
+consistency_with_report: "一致"
+consistency_notes: |
+  T3 报告中的所有声称均与 T2 独立验证结果一致。
+  密码哈希策略与 FIX-1 完全一致。
+
+result: "PASS"
+recommendation: "可标记 done，执行本地 commit"
+
+additional_notes: |
+  - 修改仅限于密码哈希逻辑，未改变其他业务流程
+  - 与 FIX-1 使用相同的 bcrypt.hashpw() 策略
+  - 作为兜底数据修复脚本可安全复用
