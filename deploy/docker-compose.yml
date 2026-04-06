@@ -118,6 +118,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ../apps/student-app/dist/build/h5:/usr/share/nginx/html/student:ro
       - ../apps/teacher-web/dist:/usr/share/nginx/html/teacher:ro
+      - ./materials:/usr/share/nginx/materials:ro
     depends_on:
       business-api:
         condition: service_healthy
