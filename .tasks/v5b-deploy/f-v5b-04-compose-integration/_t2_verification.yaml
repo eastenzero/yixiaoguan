@@ -1,0 +1,67 @@
+task_id: "f-v5b-04-compose-integration"
+verified_at: "2026-04-06T18:20:00+08:00"
+verified_by: "T2"
+
+scope_compliance: "PASS"
+scope_violations: []
+note: "仅修改 deploy/docker-compose.yml，未触碰 services/business-api/ruoyi-admin/src/、apps/、deploy/nginx/"
+
+verification:
+  L0:
+    status: "PASS"
+    details: |
+      实际检查：Select-String -Pattern "business-api|nginx" deploy/docker-compose.yml
+      结果：
+      - business-api 服务定义存在（line 45）
+      - nginx 服务定义存在（line 109）
+      - backend_logs volume 定义存在（line 132）
+      - backend_upload volume 定义存在（line 134）
+  
+  L1:
+    status: "PASS"
+    details: |
+      命令：ssh 192.168.100.165 "cd ~/dev/yixiaoguan/deploy && docker compose config --quiet"
+      结果：YAML 语法验证通过
+      注：version: "3.9" obsolete 警告是预期行为，不影响功能
+      
+      关键配置验证：
+      - SPRING_DATASOURCE_DRUID_MASTER_URL: jdbc:postgresql://postgres:5432/... ✓
+      - SPRING_DATASOURCE_DRUID_MASTER_USERNAME: ${POSTGRES_USER:-yx_admin} ✓
+      - SPRING_DATASOURCE_DRUID_MASTER_PASSWORD: ${POSTGRES_PASSWORD} ✓
+      - SPRING_DATA_REDIS_HOST: redis ✓
+      - BUSINESS_API_BASE_URL: http://business-api:8080 ✓
+  
+  L2:
+    status: "DEFERRED"
+    details: |
+      L2 验收需要在 165 服务器上执行 docker compose up -d 并等待 60s
+      由于这是高风险操作（risk: high），且需要完整的运行时环境，
+      建议在 T1 审查通过后，由人工或 batch-int 集成测试执行
+      
+      预期验收命令：
+      cd ~/dev/yixiaoguan/deploy && docker compose up -d
+      sleep 60
+      docker compose ps
+      docker compose logs business-api --tail=20 | grep -i 'started\|error'
+  
+  L3:
+    status: "DEFERRED_TO_T1"
+    details: "环境变量覆盖策略和服务依赖关系的语义判定由 T1 负责"
+
+consistency_with_report: "一致"
+cross_check_notes: |
+  T3 报告中的关键点实现与实际文件内容一致：
+  - ✅ ai-service BUSINESS_API_BASE_URL 改为 http://business-api:8080
+  - ✅ ai-service depends_on 包含 business-api
+  - ✅ business-api 服务完整定义（SPRING_DATASOURCE_DRUID_MASTER_URL 正确）
+  - ✅ nginx 服务完整定义（volume 挂载路径正确）
+  - ✅ backend_logs 和 backend_upload volumes 已添加
+  
+  RISK-2 规避验证：
+  - ✅ 使用 SPRING_DATASOURCE_DRUID_MASTER_URL（不是 SPRING_DATASOURCE_URL）
+  - ✅ 环境变量名全大写，使用下划线分隔
+
+result: "PASS"
+recommendation: "L0/L1 验证通过，可标记 done。L2 运行时验证建议在 T1 审查后执行，或在 batch-int 集成测试中覆盖"
+
+git_commit: "pending"
