@@ -2,7 +2,7 @@
 id: "f-v5b-04-compose-integration"
 parent: "v5b-deploy"
 type: "feature"
-status: "pending"
+status: "in_progress"
 tier: "T3"
 priority: "high"
 risk: "high"

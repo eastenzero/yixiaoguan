@@ -45,6 +45,8 @@ done_criteria:
 
 depends_on: ["f-v5b-01-frontend-build", "f-v5b-02-backend-dockerfile"]
 created_at: "2026-04-06"
+verified_at: "2026-04-06"
+verified_by: "T1-L3"
 ---
 
 # F-V5B-03: Nginx 反向代理配置

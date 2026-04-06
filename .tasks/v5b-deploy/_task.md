@@ -20,10 +20,11 @@ batches:
     depends_on: "batch-1"
     status: "done"
     verified_at: "2026-04-06"
-    note: "Nginx 路径设计需确认前端产物目录结构"
+    note: "L3 PASS：路由语义与 vite proxy 完全对应，volume 路径预检通过"
   - name: "batch-3"
     tasks: ["f-v5b-04-compose-integration"]
     depends_on: "batch-2"
+    status: "in_progress"
   - name: "batch-4"
     tasks: ["f-v5b-05-deploy-script"]
     depends_on: "batch-3"
