@@ -117,6 +117,8 @@ def ingest_kb_entry(file_path: Path, dry_run: bool = False, splitter: MarkdownTe
             "material_id": metadata.get('material_id', ''),
             "status": metadata.get('status', 'draft'),
             "source_file": str(file_path.relative_to(Path(__file__).parent.parent)),
+            "page_start": metadata.get('page_start', ''),
+            "page_end": metadata.get('page_end', ''),
         }
         
         result = {
