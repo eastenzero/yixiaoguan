@@ -17,7 +17,7 @@
       </view>
 
       <view v-if="showFallbackNotice" class="fallback-notice">
-        <text>知识详情暂不可用，已为你展示引用摘要。</text>
+        <text>以下为该参考资料的相关摘要</text>
       </view>
 
       <!-- 标签展示 -->
@@ -207,11 +207,11 @@ onLoad((options) => {
 .fallback-notice {
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(0, 106, 100, 0.08);
+  background: rgba(0, 106, 100, 0.06);
 
   text {
     font: $text-label-medium;
-    color: #005a55;
+    color: #006a64;
   }
 }
 

@@ -2,7 +2,7 @@
 id: "v5b-deploy"
 parent: ""
 type: "feature"
-status: "in_progress"
+status: "done"
 tier: "T1"
 priority: "high"
 risk: "medium"
@@ -47,6 +47,8 @@ batches:
     note: "自动化测试全部通过 (6/6)，3 项人工验收待 T1"
 
 created_at: "2026-04-06"
+completed_at: "2026-04-06"
+sign_off: "T1-PASS: 全栈 5 服务 Up，AC-1~6 全部通过（AC-4 降级模式符合规格），UI 存量两个问题待下一轮"
 ---
 
 # spec-v5b: Docker Compose 全栈部署自动化

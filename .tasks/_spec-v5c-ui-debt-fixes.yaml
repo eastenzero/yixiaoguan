@@ -1,0 +1,133 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v5c
+# 日期: 2026-04-06
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v5a (completed), spec-v5b (completed)
+# ===================================================================
+#
+# 背景: spec-v5a/v5b 签收后遗留 4 项 UI/配置问题，均不阻塞主流程。
+# 本 spec 为轻量修复任务，交由 T2 执行。
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v5c
+date: 2026-04-06
+author: T0-Architect
+status: ready_for_t1
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # FIX-01: captchaImage 500 修复 (DEBT-V5A-02)
+  # ────────────────────────────────────────────────────────────────
+  - id: FIX-01
+    title: captchaImage 接口 500 修复
+    priority: P2
+    estimated_effort: 30min
+    source: DEBT-V5A-02
+    description: |
+      当 Redis 中 sys_config:sys.account.captchaEnabled = true 时，
+      GET /captchaImage 返回 500。
+
+      排查方向:
+      1. 后端 kaptcha 依赖是否存在于 pom.xml
+      2. kaptcha Bean 配置是否正确（CaptchaConfig.java）
+      3. 容器内是否缺少字体文件（Alpine 镜像常见问题）
+         → 如果是字体问题: Dockerfile 加 `RUN apk add --no-cache ttf-dejavu`
+      4. 查看后端日志: docker compose logs business-api | grep -i captcha
+
+      修复后操作:
+      - 在 165 上将 captchaEnabled 设回 true
+      - 确认 /captchaImage 返回 Base64 图片数据
+    files:
+      - services/business-api/Dockerfile (可能需加字体)
+      - services/business-api/ruoyi-admin/src/main/resources/application.yml
+    acceptance_criteria:
+      - GET /captchaImage 返回 200，响应体含 img (Base64) 和 uuid
+      - 登录页显示验证码图片
+      - 输入正确验证码可正常登录
+
+  # ────────────────────────────────────────────────────────────────
+  # FIX-02: 参考资料卡片样式修正 (UI-01)
+  # ────────────────────────────────────────────────────────────────
+  - id: FIX-02
+    title: 聊天页参考资料卡片样式统一
+    priority: P3
+    estimated_effort: 15min
+    source: UI-01
+    description: |
+      聊天页底部参考资料条目的边框颜色与背景色不协调。
+      v5a 已对 chat/index.vue 内的 .source-item 改为浅主题色背景，
+      但弹层中的条目样式可能未同步更新。
+
+      检查并统一以下位置的卡片样式:
+      - .source-item（聊天消息内嵌列表）
+      - 弹层中的参考资料列表（如存在）
+      统一使用: background: rgba(0,106,100,0.06); border: 1px solid rgba(0,106,100,0.15);
+    files:
+      - apps/student-app/src/pages/chat/index.vue
+    acceptance_criteria:
+      - 所有参考资料条目样式一致，边框与背景色协调
+
+  # ────────────────────────────────────────────────────────────────
+  # FIX-03: 摘要弹层底部按钮被遮挡 (UI-02)
+  # ────────────────────────────────────────────────────────────────
+  - id: FIX-03
+    title: 参考摘要弹层底部按钮防遮挡
+    priority: P2
+    estimated_effort: 20min
+    source: UI-02
+    description: |
+      点击参考资料后弹出的摘要弹层，底部"查看详细资料"和"知道了"按钮
+      在手机屏幕上被底部导航栏遮挡。
+
+      修复方案:
+      - 弹层 overlay 使用 fixed 定位覆盖全屏（含导航栏）
+      - 弹层内容区增加 padding-bottom: calc(env(safe-area-inset-bottom) + 60px)
+      - 或将按钮固定在弹层底部，内容区域可滚动
+    files:
+      - apps/student-app/src/pages/chat/index.vue
+    acceptance_criteria:
+      - 弹层底部按钮完全可见可点击
+      - 不与底部导航栏重叠
+
+  # ────────────────────────────────────────────────────────────────
+  # FIX-04: 知识详情页内容优化 (UI-03)
+  # ────────────────────────────────────────────────────────────────
+  - id: FIX-04
+    title: 知识详情页去除"暂不可用"提示
+    priority: P3
+    estimated_effort: 15min
+    source: UI-03
+    description: |
+      当前知识详情页采用方案 B（不调后端 API，直接用 URL 参数展示摘要），
+      但页面仍然显示黄色横幅"知识详情暂不可用，已为你展示引用摘要"，
+      给用户造成"功能故障"的错觉。
+
+      既然方案 B 就是最终方案，应移除或替换此提示:
+      - 方案 A: 直接移除 fallback-notice 横幅
+      - 方案 B: 将文案改为中性描述，如"以下为该参考资料的相关摘要"
+
+      推荐方案 B。
+    files:
+      - apps/student-app/src/pages/knowledge/detail.vue
+    acceptance_criteria:
+      - 知识详情页不再显示"暂不可用"字样
+      - 摘要内容正常展示
+
+# ===================================================================
+# 上下文
+# ===================================================================
+context:
+  server: 192.168.100.165
+  test_account: "2524010001 / 2524010001"
+  access_url: "http://192.168.100.165"
+  deferred_source: ".tasks/_deferred-ui-issues.md"
+  deploy_compose: "deploy/docker-compose.yml"
+
+execution_notes: |
+  - FIX-01 需要 165 服务器操作（Docker 重建 + Redis 配置）
+  - FIX-02/03/04 为纯前端修改，修改后需在 165 上重新 build + 重启 nginx
+  - 四个任务互不冲突，可并行执行
+  - 完成后在 165 上验证: docker compose build && docker compose up -d
