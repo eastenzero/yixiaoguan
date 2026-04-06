@@ -64,4 +64,4 @@ cross_check_notes: |
 result: "PASS"
 recommendation: "L0/L1 验证通过，可标记 done。L2 运行时验证建议在 T1 审查后执行，或在 batch-int 集成测试中覆盖"
 
-git_commit: "pending"
+git_commit: "2f94666 (docker-compose.yml changes) + e38b08b (T2 verification)"

@@ -24,6 +24,9 @@ batches:
   - name: "batch-3"
     tasks: ["f-v5b-04-compose-integration"]
     depends_on: "batch-2"
+    status: "done"
+    verified_at: "2026-04-06"
+    note: "L0/L1 验证通过，L2 运行时验证留待 batch-int"
     status: "in_progress"
   - name: "batch-4"
     tasks: ["f-v5b-05-deploy-script"]
