@@ -8,7 +8,7 @@
       @click="handleSwitchTab(tab.key)"
     >
       <view class="tab-icon-wrap">
-        <component :is="tab.icon" :size="current === tab.key ? 22 : 24" :color="current === tab.key ? '#006a64' : '#5a635f'" />
+        <component :is="tab.icon" :size="current === tab.key ? 22 : 24" :color="current === tab.key ? 'var(--color-primary, #006a64)' : '#5a635f'" />
       </view>
       <text class="tab-label">{{ tab.label }}</text>
     </view>

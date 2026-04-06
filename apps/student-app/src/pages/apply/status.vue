@@ -288,7 +288,7 @@ function handleCancel(id: number) {
   uni.showModal({
     title: '确认取消',
     content: '确定要取消该申请吗？取消后不可恢复。',
-    confirmColor: '#006a64',
+    confirmColor: 'var(--color-primary, #006a64)',
     success: async (res) => {
       if (res.confirm) {
         try {

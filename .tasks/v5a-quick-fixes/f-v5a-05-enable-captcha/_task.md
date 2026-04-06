@@ -38,6 +38,9 @@ execution:
     command: "curl -s http://192.168.100.165:8080/captchaImage"
 
 created_at: "2026-04-06"
+completed_at: "2026-04-06"
+verified_by: "t2-foreman"
+git_commit: "9b9d573"
 ---
 
 # F-V5A-05: 启用登录验证码

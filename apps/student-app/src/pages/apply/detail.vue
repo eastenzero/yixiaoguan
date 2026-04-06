@@ -318,7 +318,7 @@ function contactReviewer() {
   uni.showModal({
     title: '联系审批人',
     content: '是否拨打教务处电话？',
-    confirmColor: '#006a64',
+    confirmColor: 'var(--color-primary, #006a64)',
     success: (res) => {
       if (res.confirm) {
         uni.makePhoneCall({

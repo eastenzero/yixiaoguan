@@ -40,7 +40,6 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import MarkdownIt from 'markdown-it'
-import { getKnowledgeEntryDetail } from '@/api/knowledge'
 import type { KnowledgeEntry, KnowledgeTag } from '@/types/knowledge'
 
 const md = new MarkdownIt({
@@ -128,27 +127,11 @@ function parseTags(raw: unknown): KnowledgeTag[] {
 }
 
 async function loadDetail() {
-  if (!entryId.value) {
-    loadFailed.value = true
-    isLoading.value = false
-    return
-  }
-
-  try {
-    const result = await getKnowledgeEntryDetail(entryId.value)
-    if (result) {
-      entry.value = result
-      loadFailed.value = false
-    } else {
-      // API 返回 404 或 null，使用 fallback
-      loadFailed.value = true
-    }
-  } catch (error) {
-    console.warn('知识详情加载失败，使用摘要降级展示：', error)
-    loadFailed.value = true
-  } finally {
-    isLoading.value = false
-  }
+  // 方案 B：不调后端 API，直接使用 URL 参数中的 fallback 数据
+  // ChromaDB entry_id 为字符串格式（如 KB-20260323-0001-chunk-5），
+  // 后端 API 期望数字 ID，因此直接使用 fallback 展示
+  loadFailed.value = true
+  isLoading.value = false
 }
 
 onLoad((options) => {

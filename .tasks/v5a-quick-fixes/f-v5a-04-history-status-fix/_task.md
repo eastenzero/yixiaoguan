@@ -34,6 +34,9 @@ reproduction_steps:
   - "观察控制台，出现：参数[status]要求类型为: 'java.lang.Integer', 但输入值为: 'undefined'"
 
 created_at: "2026-04-06"
+completed_at: "2026-04-06"
+verified_by: "t2-foreman"
+git_commit: "9b9d573"
 ---
 
 # F-V5A-04: 历史记录页 API 参数修复

@@ -2,7 +2,7 @@
 id: "f-v5a-06"
 parent: "v5a-quick-fixes"
 type: "bugfix"
-status: "pending"
+status: "done"
 tier: "T3"
 priority: "medium"
 risk: "medium"

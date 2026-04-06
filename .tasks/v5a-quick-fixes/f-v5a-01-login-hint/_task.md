@@ -28,6 +28,9 @@ done_criteria:
 root_cause: "密码策略已由默认密码改为学号即密码（generate_user_data.py 实现），但登录页提示文案未同步更新。"
 
 created_at: "2026-04-06"
+completed_at: "2026-04-06"
+verified_by: "t2-foreman"
+git_commit: "9b9d573"
 ---
 
 # F-V5A-01: 登录页提示文案修正

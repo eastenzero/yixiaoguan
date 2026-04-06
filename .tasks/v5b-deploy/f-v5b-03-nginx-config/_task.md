@@ -2,7 +2,7 @@
 id: "f-v5b-03-nginx-config"
 parent: "v5b-deploy"
 type: "feature"
-status: "pending"
+status: "in_progress"
 tier: "T3"
 priority: "high"
 risk: "medium"
@@ -43,7 +43,7 @@ done_criteria:
     - / → student-app 静态文件（SPA fallback）
     teacher.conf 对应 teacher-web 的 proxy 规则
 
-depends_on: ["f-v5b-01-frontend-build"]
+depends_on: ["f-v5b-01-frontend-build", "f-v5b-02-backend-dockerfile"]
 created_at: "2026-04-06"
 ---
 

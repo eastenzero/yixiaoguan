@@ -15,6 +15,11 @@ onHide(() => {
 </script>
 
 <style lang="scss">
+/* CSS 变量定义 - 与 theme.scss 同步 */
+:root {
+  --color-primary: #006a64;
+}
+
 /* 全局基础样式 */
 page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
