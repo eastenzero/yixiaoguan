@@ -211,7 +211,7 @@ onLoad((options) => {
 
   text {
     font: $text-label-medium;
-    color: #006a64;
+    color: $primary;
   }
 }
 

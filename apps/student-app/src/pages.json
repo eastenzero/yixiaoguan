@@ -40,6 +40,13 @@
 			}
 		},
 		{
+			"path": "pages/viewer/pdf",
+			"style": {
+				"navigationBarTitleText": "原始文件",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/apply/classroom",
 			"style": {
 				"navigationBarTitleText": "空教室申请"

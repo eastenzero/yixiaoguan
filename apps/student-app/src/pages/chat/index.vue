@@ -194,11 +194,13 @@
 
         <view class="source-preview-actions">
           <button
-            v-if="sourcePreview.entryId"
+            v-if="sourcePreview.entryId || sourcePreview.materialFileUrl"
             class="preview-btn preview-btn-primary"
+            :class="{ 'preview-btn-disabled': !sourcePreview.materialFileUrl && !sourcePreview.entryId }"
+            :disabled="!sourcePreview.materialFileUrl && !sourcePreview.entryId"
             @click="openSourceDetailFromPreview"
           >
-            查看完整资料
+            {{ sourcePreview.materialFileUrl ? '查看原始文件' : '查看参考摘要' }}
           </button>
           <button class="preview-btn preview-btn-ghost" @click="closeSourcePreview">
             知道了
@@ -246,6 +248,8 @@ interface Source {
   content?: string
   url: string        // 备用外链（当前 AI 服务暂不提供）
   score?: number
+  material_file_url?: string
+  material_title?: string
 }
 
 interface Message {
@@ -272,12 +276,14 @@ const sourcePreview = ref<{
   title: string
   content: string
   score?: number
+  materialFileUrl?: string
 }>({
   visible: false,
   entryId: '',
   title: '',
   content: '',
-  score: undefined
+  score: undefined,
+  materialFileUrl: undefined
 })
 
 // ============ 快捷问题 ============
@@ -480,7 +486,9 @@ async function streamResponse(userContent: string): Promise<string> {
                 title: s.title || '未知来源',
                 content: s.content || '',
                 url: s.url || '',
-                score: s.score
+                score: s.score,
+                material_file_url: s.material_file_url || '',
+                material_title: s.material_title || ''
               }))
             }
 
@@ -509,7 +517,9 @@ async function streamResponse(userContent: string): Promise<string> {
               title: s.title || '未知来源',
               content: s.content || '',
               url: s.url || '',
-              score: s.score
+              score: s.score,
+              material_file_url: s.material_file_url || '',
+              material_title: s.material_title || ''
             }))
           }
         } catch (e) { /* 忽略不完整 JSON */ }
@@ -631,9 +641,10 @@ function showSourcePreviewPopup(source: Source) {
   sourcePreview.value = {
     visible: true,
     entryId: source.entry_id || '',
-    title: source.title || '参考资料',
+    title: source.material_title || source.title || '参考资料',
     content: source.content || '暂未获取到摘要内容，可稍后重试查看详情。',
-    score: source.score
+    score: source.score,
+    materialFileUrl: source.material_file_url || ''
   }
 }
 
@@ -643,20 +654,21 @@ function closeSourcePreview() {
 
 async function openSourceDetailFromPreview() {
   const source = sourcePreview.value
-  if (!source.entryId) {
-    closeSourcePreview()
-    return
+  if (source.materialFileUrl) {
+    const pdfUrl = encodeURIComponent(source.materialFileUrl)
+    const title = encodeURIComponent(source.title)
+    try {
+      await navigateToPage('/pages/viewer/pdf?url=' + pdfUrl + '&title=' + title)
+      closeSourcePreview()
+      return
+    } catch {}
   }
+  if (!source.entryId) { closeSourcePreview(); return }
   try {
-    await navigateToPage(
-      `/pages/knowledge/detail?id=${encodeURIComponent(source.entryId)}&title=${encodeURIComponent(source.title)}&summary=${encodeURIComponent(source.content)}&score=${source.score ?? ''}`
-    )
+    await navigateToPage('/pages/knowledge/detail?id=' + encodeURIComponent(source.entryId) + '&title=' + encodeURIComponent(source.title) + '&summary=' + encodeURIComponent(source.content) + '&score=' + (source.score ?? ''))
     closeSourcePreview()
   } catch {
-    uni.showToast({
-      title: '详情页暂不可用',
-      icon: 'none'
-    })
+    uni.showToast({ title: '详情页暂不可用', icon: 'none' })
   }
 }
 
@@ -1157,6 +1169,7 @@ function scrollToBottom() {
   background: #ffffff;
   border-radius: 12px;
   box-shadow: $md-sys-elevation-1;
+  overflow: hidden;
 
   .sources-header {
     display: flex;
@@ -1171,9 +1184,10 @@ function scrollToBottom() {
     align-items: center;
     gap: 4px;
     width: 100%;
+    box-sizing: border-box;
     padding: 8px 10px;
     border-radius: 8px;
-    background: rgba(0, 106, 100, 0.06);
+    background: rgba(0, 106, 100, 0.04);
     border: 1px solid rgba(0, 106, 100, 0.15);
     transition: all 0.2s ease;
 
@@ -1459,22 +1473,32 @@ function scrollToBottom() {
   display: flex;
   gap: 10px;
   margin-top: 16px;
-  padding-bottom: calc(18px + env(safe-area-inset-bottom) + 60rpx);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .preview-btn {
   flex: 1;
-  height: 40px;
-  line-height: 40px;
+  height: 44px;
+  line-height: 44px;
   border-radius: 999px;
   border: none;
   margin: 0;
   padding: 0;
   font: $text-label-large;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 
   &:active {
     transform: scale(0.98);
   }
+}
+
+.preview-btn-disabled {
+  background: $md-sys-color-outline-variant;
+  color: $md-sys-color-on-surface-variant;
+  pointer-events: none;
 }
 
 .preview-btn-primary {

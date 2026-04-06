@@ -368,12 +368,12 @@ onLoad((options) => {
 </script>
 
 <style scoped lang="scss">
+@import '@/styles/theme.scss';
 page {
   background-color: #f0f7f5;
 }
 
 // 颜色变量（遵循 MD3 设计规范）
-$primary: #006a64;
 $primary-container: #8bf2e8;
 $on-primary: #ffffff;
 $on-primary-container: #00201e;

@@ -15,9 +15,10 @@ onHide(() => {
 </script>
 
 <style lang="scss">
+@import '@/styles/theme.scss';
 /* CSS 变量定义 - 与 theme.scss 同步 */
 :root {
-  --color-primary: #006a64;
+  --color-primary: #{$primary};
 }
 
 /* 全局基础样式 */
