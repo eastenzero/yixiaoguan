@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.kb_vectorize import vector_store
-from app.api import chat, links, kb, cluster, health, agent
+from app.api import chat, links, kb, cluster, health, agent, knowledge, materials
 
 # -- 结构化日志配置 --
 logging.basicConfig(
@@ -74,6 +74,8 @@ app.include_router(links.router)       # 快捷链接匹配
 app.include_router(kb.router)          # 知识库
 app.include_router(cluster.router)     # 相似聚类
 app.include_router(agent.router)       # 智能 Agent（意图提取）
+app.include_router(knowledge.router)   # 知识条目完整内容
+app.include_router(materials.router)   # PDF 裁剪服务
 
 
 @app.get("/", tags=["根路径"])

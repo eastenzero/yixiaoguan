@@ -57,6 +57,7 @@ class MarkdownTextSplitter:
         text: str,
         source_path: str = "",
         base_metadata: Optional[Dict[str, Any]] = None,
+        title: str = "Document",
     ) -> List[TextChunk]:
         """
         切分文本为多个 chunk
@@ -77,7 +78,7 @@ class MarkdownTextSplitter:
         chunk_index = 0
         
         # 步骤1：按 Markdown 标题切分为逻辑块
-        sections = self._split_by_headings(text)
+        sections = self._split_by_headings(text, title=title)
         
         for section in sections:
             section_content = section["content"]
@@ -111,7 +112,7 @@ class MarkdownTextSplitter:
         
         return chunks
     
-    def _split_by_headings(self, text: str) -> List[Dict[str, Any]]:
+    def _split_by_headings(self, text: str, title: str = "Document") -> List[Dict[str, Any]]:
         """
         按 Markdown 标题切分文档为逻辑块
         
@@ -120,7 +121,7 @@ class MarkdownTextSplitter:
         """
         # 在文本开头添加一个虚拟标题，确保整个文档都被处理
         if not text.lstrip().startswith('#'):
-            text = "# Document\n" + text
+            text = f"# {title}\n" + text
         
         matches = list(self.HEADING_PATTERN.finditer(text))
         

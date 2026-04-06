@@ -46,6 +46,8 @@ class SourceItemDTO(BaseModel):
     title: str = Field(..., description="知识标题")
     content: str = Field(..., description="知识内容摘要")
     score: float = Field(..., description="相似度分数 0-1")
+    material_file_url: str = Field(default="", description="原始材料 PDF 路径，无则为空字符串")
+    material_title: str = Field(default="", description="原始材料标题")
 
 
 class ChatResponseData(BaseModel):
@@ -90,6 +92,8 @@ def _convert_sources(sources: List[SourceItem]) -> List[SourceItemDTO]:
             title=s.title,
             content=s.content,
             score=s.score,
+            material_file_url=s.material_file_url,
+            material_title=s.material_title,
         )
         for s in sources
     ]

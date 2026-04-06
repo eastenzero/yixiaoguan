@@ -32,6 +32,8 @@ class SourceItem:
     title: str
     content: str
     score: float
+    material_file_url: str = ""
+    material_title: str = ""
 
 
 @dataclass
@@ -156,6 +158,8 @@ class RAGChatEngine:
                 title=r.metadata.get("title", "未知标题"),
                 content=r.content[:500] + "..." if len(r.content) > 500 else r.content,
                 score=r.score,
+                material_file_url=r.metadata.get("material_file_url", ""),
+                material_title=r.metadata.get("material_title", ""),
             )
             for r in results
         ]

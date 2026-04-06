@@ -44,6 +44,16 @@ from app.core.kb_vectorize import vector_store
 DEFAULT_SOURCE_DIR = Path(__file__).parent.parent.parent.parent / "knowledge-base" / "raw" / "first-batch-processing" / "converted" / "markdown"
 LOGS_DIR = Path(__file__).parent.parent.parent.parent / "knowledge-base" / "raw" / "first-batch-processing" / "logs"
 
+MATERIAL_INDEX_PATH = SERVICE_DIR.parent.parent / "deploy" / "materials" / "material-index.json"
+
+def _load_material_index() -> dict:
+    if not MATERIAL_INDEX_PATH.exists():
+        print(f"[警告] material-index.json 不存在: {MATERIAL_INDEX_PATH}")
+        return {}
+    with open(MATERIAL_INDEX_PATH, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 100
 
@@ -178,6 +188,7 @@ def process_single_file(
     file_path: Path,
     splitter: MarkdownTextSplitter,
     dry_run: bool = False,
+    material_index: dict = None,
 ) -> IngestionResult:
     """
     处理单个文件
@@ -204,6 +215,11 @@ def process_single_file(
         
         # 提取关键元数据
         title = metadata.get('title', file_path.stem.replace('__', ' ').replace('_', ' '))
+        material_id = metadata.get('material_id', '')
+        material_info = (material_index or {}).get(material_id, {}) if material_id else {}
+        material_pdf = material_info.get('pdf', '')
+        material_file_url = f"/materials/{material_pdf}" if material_pdf else ""
+        material_title_val = material_info.get('title', '') or title
         category = metadata.get('category', '')
         tags = metadata.get('tags', [])
         if isinstance(tags, str):
@@ -222,6 +238,7 @@ def process_single_file(
                 text=body_content,
                 source_path=str(file_path),
                 base_metadata=base_metadata,
+                title=title,
             )
         else:
             # 纯文本使用简单切分器
@@ -248,6 +265,8 @@ def process_single_file(
                 "chunk_index": chunk.index,
                 "total_chunks": len(chunks),
                 "source_file": str(file_path.name),
+                "material_file_url": material_file_url,
+                "material_title": material_title_val,
             }
             
             chunk_result = {
@@ -309,6 +328,8 @@ def run_batch_ingestion(
     """
     source_dir = source_dir or DEFAULT_SOURCE_DIR
     report = BatchReport()
+    material_index = _load_material_index()
+    print(f"[材料索引] 加载完成，共 {len(material_index)} 条映射")
     
     print("=" * 60)
     print("医小管知识库批量入库脚本")
@@ -357,7 +378,7 @@ def run_batch_ingestion(
     for i, file_path in enumerate(files, 1):
         print(f"[{i}/{len(files)}] 处理: {file_path.name}")
         
-        result = process_single_file(file_path, splitter, dry_run)
+        result = process_single_file(file_path, splitter, dry_run, material_index=material_index)
         
         # 更新统计
         report.file_results.append(result.to_dict())
