@@ -2,7 +2,7 @@
 id: "f-v5b-03-nginx-config"
 parent: "v5b-deploy"
 type: "feature"
-status: "in_progress"
+status: "done"
 tier: "T3"
 priority: "high"
 risk: "medium"
