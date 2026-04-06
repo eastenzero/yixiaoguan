@@ -18,7 +18,8 @@ batches:
   - name: "batch-2"
     tasks: ["f-v5b-03-nginx-config"]
     depends_on: "batch-1"
-    status: "in_progress"
+    status: "done"
+    verified_at: "2026-04-06"
     note: "Nginx 路径设计需确认前端产物目录结构"
   - name: "batch-3"
     tasks: ["f-v5b-04-compose-integration"]
