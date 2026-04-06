@@ -32,11 +32,15 @@ batches:
     depends_on: "batch-3"
     status: "done"
     verified_at: "2026-04-06"
-    note: "部署脚本和文档完成"
+    note: "L3 PASS: start-prod.sh 7步完整，README 6章全覆盖"
+  - name: "batch-hotfix"
+    tasks: ["hotfix-ai-healthcheck"]
+    depends_on: "batch-4"
     status: "in_progress"
+    note: "ISSUE-1: ai-service healthcheck curl 不存在，改用 python urllib"
   - name: "batch-int"
     tasks: ["int-v5b-deploy"]
-    depends_on: "batch-4"
+    depends_on: "batch-hotfix"
 
 created_at: "2026-04-06"
 ---

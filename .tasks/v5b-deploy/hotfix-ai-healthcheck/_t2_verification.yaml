@@ -1,0 +1,63 @@
+task_id: "hotfix-ai-healthcheck"
+verified_at: "2026-04-06T19:12:00+08:00"
+verified_by: "T2"
+
+scope_compliance: "PASS"
+scope_violations: []
+note: "仅修改 deploy/docker-compose.yml 第 103 行，未触碰 services/ai-service/ 和 apps/"
+
+verification:
+  L0:
+    status: "PASS"
+    details: |
+      检查：docker-compose.yml 第 103 行 healthcheck test
+      结果：不再包含 "curl"，已改为 python -c 'import urllib.request...' 形式
+      实际内容：test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/\")' || exit 1"]
+  
+  L1:
+    status: "PASS"
+    details: |
+      命令：ssh 192.168.100.165 "cd ~/dev/yixiaoguan/deploy && docker compose config --quiet"
+      结果：YAML syntax OK
+      注：version: "3.9" obsolete 警告是预期行为
+  
+  L2:
+    status: "PASS"
+    details: |
+      命令：docker compose up -d && sleep 30 && docker compose ps
+      结果：
+      - yx_ai_service: Up 45 seconds (healthy) ✅
+      - yx_nginx: Up 30 seconds ✅
+      - yx_business_api: Up 41 minutes (healthy) ✅
+      - yx_postgres: Up 22 hours (healthy) ✅
+      - yx_redis: Up 22 hours (healthy) ✅
+      
+      关键验证：
+      - ai-service 从 unhealthy 变为 healthy ✅
+      - nginx 成功启动（之前被 ai-service 阻塞）✅
+      - 全部 5 个服务 Up ✅
+  
+  L3:
+    status: "DEFERRED_TO_T1"
+    details: "healthcheck 命令在 python:3.11-slim 容器内有效性的语义判定由 T1 负责"
+
+consistency_with_report: "一致"
+cross_check_notes: |
+  T3 报告中的变更与实际文件内容一致：
+  - ✅ 使用 CMD-SHELL 格式
+  - ✅ 使用 python -c 'import urllib.request'
+  - ✅ 使用 || exit 1 确保异常时返回非零退出码
+  - ✅ 引号正确转义
+
+issue_resolution:
+  issue_id: "ISSUE-1"
+  status: "RESOLVED"
+  verification: |
+    修复前：ai-service unhealthy（curl not found）
+    修复后：ai-service healthy（python urllib 成功）
+    影响：nginx 成功启动，前端页面可访问
+
+result: "PASS"
+recommendation: "hotfix 验证通过，可标记 done，全栈 5 个服务已全部正常运行"
+
+git_commit: "pending"
