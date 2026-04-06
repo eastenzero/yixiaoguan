@@ -32,7 +32,10 @@ export function getConversationList(
   status?: number,
   params?: PageParams
 ): Promise<PageResult<Conversation>> {
-  return get('/api/v1/conversations', { status, ...params })
+  // 过滤 undefined 参数，避免发送 ?status=undefined
+  const query: Record<string, any> = { ...params }
+  if (status !== undefined) query.status = status
+  return get('/api/v1/conversations', query)
 }
 
 /**

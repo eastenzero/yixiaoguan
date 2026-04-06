@@ -1,0 +1,375 @@
+# ===================================================================
+# spec-v4-chat-bugfix · 智能问答核心修复 + 附带修复
+# ===================================================================
+# 作者: T0-Architect
+# 创建: 2026-04-06
+# 前置: spec-bugfix-login-userdata (completed)
+#       spec-v3-student-ui (s1-s6 done, int-v3-final pending)
+#
+# 范围: 仅限 apps/student-app/src/ 前端代码
+#       不涉及后端（Java / Python / SQL）
+#       不涉及 165 服务器部署（本轮仅本地验证）
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v4-chat-bugfix
+date: 2026-04-06
+author: T0-Architect
+status: ready_for_t1
+predecessor: spec-v3-student-ui (s1-s6 done)
+blocking: false  # 不阻塞其他功能，但影响展示效果
+
+# ===================================================================
+# 问题来源
+# ===================================================================
+evidence:
+  screenshots: "C:\\Users\\Administrator\\Pictures\\问题\\"
+  # 125: 知识详情页 — "暂不可用" + Markdown 原文裸露
+  # 126: 对话底部 — 来源引用 + emoji 正常
+  # 127: AI 气泡 — "证明、综合素质材料" 只显示一行 + 光标
+  # 128: AI 气泡 — "您的辅导员或相关负责老师。" 只显示一行
+  # 129/131: 空状态 — 输入框可见（正常状态）
+  # 130: 空状态 — 双层 header 挤掉输入框（异常状态）
+
+# ===================================================================
+# Bug 清单 + T0 根因分析
+# ===================================================================
+bugs:
+
+  - id: BUG-1
+    title: "空状态双层 header — 输入框被挤出屏幕"
+    severity: medium
+    screenshot: "130"
+    symptom: |
+      进入智能问答页面时，顶部出现 "AI 咨询"（原生导航栏）+
+      "医小管"（自定义 .navbar）双层 header，导致内容区被大幅下推，
+      输入框在部分机型上完全不可见，需手动下滑。
+    root_cause: |
+      pages.json 第 19 行:
+        "path": "pages/chat/index",
+        "style": { "navigationBarTitleText": "AI 咨询" }
+      渲染了 uni-app 原生导航栏（高度 ~44px + 状态栏）。
+      同时 chat/index.vue 第 4-6 行自行渲染了 .navbar 组件
+      （又占 44px + padding-top: var(--status-bar-height, 44px)）。
+      两者叠加导致 header 总高度约 132px+，在小屏设备上空状态区域 +
+      输入框总高度超过 100vh。
+    files:
+      - "apps/student-app/src/pages.json:17-21"
+      - "apps/student-app/src/pages/chat/index.vue:4-6 (custom navbar)"
+      - "apps/student-app/src/pages/chat/index.vue:786-801 (navbar style)"
+    fix_direction: |
+      方案: 在 pages.json 中为 chat 页面设置 "navigationStyle": "custom"，
+      禁用原生导航栏，仅保留自定义 .navbar。
+      同时可考虑将 .navbar 标题从 "医小管" 改为 "智能问答"，
+      与 TabBar 文字保持一致。
+
+  - id: BUG-2
+    title: "AI 气泡高度只有一行 — 回复内容被截断"
+    severity: critical
+    screenshot: "127, 128"
+    symptom: |
+      AI 回复气泡永远只显示一行文字，长回复被截断不可见。
+      这是 s3-hotfix-bubble-height 已尝试修复但未生效的问题。
+    root_cause: |
+      s3-hotfix-bubble-height 修改了 .message-content 和 .message-text
+      的 flex/min-height 属性，代码已合入（line 915-921, 951-955），
+      但问题依然存在。
+
+      真正根因: <style lang="scss" scoped> 与 v-html 的兼容性问题。
+      chat/index.vue 第 65-69 行:
+        <view class="message-text markdown-body" v-html="renderMarkdown(msg.content)"></view>
+
+      Vue 3 scoped CSS 编译规则:
+        .markdown-body p { ... }
+        → .markdown-body p[data-v-xxxxx] { ... }
+
+      但 v-html 动态插入的 <p>/<ul>/<li> 等元素不会携带 [data-v-xxxxx]
+      属性，因此 .markdown-body 下所有子元素样式全部失效。
+      没有样式的 HTML 元素在 flex 布局中行为异常，导致气泡高度坍塌为一行。
+
+      证据: chat/index.vue 第 958-1010 行的 .markdown-body 子选择器
+      （p, h1, h2, ul, li, code, pre, a, blockquote）全部在 scoped
+      样式块内，未使用 :deep() 穿透。
+    files:
+      - "apps/student-app/src/pages/chat/index.vue:65-69 (v-html template)"
+      - "apps/student-app/src/pages/chat/index.vue:958-1010 (scoped .markdown-body styles)"
+    fix_direction: |
+      将 .markdown-body 的子元素选择器改为 :deep() 穿透，例如:
+        .markdown-body { :deep(p) { margin: 0 0 8px 0; } }
+      或将 .markdown-body 相关样式移至单独的 <style> 块（不加 scoped）。
+      推荐前者，影响面更小。
+
+  - id: BUG-3
+    title: "知识详情页显示'暂不可用' — 降级为摘要展示"
+    severity: medium
+    screenshot: "125"
+    symptom: |
+      点击来源引用跳转到参考资料页后，显示 "知识详情暂不可用，
+      已为你展示引用摘要。"
+    root_cause: |
+      knowledge/detail.vue 第 106 行调用:
+        entry.value = await getKnowledgeEntryDetail(entryId.value)
+      对应 API: GET /api/v1/knowledge/entries/{id}
+
+      该 API 在后端未实现，请求必然失败 → loadFailed=true
+      → 展示 fallback notice + fallbackSummary。
+
+      当前 fallback 逻辑（第 19-21 行）只是显示一条提示文字，
+      然后在 v-else 分支（第 24-26 行）以纯 <text> 显示 summary。
+    files:
+      - "apps/student-app/src/pages/knowledge/detail.vue:98-114 (loadDetail)"
+      - "apps/student-app/src/api/knowledge.ts:7-9 (API endpoint)"
+      - "apps/student-app/src/pages/knowledge/detail.vue:19-26 (fallback template)"
+    fix_direction: |
+      前端侧修复（不依赖后端 API）:
+      1. 当 loadFailed 且有 fallbackSummary 时，将 summary 内容
+         通过 md.render() 渲染为 HTML，而不是用纯 <text> 展示。
+      2. 即：fallback 分支也使用 v-html + markdown-body 样式。
+      3. 同时需解决与 BUG-2 相同的 scoped/:deep() 问题。
+      4. 可选：将 fallback notice 文案从"暂不可用"改为更友好的措辞，
+         或在有内容可展示时隐藏该提示。
+
+  - id: BUG-4
+    title: "参考资料页 Markdown 渲染失效 — 原始标记裸露"
+    severity: medium
+    screenshot: "125"
+    symptom: |
+      参考资料页下方的内容区显示原始 Markdown 标记
+      （# Document, - 列表符号等），未渲染为格式化 HTML。
+    root_cause: |
+      与 BUG-3 同源。API 失败后走 v-else 分支 (line 24-26):
+        <view v-else class="detail-card plain-content">
+          <text>{{ displaySummary || '暂无可展示内容' }}</text>
+        </view>
+      displaySummary 来自 URL 参数 fallbackSummary，是原始 Markdown
+      文本，但以纯 <text> 输出，自然不会渲染。
+
+      此外，即使走到 v-if="renderedContent" 的 v-html 分支，
+      knowledge/detail.vue 的 .markdown-body 样式同样在 scoped 块内
+      （line 212-275），存在与 BUG-2 相同的 :deep() 缺失问题。
+    files:
+      - "apps/student-app/src/pages/knowledge/detail.vue:24-26 (plain-content branch)"
+      - "apps/student-app/src/pages/knowledge/detail.vue:68-71 (renderedContent computed)"
+      - "apps/student-app/src/pages/knowledge/detail.vue:212-275 (scoped markdown-body)"
+    fix_direction: |
+      修复 BUG-3 时一并解决:
+      1. fallback 分支渲染 md.render(fallbackSummary) 而非纯文本
+      2. .markdown-body 子选择器加 :deep() 穿透
+      与 BUG-3 合并为同一个修复任务。
+
+  - id: BUG-5
+    title: "我的申请页面'未登录'跳转回登录页"
+    severity: medium
+    screenshot: "用户口述"
+    symptom: |
+      已登录状态下点击进入"我的申请"（事务导办 → 空教室申请状态页），
+      页面显示"登录已过期"并跳转回登录页。
+    root_cause: |
+      高度疑似: 登录后 /getInfo 响应字段名不匹配。
+
+      login/index.vue 第 146-148 行:
+        const ruoyiUser = userInfoRes.user
+        userStore.setUserInfo({ id: ruoyiUser.userId, ... })
+
+      但后端 yx_user 版本的 /getInfo 返回 (fix-3 报告证据):
+        { "user": { "id": 10, "username": "2524010001", ... } }
+
+      字段名是 "id" 而非 "userId"，"username" 而非 "userName"。
+      因此 userStore.userInfo.id = undefined。
+
+      apply/status.vue 第 246 行:
+        const res = await getMyApplications(userStore.userInfo.id, ...)
+      → getMyApplications(undefined, ...) → 请求 applicantId=undefined
+      → 后端返回错误 → request.ts 第 95-104 行 401 处理器触发
+      → userStore.logout() + 跳转登录页。
+
+      auth.ts 第 54-63 行的 UserInfoResult 接口定义仍用 RuoYi 旧字段名:
+        user: { userId: number, userName: string, nickName: string }
+      需同步更新。
+    files:
+      - "apps/student-app/src/pages/login/index.vue:146-157 (field mapping)"
+      - "apps/student-app/src/api/auth.ts:54-63 (UserInfoResult type)"
+      - "apps/student-app/src/pages/apply/status.vue:246 (userInfo.id usage)"
+    fix_direction: |
+      更新 login/index.vue 的字段映射，兼容 yx_user 版 /getInfo 响应:
+        id: ruoyiUser.id ?? ruoyiUser.userId
+        username: ruoyiUser.username ?? ruoyiUser.userName
+        realName: ruoyiUser.realName ?? ruoyiUser.nickName ?? ...
+      同步更新 auth.ts 的 UserInfoResult 类型定义。
+
+# ===================================================================
+# 修复任务编排
+# ===================================================================
+fix_modules:
+
+  - id: FIX-A
+    title: "Chat 页面 scoped 样式穿透修复 (BUG-2)"
+    priority: critical
+    scope:
+      - "apps/student-app/src/pages/chat/index.vue"
+    description: |
+      将 chat/index.vue 中 .markdown-body 的所有子元素选择器
+      (p, h1-h4, ul, ol, li, code, pre, a, blockquote, hr, strong, b)
+      改为 :deep() 穿透写法。确保 v-html 渲染的 Markdown HTML
+      能正确应用样式，气泡高度随内容自适应。
+    done_criteria:
+      L0: "chat/index.vue .markdown-body 子选择器已穿透（:deep() 或独立 unscoped style 块，与 RISK-1 兜底一致）"
+      L1: "npm run build:h5 编译零错误"
+      L2: "N/A"
+      L3: "[H5] 发送多行回复问题，AI 气泡高度自适应，内容完整展示"
+
+  - id: FIX-B
+    title: "Chat 页面双层导航栏修复 (BUG-1)"
+    priority: medium
+    scope:
+      - "apps/student-app/src/pages.json"
+      - "apps/student-app/src/pages/chat/index.vue"
+    description: |
+      1. pages.json 中 chat 页面添加 "navigationStyle": "custom"
+         禁用原生导航栏
+      2. 自定义 .navbar 标题可考虑改为 "智能问答" 与 TabBar 一致
+         （或保留 "医小管"，由 T1 判断）
+      3. .navbar 的 padding-top 需确保覆盖状态栏高度
+    done_criteria:
+      L0: "pages.json chat 页面 navigationStyle 为 custom"
+      L1: "npm run build:h5 编译零错误"
+      L2: "N/A"
+      L3: "[H5] 仅显示一个导航栏，输入框在首屏可见"
+
+  - id: FIX-C
+    title: "知识详情页 Markdown 渲染修复 (BUG-3 + BUG-4)"
+    priority: medium
+    scope:
+      - "apps/student-app/src/pages/knowledge/detail.vue"
+    description: |
+      1. fallback 分支：当 loadFailed 且有 fallbackSummary 时，
+         将内容通过 md.render() 渲染，使用 v-html + markdown-body 样式
+         替代当前的纯 <text> 展示
+      2. .markdown-body 子选择器加 :deep() 穿透（与 FIX-A 同理）
+      3. 可选：当 fallback 内容已成功渲染时，隐藏或弱化
+         "知识详情暂不可用" 提示
+    done_criteria:
+      L0: "fallback 分支使用 v-html 渲染 Markdown；.markdown-body 穿透方案与 FIX-A 一致"
+      L1: "npm run build:h5 编译零错误"
+      L2: "N/A"
+      L3: "[H5] 点击来源引用 → 参考资料页正确渲染标题/列表/段落"
+
+  - id: FIX-D
+    title: "登录字段映射修复 — 解决申请页鉴权失败 (BUG-5)"
+    priority: medium
+    scope:
+      - "apps/student-app/src/pages/login/index.vue"
+      - "apps/student-app/src/api/auth.ts"
+    description: |
+      1. auth.ts: 更新 UserInfoResult 类型，兼容 yx_user 版 /getInfo
+         响应字段（id/username/realName 等）
+      2. login/index.vue: 更新 setUserInfo 映射逻辑:
+           id: ruoyiUser.id ?? ruoyiUser.userId
+           username: ruoyiUser.username ?? ruoyiUser.userName
+           realName: ruoyiUser.realName ?? ruoyiUser.nickName ?? ...
+         确保向后兼容（万一切回 RuoYi 原版也不会崩）
+      3. 验证 userStore.userInfo.id 在登录后有值
+    done_criteria:
+      L0: "login/index.vue setUserInfo 使用兼容写法"
+      L1: "npm run build:h5 编译零错误"
+      L2: "N/A"
+      L3: "[H5] 登录后进入事务导办 → 我的申请页面不跳回登录"
+
+# ===================================================================
+# 执行编排（给 T1）
+# ===================================================================
+execution_order:
+  batch_1:
+    tasks: [FIX-A, FIX-D]
+    parallel: true
+    name: "核心修复批次（不同文件，可并行）"
+    rationale: |
+      FIX-A 改 chat/index.vue style 区，FIX-D 改 login/index.vue + auth.ts，
+      文件不重叠，可并行。FIX-A 为最高优先级。
+
+  batch_2:
+    tasks: [FIX-B]
+    depends_on: batch_1
+    name: "Chat 导航栏修复"
+    rationale: |
+      FIX-B 同样改 chat/index.vue（template + pages.json），
+      与 FIX-A 存在同文件冲突，必须串行在 FIX-A 之后执行。
+
+  batch_3:
+    tasks: [FIX-C]
+    depends_on: batch_2
+    name: "知识详情修复"
+    rationale: |
+      FIX-C 需参考 FIX-A 确认的样式穿透方案（:deep() 或 unscoped），
+      确保两个页面方案一致后再执行。
+
+  batch_int:
+    tasks: [int-v4-chat-bugfix]
+    depends_on: batch_3
+    name: "集成验收"
+    rationale: "全部修复完成后统一 H5 验证"
+
+# ===================================================================
+# 集成验收标准
+# ===================================================================
+acceptance_criteria:
+  auto:
+    - "npm run build:h5 编译零错误"
+    - "grep 'navigationStyle.*custom' pages.json 命中 chat 页面"
+    - "chat/index.vue .markdown-body 子选择器已穿透（:deep() 或独立 unscoped style 块）"
+    - "knowledge/detail.vue .markdown-body 子选择器已穿透（方案与 chat 一致）"
+    - "grep 'ruoyiUser.id' login/index.vue 命中兼容映射"
+  manual_h5:
+    - "[AC-1] 智能问答空状态：单层导航栏，输入框首屏可见"
+    - "[AC-2] 发送问题后 AI 气泡高度自适应，多行内容完整显示"
+    - "[AC-3] AI 回复中 Markdown 格式正确渲染（标题/列表/加粗/链接）"
+    - "[AC-4] 点击来源引用 → 参考资料页 Markdown 正确渲染"
+    - "[AC-5] 参考资料页无'暂不可用'提示（或提示弱化），内容可读"
+    - "[AC-6] 登录后进入事务导办 → 我的申请，不跳回登录页"
+    - "[AC-7] 已有功能无回归：SSE 流式回复、快捷问题、复制按钮"
+
+# ===================================================================
+# 已知风险
+# ===================================================================
+risks:
+  - id: RISK-1
+    title: ":deep() 在 uni-app H5 模式下的兼容性"
+    description: |
+      uni-app 底层编译器可能对 :deep() 的处理与标准 Vue 3 不同。
+      如果 :deep() 不生效，备选方案是将 .markdown-body 样式
+      移至独立的 <style>（不加 scoped）块。
+    probability: low
+    impact: high
+    mitigation: "FIX-A 优先尝试 :deep()，不生效则改用 unscoped style"
+
+  - id: RISK-2
+    title: "BUG-5 根因可能不只是字段映射"
+    description: |
+      除字段映射外，/api/v1/classroom-applications 端点在后端可能
+      未注册或权限配置不匹配，导致直接返回 401/403。
+      如果 FIX-D 修复字段映射后问题仍存在，需进一步排查后端。
+    probability: medium
+    impact: medium
+    mitigation: "FIX-D 完成后先验证 userInfo.id 有值；若仍 401 则上报 T0"
+
+# ===================================================================
+# 上下文文件（T2 执行时必读）
+# ===================================================================
+context_files:
+  must_read:
+    - "apps/student-app/src/pages/chat/index.vue"
+    - "apps/student-app/src/pages/knowledge/detail.vue"
+    - "apps/student-app/src/pages/login/index.vue"
+    - "apps/student-app/src/api/auth.ts"
+    - "apps/student-app/src/pages.json"
+  reference:
+    - "apps/student-app/src/utils/request.ts"
+    - "apps/student-app/src/api/knowledge.ts"
+    - "apps/student-app/src/api/apply.ts"
+    - "apps/student-app/src/pages/apply/status.vue"
+    - ".tasks/v3-student-ui/s3-hotfix-bubble-height/_report.md"
+  evidence_screenshots:
+    - "C:\\Users\\Administrator\\Pictures\\问题\\微信图片_20260406002952_125_26.jpg"
+    - "C:\\Users\\Administrator\\Pictures\\问题\\微信图片_20260406002954_127_26.jpg"
+    - "C:\\Users\\Administrator\\Pictures\\问题\\微信图片_20260406002954_128_26.jpg"
+    - "C:\\Users\\Administrator\\Pictures\\问题\\微信图片_20260406002956_130_26.jpg"

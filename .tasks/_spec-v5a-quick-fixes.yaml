@@ -1,0 +1,309 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v5a
+# 日期: 2026-04-06
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v4 (completed)
+# ===================================================================
+#
+# 背景摘要:
+#   spec-v4 已完成并签收。现进入 demo 演示前的快速修复阶段。
+#   本 spec 包含 7 个独立小任务，均为 UI 修复或配置调整，
+#   互不冲突，可并行执行。
+#
+# 目标:
+#   1. 修复登录页提示文案（密码策略已变更）
+#   2. 清理 DEBT-V4-01 硬编码颜色
+#   3. 修复参考资料卡片样式冲突
+#   4. 修复历史记录页 status=undefined 类型错误
+#   5. 启用 165 服务器验证码
+#   6. 知识详情不可用问题诊断与修复（如成本可控）
+#   7. 首页/功能页静态数据美化
+#
+# 约束:
+#   - 所有前端修改限定在 apps/student-app/src/ 内
+#   - 不新增后端 Java 代码（验证码为配置变更）
+#   - 修改文件无交叉，可并行安全执行
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v5a
+date: 2026-04-06
+author: T0-Architect
+status: ready_for_t1
+predecessor:
+  - spec-v4 (completed, signed off 2026-04-06)
+
+# ===================================================================
+# 模块定义
+# ===================================================================
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-01: 登录页提示文案修正
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-01
+    title: 登录页提示文案修正
+    priority: P1
+    estimated_effort: 5min
+    description: |
+      当前登录页底部显示"首次登录请使用默认密码，登录后请修改"，
+      但实际密码策略为"密码与学号相同"（由 generate_user_data.py 生成）。
+      需要更新提示文案使其与实际一致。
+    files:
+      - apps/student-app/src/pages/login/index.vue
+    changes:
+      - location: "line 66, template section"
+        current: '首次登录请使用默认密码，登录后请修改'
+        target: '初始密码与学号相同，登录后请及时修改'
+    acceptance_criteria:
+      - 登录页底部提示显示"初始密码与学号相同，登录后请及时修改"
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-02: DEBT-V4-01 硬编码颜色清理
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-02
+    title: DEBT-V4-01 硬编码颜色清理
+    priority: P3
+    estimated_effort: 15min
+    description: |
+      spec-v4 遗留技术债 DEBT-V4-01：5 处 #006a64 硬编码在 JS/template/JSON 中，
+      无法直接使用 SCSS 变量。需替换为语义化方案。
+      注意：theme.scss 中 $primary-40: #006a64 是定义源，不需要修改。
+    files:
+      - apps/student-app/src/pages.json
+      - apps/student-app/src/pages/chat/index.vue
+      - apps/student-app/src/pages/apply/status.vue
+      - apps/student-app/src/pages/apply/detail.vue
+      - apps/student-app/src/components/CustomTabBar.vue
+    changes:
+      - file: pages.json
+        location: "tabBar.selectedColor"
+        note: "JSON 无法用变量，保留 #006a64 但添加注释说明来源，或改为 CSS 自定义属性方案"
+      - file: chat/index.vue (line 38)
+        current: 'color="#006a64"'
+        target: '使用 $primary 或 CSS 变量 var(--md-sys-color-primary)'
+      - file: apply/status.vue (line 291)
+        current: "confirmColor: '#006a64'"
+        target: "使用主题变量或从 CSS 变量读取"
+      - file: apply/detail.vue (line 321)
+        current: "confirmColor: '#006a64'"
+        target: "使用主题变量或从 CSS 变量读取"
+      - file: CustomTabBar.vue (line 11)
+        current: "color=\"#006a64\""
+        target: '使用 $primary 或 CSS 变量'
+    strategy: |
+      推荐方案：在 App.vue 或 theme.scss 中定义 CSS 自定义属性
+      :root { --color-primary: #006a64; }
+      然后 JS/template 中统一使用 getComputedStyle 读取或直接引用常量文件。
+      对于 pages.json 的 tabBar.selectedColor，因 uni-app 限制只能写字面量，
+      保留硬编码但在旁边用注释标注"同步 theme.scss $primary-40"。
+    acceptance_criteria:
+      - template/JS 中不再有裸写 #006a64（pages.json 除外，需注释标注）
+      - 视觉效果与修改前完全一致
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-03: 参考资料卡片样式优化
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-03
+    title: 参考资料卡片样式优化
+    priority: P2
+    estimated_effort: 10min
+    description: |
+      AI 回答下方的"参考资料"条目列表，当前使用灰色底色
+      (background: $md-sys-color-surface-container-low) 在白色背景上视觉层次不清晰，
+      灰白冲突导致看起来像是 disabled 状态。
+      需要优化为更清晰的视觉层次。
+    files:
+      - apps/student-app/src/pages/chat/index.vue
+    changes:
+      - location: ".source-item style block (approx line 1169-1202)"
+        current: "background: $md-sys-color-surface-container-low"
+        target: |
+          方案选择（T1 择一实施）：
+          A) 加左侧主题色竖线 + 白底 + 浅灰边框
+             border-left: 3px solid $primary;
+             background: #ffffff;
+             border: 1px solid $md-sys-color-outline-variant;
+          B) 使用浅主题色背景
+             background: rgba(0, 106, 100, 0.06);
+             border: 1px solid rgba(0, 106, 100, 0.15);
+          推荐方案 B，与主题色呼应且不喧宾夺主。
+    acceptance_criteria:
+      - 参考资料卡片在白色背景上层次清晰，不像 disabled
+      - 点击态仍有视觉反馈
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-04: 历史记录页 status=undefined 修复
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-04
+    title: 历史记录页 API 参数修复
+    priority: P1
+    estimated_effort: 15min
+    description: |
+      history.vue 调用 getConversationList() 时不传 status 参数，
+      但 api/chat.ts 的 getConversationList(status?: number) 会将
+      undefined 的 status 传入 GET 请求参数，导致后端报错：
+      "参数[status]要求类型为: 'java.lang.Integer', 但输入值为: 'undefined'"
+
+      根因分析：
+      - api/chat.ts line 35: get('/api/v1/conversations', { status, ...params })
+      - 当 status 为 undefined 时，{ status: undefined } 被序列化为 ?status=undefined
+      - 后端 Java Controller 期望 Integer 类型，无法解析 "undefined" 字符串
+
+      控制台截图显示多次重复报错（onMounted + onShow 各触发一次）。
+    files:
+      - apps/student-app/src/api/chat.ts
+    changes:
+      - location: "getConversationList function, line 35"
+        current: "return get('/api/v1/conversations', { status, ...params })"
+        target: |
+          // 过滤 undefined 参数，避免发送 ?status=undefined
+          const query: Record<string, any> = { ...params }
+          if (status !== undefined) query.status = status
+          return get('/api/v1/conversations', query)
+    acceptance_criteria:
+      - 进入历史记录页不再有控制台报错
+      - 会话列表正常加载（如有数据则显示，无数据则显示空状态）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-05: 165 服务器启用验证码
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-05
+    title: 启用登录验证码
+    priority: P2
+    estimated_effort: 15min
+    description: |
+      当前 165 服务器 captchaEnabled=False，登录页无验证码。
+      需启用验证码以增强安全性。
+
+      第一阶段使用若依自带的算术验证码（工作量最小）。
+      后续如需替换为滑块验证码等方案，作为单独任务处理。
+    execution:
+      - step: "在 165 服务器上执行 Redis 配置变更"
+        command: |
+          docker exec yx_redis redis-cli -a 'Yx@Redis2026!' SET sys_config:sys.account.captchaEnabled true
+        note: "或通过后端管理接口/数据库修改 sys_config 表"
+      - step: "确认前端登录页已有验证码组件"
+        note: |
+          检查 login/index.vue 是否已有 captchaImage 相关逻辑。
+          若依标准模板通常已包含，确认 /api/captchaImage 代理正常即可。
+    files:
+      - apps/student-app/src/pages/login/index.vue (确认验证码 UI 存在)
+    acceptance_criteria:
+      - 登录页显示算术验证码图片
+      - 输入正确验证码 + 正确账号密码可登录成功
+      - 验证码错误时有明确提示
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-06: 知识详情不可用诊断与修复
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-06
+    title: 知识详情页不可用修复
+    priority: P2
+    estimated_effort: 30min~2h (视根因而定)
+    description: |
+      点击参考资料条目跳转到 knowledge/detail 页面后，显示
+      "知识详情暂不可用，已为你展示引用摘要"（降级逻辑正常工作）。
+
+      根因分析（T0 诊断结果）：
+      1. detail.vue 调用 GET /api/v1/knowledge/entries/{id}
+      2. 该 API 可能返回 404（后端未实现该接口，或 entry_id 映射不上）
+      3. AI 回复中的 entry_id 来自 ChromaDB metadata，
+         格式如 "KB-20260323-0001-chunk-5"，非纯数字 ID
+      4. normalizeEntryId() 尝试将其解析为数字，可能失败
+
+      修复策略（T1 择一实施）：
+      A) 如果后端 /api/v1/knowledge/entries/{id} 已实现但 ID 不匹配：
+         修改 normalizeEntryId 适配 ChromaDB 的 entry_id 格式
+      B) 如果后端 API 不存在：
+         改为直接使用 AI 回复中携带的 content 作为详情内容展示，
+         不再调用后端 API，detail.vue 完全依赖 URL 参数中的 summary
+      C) 如果修复成本 > 2h：
+         保持现状（降级摘要展示已可用），标记为 DEBT-V5A-01 延后处理
+
+      推荐方案 B（成本最低，效果可接受）。
+    files:
+      - apps/student-app/src/pages/knowledge/detail.vue
+      - apps/student-app/src/pages/chat/index.vue (normalizeEntryId)
+      - apps/student-app/src/api/knowledge.ts
+    acceptance_criteria:
+      - 点击参考资料条目后能看到完整摘要内容（非"暂不可用"提示）
+      - 如采用方案 C，需在 spec 中注明 DEBT 编号
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5A-07: 首页/功能页静态数据美化
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5A-07
+    title: 首页与功能页静态数据美化
+    priority: P3
+    estimated_effort: 1~2h
+    description: |
+      当前首页和功能页使用开发阶段的占位数据，
+      需要替换为更贴近真实场景的演示数据，提升 demo 展示效果。
+
+      需美化的页面（T1 逐一检查并优化）：
+      1. 首页 (pages/home/index.vue 或类似)：
+         - 轮播图/公告区域：使用医学院相关内容
+         - 快捷入口：确保图标和文案合理
+         - 统计数据：显示合理的数字而非 0 或占位符
+      2. 事务导办 (pages/services/index.vue)：
+         - 功能卡片数据完整、图标匹配
+      3. 个人中心 (pages/profile/index.vue)：
+         - 显示当前登录用户的真实信息（学号、姓名、学院）
+    files:
+      - apps/student-app/src/pages/ (多个页面)
+    acceptance_criteria:
+      - 首页无明显占位数据或空白区域
+      - 各页面数据看起来合理、完整
+      - 不需要真实后端数据，静态 mock 即可
+
+# ===================================================================
+# 验收标准汇总
+# ===================================================================
+acceptance_criteria_global:
+  - AC-1: 登录页提示文案正确反映密码策略
+  - AC-2: 无裸写 #006a64（pages.json 除外且有注释）
+  - AC-3: 参考资料卡片视觉层次清晰
+  - AC-4: 历史记录页无控制台报错
+  - AC-5: 登录页显示验证码且功能正常
+  - AC-6: 参考资料点击后能展示有意义的内容
+  - AC-7: 首页演示数据合理完整
+
+# ===================================================================
+# 上下文文件
+# ===================================================================
+context_files:
+  theme:
+    - apps/student-app/src/styles/theme.scss
+  login:
+    - apps/student-app/src/pages/login/index.vue
+  chat:
+    - apps/student-app/src/pages/chat/index.vue
+    - apps/student-app/src/api/chat.ts
+  knowledge:
+    - apps/student-app/src/pages/knowledge/detail.vue
+    - apps/student-app/src/api/knowledge.ts
+  scripts:
+    - scripts/generate_user_data.py
+
+# ===================================================================
+# 165 服务器信息
+# ===================================================================
+server_info:
+  host: 192.168.100.165
+  ssh_user: easten
+  project_path: ~/dev/yixiaoguan/
+  postgres:
+    container: yx_postgres
+    user: yx_admin
+    database: yixiaoguan
+  redis:
+    container: yx_redis
+    password: 'Yx@Redis2026!'
+  ports:
+    backend: 8080
+    ai_service: 8000
+    student_app: 5174
+    teacher_web: 5173

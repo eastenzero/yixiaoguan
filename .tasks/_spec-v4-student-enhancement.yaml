@@ -1,0 +1,503 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v4
+# 日期: 2026-04-06
+# 作者: T0 Architect (Cascade)
+# 状态: completed  # T0 签收 2026-04-06 14:15
+# 前置: spec-v3 (completed), spec-v4-chat-bugfix (hotfix merged)
+# ===================================================================
+#
+# 背景摘要:
+#   spec-v3 完成了学生端 UI 重做（对话/首页/事务导办/个人中心）。
+#   spec-v4-chat-bugfix 修复了 5 个阻塞性 bug（BUG-1~5），其中 BUG-2
+#   的真正根因（SSE chunk 契约不匹配）由 T0 直接 hotfix。
+#   现在进入"功能补全 + 质量提升"阶段：清理遗留技术债、对接已有后端 API、
+#   新增聊天历史功能、扩充知识库覆盖面。
+#
+# 目标:
+#   1. 清理 spec-v3 遗留技术债 (A1/A2/A3)
+#   2. 聊天历史记录功能 (B1) — 后端 API 已就绪，需前端对接
+#   3. 来源引用点击闭环增强 (B2) — 依赖 A1
+#   4. 快捷问题动态化 (B3)
+#   5. 知识库扩量 (C1) — 补齐生活化高频问题
+#   6. AI 防幻觉端到端验证 (C2)
+#   7. 事务导办统计卡片真实数据 (D3)
+#
+# 约束:
+#   - 不新增后端 Java 接口（全部已在模块 1-5 中实现）
+#   - 前端通道任务之间禁止写同一文件（并行安全）
+#   - KB 通道与前端通道完全独立，可全程并行
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v4
+date: 2026-04-06
+author: T0-Architect
+status: ready_for_t1
+predecessor:
+  - spec-v3 (completed, signed off 2026-04-05)
+  - spec-v4-chat-bugfix (hotfix merged 2026-04-06)
+
+# ===================================================================
+# 当前状态快照
+# ===================================================================
+current_state:
+  backend_apis_ready:
+    knowledge_detail: "GET /api/v1/knowledge/entries/{id} — KnowledgeEntryController.getById()"
+    conversation_list: "GET /api/v1/conversations — ConversationController.list()"
+    conversation_create: "POST /api/v1/conversations — ConversationController.create()"
+    conversation_close: "DELETE /api/v1/conversations/{id}"
+    message_history: "GET /api/v1/conversations/{id}/messages — 全量历史"
+    message_page: "GET /api/v1/conversations/{id}/messages/page — 分页"
+    message_send: "POST /api/v1/conversations/{id}/messages"
+    ai_message_save: "YxMessageService.saveAiMessage() — AI 回复入库"
+
+  frontend_api_layer:
+    file: "apps/student-app/src/api/chat.ts"
+    status: "所有会话/消息 API 函数已定义，但 chat 页面未调用"
+    functions:
+      - createConversation
+      - getConversationList
+      - getConversationDetail
+      - getHistory
+      - getMessagePage
+      - sendMessage
+
+  knowledge_base:
+    file_count: 55
+    chunk_count: ~126
+    coverage: "学术政策为主（奖学金/选课/考试/图书馆等）"
+    gap: "生活服务类严重不足（电费/报修/水电/校园卡/网络/宿舍/食堂等）"
+
+  already_implemented:
+    - "D1 首页个性化问候：timeGreeting + userStore.realName（已有，无需再做）"
+
+  hardcoded_issues:
+    quick_questions: "chat/index.vue:269-274 — 4 条硬编码"
+    color_tokens: "23 处 #006a64 内联硬编码，分布在 11 个文件"
+    source_preview: "chat/index.vue:184 — <text>{{ content }}</text> 纯文本，未用 v-html"
+
+# ===================================================================
+# 模块定义
+# ===================================================================
+modules:
+
+  # ─────────────── A 层：遗留技术债 ───────────────
+
+  - id: F-V4-01
+    name: "知识详情页 API 对接"
+    origin: "spec-v3 遗留 t1-15"
+    priority: P0
+    description: |
+      knowledge/detail.vue 当前走 fallback（API 404 → 展示 route query 中的摘要）。
+      后端 GET /api/v1/knowledge/entries/{id} 已实现，需前端对接：
+      1. 修复 getKnowledgeEntryDetail 调用，正确处理 AjaxResult 响应包装
+      2. 成功时渲染完整知识条目（标题 + markdown 正文 + 标签）
+      3. 失败时保留现有 fallback 行为
+    scope:
+      - pages/knowledge/detail.vue
+      - api/knowledge.ts
+    out_of_scope:
+      - 后端接口修改
+      - 其他页面
+    verification:
+      L0: "TypeScript 编译无错误"
+      L1: "getKnowledgeEntryDetail 函数调用格式正确"
+      L2: "H5 预览：从 AI 回复来源点击进入详情页，显示完整条目内容"
+    depends_on: []
+
+  - id: F-V4-02
+    name: "主题色 Token 统一"
+    origin: "spec-v3 DEBT-V3-01"
+    priority: P1
+    description: |
+      将 11 个文件中的 23 处 #006a64 内联硬编码替换为 theme.scss 中的
+      $primary 或对应语义 token 引用。
+    scope:
+      - pages/chat/index.vue (8 处，仅 CSS 中 color/background 值)
+      - pages/knowledge/detail.vue (3 处)
+      - components/CustomTabBar.vue (2 处)
+      - pages/apply/detail.vue (2 处)
+      - pages/apply/status.vue (2 处)
+      - components/StatusBadge.vue (1 处)
+      - pages/apply/classroom.vue (1 处)
+      - pages/login/index.vue (1 处)
+      - pages/profile/index.vue (1 处)
+      - pages/questions/index.vue (1 处)
+      - styles/theme.scss (确认 $primary 已为 #006a64)
+    out_of_scope:
+      - 新增或修改 theme.scss token 定义（已在 spec-v3 F-S1 完成）
+    verification:
+      L0: "编译无错误"
+      L1: "grep -r '#006a64' src/ 结果仅剩 theme.scss 中的定义行"
+      L2: "H5 预览：各页面颜色表现无变化"
+    depends_on: []
+
+  - id: F-V4-05-A2
+    name: "来源弹层 Markdown 渲染"
+    origin: "spec-v3 DEBT-V3-04"
+    priority: P1
+    description: |
+      source-preview 弹层当前用 <text>{{ content }}</text> 渲染来源摘要，
+      导致 markdown 符号（**粗体**、# 标题等）裸露。
+      修改为 v-html="renderMarkdown(content)" + :deep() 样式穿透。
+      复用已有的 renderMarkdown 函数和 .markdown-body 样式。
+    scope:
+      - pages/chat/index.vue (template 行 183-184, CSS source-preview 区域)
+    out_of_scope:
+      - 其他文件
+      - renderMarkdown 函数逻辑（已有）
+    verification:
+      L0: "编译无错误"
+      L1: "source-preview-content 使用 v-html 而非 {{ }}"
+      L2: "H5 预览：来源弹层内 markdown 正确渲染（粗体/列表/标题）"
+    depends_on: []
+
+  # ─────────────── B 层：功能增强 ───────────────
+
+  - id: F-V4-03
+    name: "聊天历史记录"
+    priority: P0
+    description: |
+      新建会话历史列表页，对接已有后端 API，实现对话持久化。
+      前端 api/chat.ts 已定义全部 API 函数，页面层尚未调用。
+
+      功能要求：
+      1. 新建 pages/chat/history.vue — 会话列表页
+         - 调用 getConversationList() 展示历史会话
+         - 每条显示：标题（或首条消息摘要）、最后消息时间、消息数
+         - 点击进入对应会话，加载历史消息
+         - "新建对话"按钮，调用 createConversation()
+         - 空状态提示
+      2. pages.json 注册新路由
+      3. 会话持久化逻辑（可在集成阶段由 F-V4-06 统一处理）：
+         - 首次发消息时调用 createConversation 获取 conversationId
+         - AI 回复完成后将 user+AI 消息保存到后端
+         - 再次进入已有会话时从 getHistory 加载
+
+      UI 参考：
+      - 列表项卡片式布局，teal 渐变标题栏
+      - 与现有 chat 页面风格统一
+    scope:
+      - pages/chat/history.vue (新建)
+      - pages.json (新增路由)
+    out_of_scope:
+      - chat/index.vue 修改（由 F-V4-06 统一处理）
+      - 搜索/删除/归档会话（后续迭代）
+    verification:
+      L0: "编译无错误，新页面存在"
+      L1: "pages.json 包含 pages/chat/history 路由"
+      L2: "H5 预览：会话历史页渲染正常，空状态或已有会话列表可见"
+    depends_on: []
+
+  - id: F-V4-04
+    name: "事务导办统计卡片"
+    priority: P2
+    description: |
+      services/index.vue 顶部添加统计概览卡片区域：
+      1. "进行中的申请"数量 — 调用 getMyApplications 统计 status=处理中 的数量
+      2. "待处理通知"数量 — 预留位，当前显示 0 或 mock
+      数据获取失败时显示 "--" 而非报错。
+    scope:
+      - pages/services/index.vue
+    out_of_scope:
+      - 新增后端接口
+      - 通知 API 对接（后端通知模块暂未前端化）
+    verification:
+      L0: "编译无错误"
+      L1: "services/index.vue 包含统计卡片组件"
+      L2: "H5 预览：事务导办页顶部显示统计区域"
+    depends_on: []
+
+  - id: F-V4-05
+    name: "快捷问题动态化"
+    priority: P1
+    description: |
+      将 chat/index.vue 中硬编码的 quickQuestions 数组改为从知识库热门问题
+      动态获取。
+
+      实现方案（任选其一）：
+      - 方案 A：从 ai-service 新增一个 GET /api/chat/suggestions 接口返回热门问题
+      - 方案 B：在前端维护一个可配置的问题列表（从 localStorage 或远程配置读取）
+      - 方案 C（推荐）：保留前端默认列表作为 fallback，尝试从 ai-service 获取，
+        失败则用默认列表
+
+      无论哪种方案，quickQuestions 必须保持响应式，页面首次加载时异步获取。
+    scope:
+      - pages/chat/index.vue (quickQuestions 定义区域，行 269-274)
+      - api/chat.ts (可能新增 getSuggestions 函数)
+    out_of_scope:
+      - ai-service 侧新增接口（如采用方案 A，需单独处理）
+    verification:
+      L0: "编译无错误"
+      L1: "quickQuestions 不再是纯硬编码常量"
+      L2: "H5 预览：快捷问题正常显示（至少 fallback 列表可见）"
+    depends_on: []
+
+  - id: F-V4-06
+    name: "Chat 页面集成增强"
+    priority: P0
+    description: |
+      将 B1/B2/A2 相关的 chat/index.vue 改动统一集成。
+      此任务是 chat/index.vue 的唯一写入者（batch_2 阶段）。
+
+      包含以下子改动：
+      1. **历史导航按钮**：navbar 区域增加"历史记录"入口，
+         navigateTo pages/chat/history
+      2. **来源点击闭环**：handleSourceClick 优先跳知识详情页
+         (navigateTo /pages/knowledge/detail?id=xxx)，
+         已有 entryId 时直接跳转（A1 保障详情页可用）；
+         无 entryId 时降级弹层；有 url 时保留外链兜底
+      3. **会话持久化集成**：
+         - sendMessage 时如无 conversationId 则先 createConversation
+         - AI 回复完成后保存 user+AI 消息到后端
+         - onLoad 时如有 conversationId 参数则加载历史消息
+      4. **快捷问题集成**：如 F-V4-05 采用方案 A/C，
+         在 onMounted 中调用获取建议问题
+    scope:
+      - pages/chat/index.vue
+    out_of_scope:
+      - history.vue 页面本身（由 F-V4-03 完成）
+      - knowledge/detail.vue（由 F-V4-01 完成）
+    verification:
+      L0: "编译无错误"
+      L1: "navbar 包含历史入口按钮"
+      L2: "H5 预览：点击历史按钮跳转到历史页；来源点击跳转详情页"
+      L3: "发送消息后刷新页面，消息从后端恢复（需 business-api 运行）"
+    depends_on: [F-V4-01, F-V4-03, F-V4-05]
+
+  # ─────────────── C 层：知识库 & AI 质量 ───────────────
+
+  - id: F-V4-KB
+    name: "知识库扩量 — 生活服务类"
+    priority: P0
+    description: |
+      当前 KB 55 个文件，主要覆盖学术政策。生活服务类严重不足。
+      需从两份核心参考文档中提取信息，编写结构化 KB 条目。
+
+      ═══════════════════════════════════════════════
+      核心参考文档（已复制到项目目录）
+      ═══════════════════════════════════════════════
+      1. 学生手册-生活服务.md (401KB, 5076 行)
+         路径: knowledge-base/raw/first-batch-processing/converted/学生手册-生活服务.md
+         来源: 学校官方学生手册 PDF (MinerU 提取)
+         已验证覆盖的高频主题：
+         - ✅ 电费缴纳：完美校园APP/支付宝小程序操作步骤（行 4927-5041）
+         - ✅ 报修流程：后勤管理部负责，学生不得擅自处理（行 4300-4309）
+         - ✅ 校园卡办理：实体卡+虚拟校园码，充值方式三种（行 4927-5026）
+         - ✅ 水卡/淋浴：无单独水卡，校园卡集成淋浴/直饮水（行 4927）
+         - ✅ 节约水电要求（行 4288）
+         - ⚠️ 电费标准（单价）：文档未提及，标注"以学校通知为准"
+         其他可提取主题：学生公寓管理、纪律处分、奖学金评定、学籍管理、
+         请假销假、考试纪律、社会实践等
+
+      2. 医小管知识库二次修改版.md (178KB, 2103 行)
+         路径: knowledge-base/raw/first-batch-processing/converted/医小管知识库二次修改版.md
+         来源: 项目早期整理的学校信息汇编
+         覆盖主题：学校概况/师资力量/考研数据/就业去向/学院概况
+
+      ═══════════════════════════════════════════════
+      必补主题（从学生手册提取，高频）
+      ═══════════════════════════════════════════════
+      - 电费缴纳（完美校园APP操作步骤 + 电控功能说明）
+      - 宿舍报修（后勤管理部职责 + 学生注意事项 + 损坏赔偿）
+      - 校园卡办理（实体卡/虚拟码 + 三种充值方式 + 覆盖功能）
+      - 水电管理（淋浴/直饮水使用 + 节约要求 + 供应保障）
+      - 学生公寓管理（入住/退宿/门禁/访客/安全规定）
+      - 请假销假（流程/审批/学时要求）
+      - 奖学金评定（类别/条件/评选流程）
+      - 纪律处分（类别/程序/申诉）
+
+      可选主题（中频，视文档覆盖情况）：
+      - 学籍管理（休学/复学/转专业）
+      - 考试纪律与违纪处理
+      - 社会实践与志愿服务
+      - 校医院就诊流程
+
+      ═══════════════════════════════════════════════
+      格式要求
+      ═══════════════════════════════════════════════
+      - 遵循现有 KB frontmatter 格式 (material_id, title, category, tags)
+      - 每条 500-1500 字，结构化（## 小标题 + 列表）
+      - 信息来源标注：标注出自学生手册第 X 行或知识库二次修改版
+      - 文档未覆盖的信息加注"以学校最新通知为准"
+      - 编号从 KB-0150 起（避免与现有条目冲突）
+
+      入库流程：
+      1. 从参考文档提取信息，编写 .md 文件到
+         knowledge-base/raw/first-batch-processing/converted/markdown/
+      2. 运行 batch_ingest_kb.py 入库
+      3. 验证 /kb/stats entry_count 增长
+    scope:
+      - knowledge-base/raw/first-batch-processing/converted/markdown/ (新增 .md)
+    source_documents:
+      - knowledge-base/raw/first-batch-processing/converted/学生手册-生活服务.md
+      - knowledge-base/raw/first-batch-processing/converted/医小管知识库二次修改版.md
+    out_of_scope:
+      - 修改已有 KB 条目
+      - 修改 chunker 或入库脚本
+    verification:
+      L0: "新增 .md 文件存在且 frontmatter 格式正确"
+      L1: "batch_ingest_kb.py 运行无错误"
+      L2: "/kb/stats entry_count ≥ 75（当前 55 + 至少 20 条新增）"
+    depends_on: []
+
+  - id: F-V4-GR
+    name: "AI 防幻觉端到端验证"
+    priority: P1
+    description: |
+      llm_chat.py 已实现检索门控 (grounded 检查) 和证据不足拒答
+      (FALLBACK_NO_GROUNDING_ANSWER)。需端到端验证：
+      1. 发送 KB 覆盖范围外的问题（如"北京天气怎样"），确认返回拒答
+      2. 发送 KB 覆盖范围内的问题，确认正常回答且 grounded=true
+      3. KB 扩量后重新验证边界问题（如"电费怎么交"从拒答变为正常回答）
+      4. 更新 eval-set-v1.yaml 评测集，补充生活服务类用例
+    scope:
+      - docs/test-reports/ (验证报告)
+      - scripts/eval/ (评测集更新)
+    out_of_scope:
+      - 修改 llm_chat.py 防幻觉逻辑
+    verification:
+      L0: "验证报告文件存在"
+      L1: "拒答用例返回 FALLBACK 文案"
+      L2: "Recall@5 ≥ 90% 且拒答准确率 = 100%"
+    depends_on: [F-V4-KB]
+
+# ===================================================================
+# 执行编排
+# ===================================================================
+execution_order:
+
+  batch_1:
+    name: "并行主批次 — 零文件冲突"
+    tasks: [F-V4-01, F-V4-02, F-V4-03, F-V4-04]
+    parallel: true
+    file_conflict_check: |
+      F-V4-01: knowledge/detail.vue, api/knowledge.ts
+      F-V4-02: 11 个文件的 CSS 值替换（不含 knowledge/detail.vue 的 JS）
+      F-V4-03: NEW pages/chat/history.vue, pages.json
+      F-V4-04: services/index.vue
+      → 无冲突 ✓
+    rationale: "全部独立文件，T2 可并行执行"
+
+  batch_2:
+    name: "Chat 集成批次"
+    tasks: [F-V4-05, F-V4-06, F-V4-05-A2]
+    parallel: false
+    execution_order_within: "F-V4-05 → F-V4-05-A2 → F-V4-06"
+    rationale: |
+      三个任务都涉及 chat/index.vue，必须串行。
+      F-V4-05 改 quickQuestions 定义 → F-V4-05-A2 改 source-preview 模板 →
+      F-V4-06 做最终集成（历史导航 + 来源闭环 + 会话持久化）
+    depends_on: batch_1
+
+  batch_kb:
+    name: "知识库通道（与前端完全并行）"
+    tasks: [F-V4-KB]
+    parallel_with: [batch_1, batch_2]
+    rationale: "纯数据层操作，与前端代码零交叉"
+
+  batch_verify:
+    name: "验证收尾"
+    tasks: [F-V4-GR]
+    depends_on: [batch_kb]
+    rationale: "KB 扩量后才能验证边界问题转变"
+
+  batch_int:
+    name: "集成验收"
+    depends_on: [batch_2, batch_verify]
+    tasks: [integration_test]
+    acceptance_criteria:
+      - id: AC-1
+        desc: "知识详情页从 AI 来源点击可进入，显示完整条目"
+        covers: [F-V4-01, F-V4-06]
+      - id: AC-2
+        desc: "所有页面 grep #006a64 仅剩 theme.scss 定义行"
+        covers: [F-V4-02]
+      - id: AC-3
+        desc: "会话历史页可列出/新建会话"
+        covers: [F-V4-03]
+      - id: AC-4
+        desc: "事务导办页统计卡片显示"
+        covers: [F-V4-04]
+      - id: AC-5
+        desc: "快捷问题非硬编码"
+        covers: [F-V4-05]
+      - id: AC-6
+        desc: "来源弹层 markdown 正确渲染"
+        covers: [F-V4-05-A2]
+      - id: AC-7
+        desc: "Chat 页面有历史入口，来源点击跳详情页"
+        covers: [F-V4-06]
+      - id: AC-8
+        desc: "KB entry_count ≥ 75"
+        covers: [F-V4-KB]
+      - id: AC-9
+        desc: "拒答准确率 100%，Recall@5 ≥ 90%"
+        covers: [F-V4-GR]
+      - id: AC-10
+        desc: "TypeScript 编译零错误，所有已有功能无回归"
+        covers: [ALL]
+
+# ===================================================================
+# 风险登记
+# ===================================================================
+risks:
+  - id: RISK-V4-01
+    title: "business-api 未运行导致会话 API 不可用"
+    probability: medium
+    impact: high
+    mitigation: |
+      F-V4-03/F-V4-06 的 L3 验证需要 business-api (8080) 运行。
+      L0-L2 可在无后端情况下通过（代码层验证）。
+      会话列表页应优雅处理 API 失败（显示空状态而非报错）。
+    affected: [F-V4-03, F-V4-06]
+
+  - id: RISK-V4-02
+    title: "chat/index.vue 串行批次效率"
+    probability: low
+    impact: medium
+    mitigation: |
+      batch_2 三个任务串行执行。如时间紧迫，可将 F-V4-05 和 F-V4-05-A2
+      合并为一个任务减少交接成本。
+
+  - id: RISK-V4-03
+    title: "KB 扩量内容准确性"
+    probability: medium
+    impact: medium
+    mitigation: |
+      优先使用学生手册/学校官网作为信息来源。
+      无官方来源的通用信息需标注"以学校最新通知为准"。
+      入库后通过 eval-set 回归验证。
+
+# ===================================================================
+# 注意事项（给 T1 Coordinator）
+# ===================================================================
+notes_for_t1:
+  - "batch_1 四个任务可并行下发 T2，文件冲突已验证为零"
+  - "batch_2 必须串行执行，顺序为 F-V4-05 → F-V4-05-A2 → F-V4-06"
+  - "batch_kb 可与 batch_1/batch_2 全程并行，由独立 T2 或人工执行"
+  - "F-V4-02 (theme token) 涉及 11 个文件但改动极简（find-replace），建议给 T2 明确替换规则"
+  - "F-V4-06 是 chat/index.vue 的最终集成，改动面最大，需重点 review"
+  - "A4 (FIX-D 运行态验证) 纳入 batch_int 的 AC-10 回归项，不单独出任务"
+
+# ===================================================================
+# 上下文文件清单（T2 执行时必读）
+# ===================================================================
+context_files:
+  must_read:
+    - "apps/student-app/src/api/chat.ts  # 已有全部会话/消息 API"
+    - "apps/student-app/src/api/knowledge.ts  # 已有 getKnowledgeEntryDetail"
+    - "apps/student-app/src/styles/theme.scss  # $primary 定义"
+    - "apps/student-app/src/pages/chat/index.vue  # 主战场"
+    - "apps/student-app/src/pages/knowledge/detail.vue"
+    - "apps/student-app/src/pages/services/index.vue"
+  backend_reference:
+    - "services/business-api/.../knowledge/controller/KnowledgeEntryController.java"
+    - "services/business-api/.../conversation/controller/ConversationController.java"
+    - "services/business-api/.../conversation/service/IYxConversationService.java"
+    - "services/business-api/.../conversation/service/IYxMessageService.java"
+  knowledge_base:
+    - "knowledge-base/raw/first-batch-processing/converted/markdown/  # 现有 55 个 .md"
+    - "knowledge-base/raw/first-batch-processing/converted/学生手册-生活服务.md  # 核心参考：生活服务类（401KB, 5076行）"
+    - "knowledge-base/raw/first-batch-processing/converted/医小管知识库二次修改版.md  # 核心参考：学校概况类（178KB, 2103行）"
+    - "services/ai-service/scripts/batch_ingestion.py  # 入库脚本"

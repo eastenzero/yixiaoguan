@@ -1,0 +1,456 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v5b
+# 日期: 2026-04-06
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v4 (completed)
+# ===================================================================
+#
+# 背景摘要:
+#   项目即将进入 demo 展示阶段，需要将当前散落在 Tmux 会话中的
+#   各服务统一为 Docker Compose 编排，实现一键启停和开机自恢复。
+#
+# 当前状态:
+#   - PostgreSQL + Redis: 已在 docker-compose.yml 中（deploy/）
+#   - ai-service: 已有 Dockerfile，已在 docker-compose.yml 中
+#   - business-api (Spring Boot): Tmux 手动启动 java -jar，无 Dockerfile
+#   - student-app / teacher-web: Tmux 手动启动 dev server，无构建产物
+#   - Nginx: 不存在
+#
+# 目标:
+#   实现方案 B 级部署自动化：
+#   1. 前端构建为静态文件
+#   2. Nginx 反代统一入口
+#   3. 后端 + AI service 全部容器化
+#   4. docker-compose up -d 一键启动全栈
+#   5. .env 统一管理所有配置
+#
+# 约束:
+#   - 165 服务器资源有限 (i5-8665U/16GB/128GB, 可用 ~38G)
+#   - Docker 28.2.2, Node 18.19.1, JDK 21, Python 3.12
+#   - 使用清华 pip 镜像 + npm 镜像加速
+#   - 不涉及 HTTPS/CI-CD（方案 C 范畴，本轮不做）
+#   - Mutagen 从 Windows 实时同步代码到 165，但 node_modules/target 排除
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v5b
+date: 2026-04-06
+author: T0-Architect
+status: ready_for_t1
+predecessor:
+  - spec-v4 (completed, signed off 2026-04-06)
+
+# ===================================================================
+# 模块定义
+# ===================================================================
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5B-01: 前端静态构建
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5B-01
+    title: 前端静态构建 (student-app + teacher-web)
+    priority: P1
+    estimated_effort: 1h
+    description: |
+      将两个前端项目从 dev server 模式改为构建静态产物，供 Nginx 托管。
+
+      student-app (uni-app H5):
+        构建命令: npx uni build -p h5
+        产物目录: dist/build/h5/
+        注意: vite.config.ts 中的 proxy 配置仅在 dev 模式生效，
+              生产模式下 API 代理由 Nginx 负责
+
+      teacher-web (Vue 3 + Vite):
+        构建命令: npm run build
+        产物目录: dist/
+        注意: 确认 .env.production 中 VITE_APP_BASE_API 设为 '/api'
+              或空字符串，由 Nginx 统一反代
+
+    files_to_check:
+      - apps/student-app/vite.config.ts
+      - apps/student-app/package.json
+      - apps/teacher-web/vite.config.ts
+      - apps/teacher-web/package.json
+      - apps/teacher-web/.env.production (如不存在需创建)
+
+    steps:
+      - "1. 在 165 上测试 student-app 构建: cd ~/dev/yixiaoguan/apps/student-app && npx uni build -p h5"
+      - "2. 确认产物生成在 dist/build/h5/"
+      - "3. 在 165 上测试 teacher-web 构建: cd ~/dev/yixiaoguan/apps/teacher-web && npm run build"
+      - "4. 确认产物生成在 dist/"
+      - "5. 解决构建过程中的任何报错（缺少依赖、路径问题等）"
+
+    acceptance_criteria:
+      - student-app 构建成功，dist/build/h5/index.html 存在
+      - teacher-web 构建成功，dist/index.html 存在
+      - 构建过程无 error（warning 可接受）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5B-02: Spring Boot 后端 Dockerfile
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5B-02
+    title: Spring Boot 后端容器化
+    priority: P1
+    estimated_effort: 1h
+    description: |
+      为 business-api 创建 Dockerfile，使其可纳入 Docker Compose 编排。
+
+      当前状态:
+        - 已有构建产物: ruoyi-admin/target/ruoyi-admin.jar
+        - 手动启动: java -jar ruoyi-admin/target/ruoyi-admin.jar
+        - 需要环境变量: POSTGRES_PASSWORD, REDIS_PASSWORD
+        - JDK 版本: 21
+
+      策略: 使用预构建 jar（不在 Docker 内 Maven 构建，节省资源）
+        如果 target/ 被 Mutagen 排除同步，需在 165 上手动 mvn package 一次，
+        或改为 Docker 多阶段构建。
+
+      注意事项:
+        - application.yml 中数据库连接地址需改为 Docker 内部网络地址
+          (postgres → yx_postgres 或 docker-compose service name)
+        - Redis 连接同理
+        - 日志路径: ./logs (已在之前修复过)
+        - 上传路径: ./uploadPath (已修复)
+
+    files_to_create:
+      - services/business-api/Dockerfile
+    files_to_modify:
+      - services/business-api/ruoyi-admin/src/main/resources/application.yml
+      - services/business-api/ruoyi-admin/src/main/resources/application-druid.yml
+
+    dockerfile_template: |
+      FROM eclipse-temurin:21-jre-alpine
+      LABEL maintainer="yixiaoguan-team"
+      WORKDIR /app
+      # 如果使用预构建 jar:
+      COPY ruoyi-admin/target/ruoyi-admin.jar app.jar
+      # 如果需要容器内构建（备选）:
+      # COPY . .
+      # RUN mvn package -DskipTests
+      RUN mkdir -p logs uploadPath
+      EXPOSE 8080
+      ENTRYPOINT ["java", "-jar", "app.jar"]
+
+    env_variables:
+      - SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/yixiaoguan"
+      - SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
+      - SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
+      - SPRING_REDIS_HOST: "redis"
+      - SPRING_REDIS_PASSWORD: "${REDIS_PASSWORD}"
+
+    acceptance_criteria:
+      - Dockerfile 可成功构建镜像
+      - 容器启动后 8080 端口可响应 /login 请求
+      - 数据库连接正常（通过 Docker 网络访问 postgres 服务）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5B-03: Nginx 反向代理配置
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5B-03
+    title: Nginx 反向代理
+    priority: P1
+    estimated_effort: 1h
+    depends_on: [F-V5B-01]
+    description: |
+      配置 Nginx 作为统一入口，反代所有服务。
+
+      路由规则:
+        端口 80 (学生端):
+          /                → student-app 静态文件
+          /api/chat        → ai-service:8000 (AI 服务)
+          /api/            → business-api:8080 (后端 API，strip /api 前缀)
+          /login           → business-api:8080 (直接透传)
+          /captchaImage    → business-api:8080 (直接透传)
+          /getInfo         → business-api:8080 (直接透传)
+          /logout          → business-api:8080 (直接透传)
+
+        端口 81 (教师端，可选):
+          /                → teacher-web 静态文件
+          /api/            → business-api:8080
+
+      注意:
+        - 学生端前端代码中 API 调用使用 /api 前缀
+        - RuoYi 认证路由 (/login, /captchaImage 等) 无 /api 前缀
+        - AI 服务路径 /api/chat 需优先匹配（在通用 /api 规则之前）
+        - 这些规则与 vite.config.ts 的 proxy 规则一一对应
+
+    files_to_create:
+      - deploy/nginx/nginx.conf
+      - deploy/nginx/conf.d/student.conf
+      - deploy/nginx/conf.d/teacher.conf (可选)
+
+    nginx_config_sketch: |
+      # student.conf
+      server {
+          listen 80;
+          server_name _;
+
+          # 静态文件
+          root /usr/share/nginx/html/student;
+          index index.html;
+
+          # SPA fallback
+          location / {
+              try_files $uri $uri/ /index.html;
+          }
+
+          # RuoYi 认证路由（无 /api 前缀，直接透传）
+          location ~ ^/(login|logout|captchaImage|getInfo) {
+              proxy_pass http://business-api:8080;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+          }
+
+          # AI 服务（必须在通用 /api 之前）
+          location /api/chat {
+              proxy_pass http://ai-service:8000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              # SSE 支持
+              proxy_http_version 1.1;
+              proxy_set_header Connection '';
+              proxy_buffering off;
+              proxy_cache off;
+              proxy_read_timeout 300s;
+          }
+
+          # 业务 API（通用规则，路径原样转发）
+          location /api/ {
+              proxy_pass http://business-api:8080;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+          }
+      }
+
+    acceptance_criteria:
+      - 浏览器访问 http://192.168.100.165 可看到学生端首页
+      - 登录功能正常（验证码图片加载、登录请求成功）
+      - AI 对话功能正常（SSE 流式响应无断流）
+      - 教师端访问正常（如配置了 81 端口）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5B-04: Docker Compose 全栈编排
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5B-04
+    title: Docker Compose 全栈编排
+    priority: P1
+    estimated_effort: 1h
+    depends_on: [F-V5B-01, F-V5B-02, F-V5B-03]
+    description: |
+      升级现有 docker-compose.yml，将所有服务纳入编排。
+
+      现有服务（保留）:
+        - postgres (yx_postgres)
+        - redis (yx_redis)
+        - ai-service (yx_ai_service)
+
+      新增服务:
+        - business-api: Spring Boot 后端
+        - nginx: 反向代理 + 静态文件托管
+
+      关键配置:
+        - 所有服务在同一 Docker 网络中，使用服务名互访
+        - business-api 的 DB 连接地址: postgres:5432
+        - ai-service 的 BUSINESS_API_BASE_URL: http://business-api:8080
+        - nginx 挂载前端构建产物
+        - 启动顺序: postgres → redis → business-api → ai-service → nginx
+        - 数据持久化: postgres_data, redis_data, chroma_data, upload_data, logs
+
+    files_to_modify:
+      - deploy/docker-compose.yml
+    files_to_check:
+      - deploy/.env
+
+    docker_compose_additions: |
+      # 新增 business-api 服务
+      business-api:
+        build:
+          context: ../services/business-api
+          dockerfile: Dockerfile
+        container_name: yx_business_api
+        restart: unless-stopped
+        environment:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-yixiaoguan}
+          SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-yx_admin}
+          SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+          SPRING_REDIS_HOST: redis
+          SPRING_REDIS_PORT: 6379
+          SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+        ports:
+          - "8080:8080"   # 开发阶段保留直连，生产可去掉
+        volumes:
+          - backend_logs:/app/logs
+          - backend_upload:/app/uploadPath
+        depends_on:
+          postgres:
+            condition: service_healthy
+          redis:
+            condition: service_healthy
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+          interval: 15s
+          timeout: 5s
+          retries: 10
+          start_period: 30s
+
+      # 新增 Nginx 服务
+      nginx:
+        image: nginx:1.25-alpine
+        container_name: yx_nginx
+        restart: unless-stopped
+        ports:
+          - "80:80"
+          - "81:81"       # 教师端（可选）
+        volumes:
+          - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+          - ./nginx/conf.d:/etc/nginx/conf.d:ro
+          - ../apps/student-app/dist/build/h5:/usr/share/nginx/html/student:ro
+          - ../apps/teacher-web/dist:/usr/share/nginx/html/teacher:ro
+        depends_on:
+          - business-api
+          - ai-service
+
+      # 更新 ai-service 的 BUSINESS_API_BASE_URL
+      # ai-service.environment.BUSINESS_API_BASE_URL: http://business-api:8080
+
+    acceptance_criteria:
+      - docker compose up -d 一键启动全部 6 个服务
+      - docker compose ps 全部 healthy/running
+      - 浏览器访问 http://192.168.100.165 可正常使用学生端
+      - 数据在 docker compose down / up 之间持久化
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5B-05: 一键部署脚本与文档
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5B-05
+    title: 一键部署脚本与文档
+    priority: P2
+    estimated_effort: 30min
+    depends_on: [F-V5B-04]
+    description: |
+      创建生产部署脚本，替代旧的 start-dev.sh。
+      编写简明部署文档供团队成员使用。
+
+    files_to_create:
+      - deploy/start-prod.sh
+      - deploy/README.md
+
+    script_outline: |
+      #!/bin/bash
+      # 医小管 — 一键部署脚本
+      set -e
+      cd "$(dirname "$0")"
+
+      echo "=== 1. 检查 .env 配置 ==="
+      [ -f .env ] || { echo "缺少 .env 文件"; exit 1; }
+
+      echo "=== 2. 构建前端 ==="
+      cd ../apps/student-app && npm install && npx uni build -p h5
+      cd ../teacher-web && npm install && npm run build
+      cd ../../deploy
+
+      echo "=== 3. 构建后端 (如需要) ==="
+      # 检查 jar 是否存在，不存在则构建
+      JAR=../services/business-api/ruoyi-admin/target/ruoyi-admin.jar
+      [ -f "$JAR" ] || {
+        cd ../services/business-api && mvn package -DskipTests
+        cd ../../deploy
+      }
+
+      echo "=== 4. Docker Compose 启动 ==="
+      docker compose build
+      docker compose up -d
+
+      echo "=== 5. 等待服务就绪 ==="
+      sleep 10
+      docker compose ps
+
+      echo ""
+      echo "部署完成！访问地址："
+      echo "  学生端: http://$(hostname -I | awk '{print $1}')"
+      echo "  教师端: http://$(hostname -I | awk '{print $1}'):81"
+
+    readme_outline: |
+      # 医小管 部署指南
+
+      ## 前置条件
+      - Docker 28+ / Docker Compose v2
+      - Node 18+ (构建前端)
+      - JDK 21 + Maven 3.8+ (构建后端，如无预构建 jar)
+
+      ## 快速部署
+      1. 复制 .env.example 为 .env 并填写密钥
+      2. 运行 bash deploy/start-prod.sh
+      3. 访问 http://<服务器IP>
+
+      ## 服务管理
+      - 启动: docker compose up -d
+      - 停止: docker compose down
+      - 查看日志: docker compose logs -f [service_name]
+      - 重建: docker compose build --no-cache [service_name]
+
+    acceptance_criteria:
+      - start-prod.sh 可在干净环境下一键完成部署
+      - README.md 包含完整部署步骤
+
+# ===================================================================
+# 验收标准汇总
+# ===================================================================
+acceptance_criteria_global:
+  - AC-1: docker compose up -d 一键启动全部服务（postgres, redis, business-api, ai-service, nginx）
+  - AC-2: http://192.168.100.165 (端口 80) 可访问学生端，登录+AI对话正常
+  - AC-3: http://192.168.100.165:81 可访问教师端（可选）
+  - AC-4: docker compose down 后数据不丢失
+  - AC-5: start-prod.sh 脚本可在 165 服务器上一键执行
+  - AC-6: README.md 文档完整可读
+
+# ===================================================================
+# 执行顺序
+# ===================================================================
+execution_order:
+  phase1_parallel:
+    - F-V5B-01 (前端构建)
+    - F-V5B-02 (后端 Dockerfile)
+  phase2:
+    - F-V5B-03 (Nginx 配置，依赖 phase1 产物路径确认)
+  phase3:
+    - F-V5B-04 (Docker Compose 集成)
+  phase4:
+    - F-V5B-05 (脚本与文档)
+
+# ===================================================================
+# 服务器信息
+# ===================================================================
+server_info:
+  host: 192.168.100.165
+  ssh_user: easten
+  project_path: ~/dev/yixiaoguan/
+  docker_version: 28.2.2
+  node_version: 18.19.1
+  jdk_version: 21
+  python_version: 3.12
+  available_disk: ~38GB
+  existing_compose: deploy/docker-compose.yml
+  existing_env: deploy/.env
+  existing_ai_dockerfile: services/ai-service/Dockerfile
+
+# ===================================================================
+# 风险与注意事项
+# ===================================================================
+risks:
+  - id: RISK-1
+    description: |
+      ruoyi-admin.jar 在 target/ 目录中，该目录被 Mutagen 排除同步。
+      解决方案: 在 165 上直接 mvn package，或使用 Docker 多阶段构建。
+  - id: RISK-2
+    description: |
+      application.yml 中的数据库连接地址硬编码为 localhost。
+      Docker 网络内需改为服务名 (postgres)。
+      解决方案: 使用环境变量覆盖 Spring Boot 配置。
+  - id: RISK-3
+    description: |
+      165 服务器内存仅 16GB，全容器化后需关注内存占用。
+      Spring Boot + AI service + Postgres + Redis + Nginx 预估 ~4-6GB。

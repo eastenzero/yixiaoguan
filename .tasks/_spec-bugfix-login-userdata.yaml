@@ -1,0 +1,360 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格: 登录认证修复 + 用户数据生成
+# 日期: 2026-04-05
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v3 completed; 165 服务器全量部署完成
+# ===================================================================
+#
+# 背景摘要:
+#   165 服务器已完成全量部署（PostgreSQL/Redis/Spring Boot/ai-service/student-app），
+#   但学生端登录失败——所有账号均报"用户不存在"或"密码错误"。
+#   原因是数据生成脚本（generate_user_data.py）存在三个致命 Bug，
+#   且原计划的"模拟账号生成阶段"在迁移过程中丢失、质量也不达标。
+#   本 spec 从头重做用户数据生成全流程，彻底修复登录阻塞。
+#
+# 阻塞影响:
+#   - 学生端：完全不可用（无法登录）
+#   - 教师端：若走 yx_user 认证链，同样不可用
+#   - AI 对话、事务导办等所有业务功能：全部被登录阻塞
+#   - 这是地基级 Bug，优先级最高
+#
+# 约束:
+#   - 不修改后端 Java 代码（认证链路正确，问题在数据层）
+#   - 不修改前端代码（前端登录逻辑正确）
+#   - 密码必须在 INSERT 前由 Python bcrypt 库预先哈希（不依赖"后端自动加密"）
+#   - 生成的 SQL 必须对齐 yx_schema.sql 的 yx_user 表定义
+#   - 165 服务器执行 SQL 后需端到端验证
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-bugfix-login-userdata
+date: 2026-04-05
+author: T0-Architect
+status: completed  # T0 验收通过 2026-04-06, PASS 11/11, L3 H5 实机人工验证成功
+predecessor: spec-v3 (completed)
+blocking: true  # 阻塞所有需要登录的功能
+
+# ===================================================================
+# 根因诊断（T0 独立验证，与已有 _task.md 交叉确认）
+# ===================================================================
+root_cause_diagnosis:
+
+  summary: |
+    三层致命 Bug 叠加导致所有账号均无法登录。
+
+  bug_1_column_mismatch:
+    severity: FATAL
+    location: "scripts/generate_user_data.py 第 159 行 SQL 模板"
+    description: |
+      SQL INSERT 使用了 yx_user 表中不存在的列名：
+        nick_name  → 实际列名: nickname
+        dept_name  → 实际列名: department
+        user_type  → yx_user 表无此列
+      后果: PostgreSQL 拒绝执行 INSERT，yx_user 表零行数据。
+    evidence:
+      - "services/business-api/sql/yx_schema.sql 第 7-33 行 CREATE TABLE yx_user"
+      - "scripts/generate_user_data.py 第 159 行"
+
+  bug_2_plaintext_password:
+    severity: FATAL
+    location: "scripts/generate_user_data.py 第 168-169 行; scripts/fix_and_insert.py 第 88 行"
+    description: |
+      密码以明文存储（如 "2024010001" 或 "admin123"）。
+      后端认证链使用 BCryptPasswordEncoder.matches(raw, stored)，
+      当 stored 不是合法 BCrypt 哈希时永远返回 false。
+      BCrypt 哈希格式: $2a$10$... (60 字符)
+    evidence:
+      - "services/business-api/ruoyi-common/src/main/java/com/ruoyi/common/utils/SecurityUtils.java 第 111-114 行"
+      - "services/business-api/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/SysPasswordService.java 第 74-77 行"
+
+  bug_3_wrong_table:
+    severity: FATAL
+    location: "165 服务器手动 INSERT 操作"
+    description: |
+      旧测试账号（4523570155、2024010001）手动插入了 sys_user 表，
+      但定制版 UserDetailsServiceImpl 查的是 yx_user 表。
+      用户不可能被找到。
+    evidence:
+      - "services/business-api/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/UserDetailsServiceImpl.java 第 45 行"
+      - "services/business-api/ruoyi-admin/src/main/resources/mapper/yixiaoguan/user/YxUserMapper.xml 第 49-56 行"
+
+  additional_captcha_block:
+    severity: HIGH
+    location: "165 服务器 Redis + sys_config 表"
+    description: |
+      上一轮部署时 Redis 缓存未清，导致 sys_config 中 captchaEnabled=false 不生效。
+      即使用户数据修好，验证码仍可能阻塞登录。
+      需确保验证码已关闭（sys_config 设置 + Redis 缓存清除/后端重启）。
+
+# ===================================================================
+# 认证链路参考（T1/T2/T3 必读）
+# ===================================================================
+auth_chain_reference: |
+  POST /login
+    → SysLoginService.login(username, password, code, uuid)
+      → validateCaptcha()
+          读 sys_config 表 "sys.account.captchaEnabled"
+          若 enabled: 从 Redis 取验证码比对（key = captcha_codes:uuid）
+      → loginPreCheck()
+          username 长度 2-20，password 长度 5-20
+      → authenticationManager.authenticate()
+        → UserDetailsServiceImpl.loadUserByUsername(username)   [定制版]
+          → YxUserMapper.selectUserByUsername(username)         [查 yx_user 表]
+          → 检查 is_deleted = false
+          → 检查 status = 1（status=0 停用，status=2 未激活，均拒绝）
+        → SysPasswordService.validate(sysUser)
+          → BCryptPasswordEncoder.matches(输入明文, 数据库存储哈希)
+      → tokenService.createToken(loginUser) → 返回 JWT token
+
+# ===================================================================
+# yx_user 表结构参考（SQL 必须对齐）
+# ===================================================================
+yx_user_schema: |
+  CREATE TABLE yx_user (
+      id            BIGSERIAL PRIMARY KEY,
+      created_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      updated_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      is_deleted    BOOLEAN NOT NULL DEFAULT FALSE,
+      username      VARCHAR(64) NOT NULL UNIQUE,    -- 学号/工号/登录名
+      password      VARCHAR(255) NOT NULL,          -- BCrypt 哈希，$2a$10$... 格式
+      real_name     VARCHAR(50) NOT NULL,
+      nickname      VARCHAR(50),                    -- 注意：不是 nick_name
+      gender        SMALLINT DEFAULT 0,
+      phone         VARCHAR(20),
+      email         VARCHAR(128),
+      avatar_url    VARCHAR(512),
+      bio           TEXT,
+      student_id    VARCHAR(32),                    -- 学号（学生填）
+      employee_id   VARCHAR(32),                    -- 工号（教师填）
+      department    VARCHAR(100),                   -- 注意：不是 dept_name
+      major         VARCHAR(100),
+      class_name    VARCHAR(50),
+      grade         VARCHAR(20),
+      wechat_openid VARCHAR(128) UNIQUE,
+      status        SMALLINT NOT NULL DEFAULT 2,    -- 重要：默认值是 2（未激活），INSERT 必须显式设 1
+      password_changed BOOLEAN NOT NULL DEFAULT FALSE,
+      last_login_at TIMESTAMP WITH TIME ZONE,
+      last_login_ip VARCHAR(128),
+      remark        VARCHAR(500)
+  );
+
+  -- 注意：无 user_type 列！角色通过 yx_user_role 关联表区分
+
+# ===================================================================
+# 修复模块定义
+# ===================================================================
+fix_modules:
+
+  - id: FIX-0
+    name: "前置：验证码关闭确认"
+    priority: P0-PREREQUISITE
+    description: |
+      确认 165 服务器上验证码已关闭。两种方式任选：
+      a) 确认 sys_config 表 sys.account.captchaEnabled = false，
+         然后重启后端（清 Redis 缓存）。
+      b) 或 redis-cli 清除 captcha_codes:* 相关 key。
+      验证：GET /captchaImage 返回 captchaEnabled=false。
+    scope:
+      - "165 服务器操作（非代码修改）"
+    done_criteria:
+      L2: "curl http://localhost:8080/captchaImage 返回 JSON 中 captchaEnabled=false"
+
+  - id: FIX-1
+    name: "重写 generate_user_data.py"
+    priority: P0-FOUNDATION
+    description: |
+      全面修复数据生成脚本：
+      1. SQL INSERT 列名完全对齐 yx_schema.sql 的 yx_user 表定义
+         - nick_name → nickname
+         - dept_name → department
+         - 删除 user_type 列
+         - 新增 student_id / employee_id 列
+      2. 密码字段使用 Python bcrypt 库预先哈希
+         - import bcrypt
+         - hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+         - 生成的 SQL password 值以 $2a$10$ 开头
+      3. status 显式设为 1（激活）
+      4. 同时生成 yx_role 初始化 SQL（student=2, teacher=3）
+      5. 同时生成 yx_user_role 关联 SQL
+      6. 生成的 SQL 中 BCrypt 哈希值用 E'' 或 $$ 定界符包裹（避免 $ 被解释）
+    depends_on: []
+    scope:
+      - "scripts/generate_user_data.py"
+      - "scripts/insert_students.sql（产物）"
+      - "scripts/insert_teachers.sql（产物）"
+    out_of_scope:
+      - "services/**"
+      - "apps/**"
+    done_criteria:
+      L0: "scripts/generate_user_data.py 存在且 python -c 'import ast; ast.parse(open(...).read())' 通过"
+      L1: "python scripts/generate_user_data.py --dry-run 或 --help 不报错"
+      L2: |
+        生成的 insert_students.sql 满足：
+        (a) INSERT 列名与 yx_schema.sql 的 yx_user 表完全一致
+        (b) password 字段值以 $2a$ 开头（BCrypt 格式）
+        (c) 无 nick_name/dept_name/user_type 等不存在的列
+        (d) status = 1
+        (e) student_id 列有值
+
+  - id: FIX-2
+    name: "修复 fix_and_insert.py 密码哈希"
+    priority: P0-FOUNDATION
+    description: |
+      fix_and_insert.py 已修复列名映射（Bug-1），但遗漏密码哈希（Bug-2）。
+      在第 88 行 password = fields[1].strip("'") 之后，
+      增加 bcrypt.hashpw() 调用。
+      同理处理教师插入部分（第 182 行）。
+    depends_on: [FIX-1]
+    scope:
+      - "scripts/fix_and_insert.py"
+    done_criteria:
+      L0: "fix_and_insert.py 存在且可 ast.parse"
+      L1: "grep -c 'bcrypt.hashpw' scripts/fix_and_insert.py >= 1"
+      L2: "python -c 'import fix_and_insert' 不报 ImportError"
+
+  - id: FIX-3
+    name: "165 服务器部署执行 + 端到端验证"
+    priority: P0-FOUNDATION
+    description: |
+      在 165 服务器上执行修复后的数据插入，并端到端验证登录。
+      步骤：
+      1. 清空 yx_user / yx_user_role 旧数据（TRUNCATE CASCADE）
+      2. 执行 yx_role 初始化 SQL
+      3. 执行修复后的 insert_students.sql 和 insert_teachers.sql
+      4. 验证 yx_user 行数 > 0 且 password 以 $2a$ 开头
+      5. 确认验证码已关闭
+      6. curl POST /login 使用测试账号验证获取 token
+      7. 手机浏览器访问 http://192.168.100.165:5174 登录验证
+
+      注意：remote_exec.py 传输含 $ 的 SQL 时单引号会被吞，
+      建议通过 --file 传输 .sh 脚本或 scp SQL 文件到 165 后本地执行。
+    depends_on: [FIX-0, FIX-1, FIX-2]
+    scope:
+      - "165 服务器操作"
+    done_criteria:
+      L0: "SELECT COUNT(*) FROM yx_user > 0"
+      L1: "SELECT LEFT(password, 4) FROM yx_user LIMIT 1 返回 '$2a$'"
+      L2: "curl -X POST http://localhost:8080/login -d '{...}' 返回 token"
+      L3: "手机浏览器登录成功并进入首页"
+
+# ===================================================================
+# 已知陷阱（T2/T3 必读）
+# ===================================================================
+known_pitfalls:
+
+  - id: PITFALL-1
+    title: "remote_exec.py 引号/$ 符号丢失"
+    description: |
+      通过 remote_exec.py 传输含单引号或 $ 符号的 bash/SQL 脚本时，
+      引号和 $ 会被 shell 解释吞掉。BCrypt 哈希 $2a$10$... 必然触发此问题。
+    mitigation: |
+      方案 A: write_to_file 写 .sh/.sql 文件 → scp 到 165 → ssh 执行
+      方案 B: remote_exec.py --file 传输完整脚本文件
+
+  - id: PITFALL-2
+    title: "yx_user.status 默认值为 2（未激活）"
+    description: |
+      INSERT 时必须显式设置 status=1，否则 UserDetailsServiceImpl 会拒绝登录
+      （status==0 停用 || status==2 未激活 → 报"已停用或未激活"）。
+
+  - id: PITFALL-3
+    title: "yx_role 和 yx_user_role 可能为空"
+    description: |
+      fix_and_insert.py 有初始化 yx_role 的逻辑（student=2, teacher=3），
+      但需确认 165 数据库中这些记录是否存在。
+      UserDetailsServiceImpl 查 yx_user 时会 LEFT JOIN yx_user_role 和 yx_role。
+      角色为空不阻塞登录（LEFT JOIN），但会导致权限集为空。
+
+  - id: PITFALL-4
+    title: "BCrypt 哈希含 $ 符号"
+    description: |
+      生成的 SQL 中 $2a$10$... 在 bash 环境下会被解释为变量。
+      在 PostgreSQL 中建议使用 E'' 转义或 $$ 定界符：
+        INSERT INTO yx_user (..., password, ...) VALUES (..., E'$2a$10$xxxxx', ...);
+      或
+        INSERT INTO yx_user (..., password, ...) VALUES (..., $$2a$10$xxxxx$$, ...);
+      注意 $$ 定界符方式下哈希值开头的 $ 会与定界符冲突，
+      推荐使用 E'' 方式。
+
+  - id: PITFALL-5
+    title: "username 长度限制 2-20 字符"
+    description: |
+      loginPreCheck 检查 username 长度范围 [2, 20]。
+      如果学号超过 20 位会被拦截。常规学号 10 位，不会触发。
+      教师用户名（如 zhang_w_fangshe_24）可能较长，需控制在 20 字符内。
+
+# ===================================================================
+# 密码策略确认（T0 决定）
+# ===================================================================
+password_policy:
+  encoding: BCrypt
+  library: "Python bcrypt (pip install bcrypt)"
+  hash_format: "$2a$10$<22_char_salt><31_char_hash>"
+  total_length: 60
+  pre_hash_required: true  # 必须在 INSERT 前由 Python 预先哈希
+  reason: |
+    后端 Spring Security 的 BCryptPasswordEncoder.matches(raw, stored)
+    要求 stored 是合法 BCrypt 哈希。直接 INSERT 不走注册接口，
+    不会触发后端自动加密。这一点已由用户确认。
+  default_student_password: "学号本身（混淆后）"  # 与 generate_user_data.py 现有逻辑一致
+  default_teacher_password: "姓名全拼音"          # 与 generate_user_data.py 现有逻辑一致
+
+# ===================================================================
+# 执行顺序建议（给 T1 Coordinator）
+# ===================================================================
+execution_order:
+  phase_0:
+    tasks: [FIX-0]
+    name: "前置：验证码关闭"
+    rationale: "不关闭验证码则后续端到端验证无法进行"
+    executor: "人工 SSH 或 remote_exec.py"
+
+  phase_1:
+    tasks: [FIX-1, FIX-2]
+    name: "脚本修复"
+    rationale: "可并行，FIX-1 和 FIX-2 修改不同文件"
+    executor: "T3 (Kimi CLI 或本地)"
+
+  phase_2:
+    tasks: [FIX-3]
+    name: "部署执行 + 端到端验证"
+    rationale: "依赖 Phase 0 + Phase 1 全部完成"
+    executor: "需 SSH 到 165 执行"
+
+# ===================================================================
+# 验收标准（整体）
+# ===================================================================
+acceptance_criteria:
+  - "yx_user 表中学生和教师数据行数 > 0"
+  - "所有 password 字段值以 $2a$ 开头（BCrypt 格式）"
+  - "yx_role 表有 student(id=2) 和 teacher(id=3) 角色"
+  - "yx_user_role 表有学生和教师的角色关联"
+  - "验证码已关闭（captchaEnabled=false 生效）"
+  - "测试学号 + 默认密码通过 POST /login 获取 token"
+  - "手机浏览器访问 http://192.168.100.165:5174 登录成功并进入首页"
+  - "generate_user_data.py 和 fix_and_insert.py 代码可复用"
+
+# ===================================================================
+# 上下文文件清单（T2 执行时必读）
+# ===================================================================
+context_files:
+  must_read:
+    - "services/business-api/sql/yx_schema.sql"
+    - "services/business-api/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/UserDetailsServiceImpl.java"
+    - "services/business-api/ruoyi-framework/src/main/java/com/ruoyi/framework/web/service/SysPasswordService.java"
+    - "services/business-api/ruoyi-common/src/main/java/com/ruoyi/common/utils/SecurityUtils.java"
+    - "services/business-api/ruoyi-admin/src/main/resources/mapper/yixiaoguan/user/YxUserMapper.xml"
+  scripts_to_fix:
+    - "scripts/generate_user_data.py"
+    - "scripts/fix_and_insert.py"
+  existing_diagnosis:
+    - ".tasks/bugfix-login-auth/_task.md"
+
+# ===================================================================
+# 与 spec-v4 的关系
+# ===================================================================
+relationship_to_v4: |
+  本 spec 是 spec-v4（知识详情页、聊天历史等功能）的前置阻塞项。
+  登录不通，所有需要认证的 v4 功能均无法测试。
+  本 spec 完成后再启动 spec-v4。

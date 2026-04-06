@@ -63,7 +63,7 @@
     </view>
     
     <view class="login-footer">
-      <text class="hint">首次登录请使用默认密码，登录后请修改</text>
+      <text class="hint">初始密码与学号相同，登录后请及时修改</text>
     </view>
   </view>
 </template>

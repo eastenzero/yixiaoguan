@@ -1,0 +1,50 @@
+04:32:32.032 [http-nio-8080-exec-31] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+04:32:32.044 [schedule-pool-7] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+04:32:33.077 [http-nio-8080-exec-33] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+04:32:33.087 [schedule-pool-14] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+04:32:38.100 [http-nio-8080-exec-35] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+04:32:38.111 [schedule-pool-8] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+04:32:42.797 [http-nio-8080-exec-37] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+04:32:42.807 [schedule-pool-15] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+06:02:13.580 [http-nio-8080-exec-42] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:02:13.591 [schedule-pool-4] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+06:02:18.158 [http-nio-8080-exec-44] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:02:18.169 [schedule-pool-16] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+06:02:21.744 [http-nio-8080-exec-49] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:02:21.755 [schedule-pool-1] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+06:20:00.668 [http-nio-8080-exec-50] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:20:00.678 [schedule-pool-17] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+06:35:24.717 [http-nio-8080-exec-53] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:35:24.728 [schedule-pool-9] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[4523570155][Error][用户不存在/密码错误]
+06:35:30.848 [http-nio-8080-exec-55] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:35:30.858 [schedule-pool-18] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[4523570155][Error][用户不存在/密码错误]
+06:35:31.565 [http-nio-8080-exec-57] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:35:31.576 [schedule-pool-10] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[4523570155][Error][用户不存在/密码错误]
+06:35:31.739 [http-nio-8080-exec-59] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:35:31.750 [schedule-pool-19] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[4523570155][Error][用户不存在/密码错误]
+06:35:31.922 [http-nio-8080-exec-61] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:35:31.933 [schedule-pool-5] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[4523570155][Error][用户不存在/密码错误]
+06:35:44.187 [http-nio-8080-exec-63] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+06:35:44.198 [schedule-pool-20] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[4523570155][Error][用户不存在/密码错误]
+06:36:17.847 [schedule-pool-3] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2524010001][Error][用户不存在/密码错误]
+06:36:23.116 [schedule-pool-21] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2524010001][Error][用户不存在/密码错误]
+06:36:44.591 [schedule-pool-11] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2524010001][Error][用户不存在/密码错误]
+06:37:34.193 [schedule-pool-22] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2524010001][Error][用户不存在/密码错误]
+06:37:43.208 [schedule-pool-12] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2024010003][Error][用户不存在/密码错误]
+06:37:50.239 [schedule-pool-23] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2024010003][Error][用户不存在/密码错误]
+06:38:31.123 [schedule-pool-6] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2024010003][Error][用户不存在/密码错误]
+06:38:31.125 [http-nio-8080-exec-81] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：admin 不存在.
+06:38:31.136 [schedule-pool-24] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][用户不存在/密码错误]
+06:39:09.971 [http-nio-8080-exec-80] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：admin 不存在.
+06:39:09.982 [schedule-pool-2] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][用户不存在/密码错误]
+06:42:42.192 [schedule-pool-25] INFO  sys-user - [run,55] - [192.168.100.165]内网IP[2024010003][Success][登录成功]
+06:42:47.927 [schedule-pool-13] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2524010001][Success][登录成功]
+06:52:10.963 [schedule-pool-26] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[2524010001][Error][用户不存在/密码错误]
+06:52:15.562 [schedule-pool-7] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[2524010001][Success][登录成功]
+08:12:41.326 [SpringApplicationShutdownHook] INFO  o.q.c.QuartzScheduler - [standby,576] - Scheduler quartzScheduler_$_NON_CLUSTERED paused.
+08:12:41.370 [SpringApplicationShutdownHook] INFO  o.q.c.QuartzScheduler - [shutdown,656] - Scheduler quartzScheduler_$_NON_CLUSTERED shutting down.
+08:12:41.370 [SpringApplicationShutdownHook] INFO  o.q.c.QuartzScheduler - [standby,576] - Scheduler quartzScheduler_$_NON_CLUSTERED paused.
+08:12:41.370 [SpringApplicationShutdownHook] INFO  o.q.c.QuartzScheduler - [shutdown,728] - Scheduler quartzScheduler_$_NON_CLUSTERED shutdown complete.
+08:12:41.372 [SpringApplicationShutdownHook] INFO  sys-user - [shutdownAsyncManager,31] - ====关闭后台任务任务线程池====
+08:12:41.380 [SpringApplicationShutdownHook] INFO  c.a.d.p.DruidDataSource - [close,2083] - {dataSource-1} closing ...
+08:12:41.381 [SpringApplicationShutdownHook] INFO  c.a.d.p.DruidDataSource - [close,2156] - {dataSource-1} closed

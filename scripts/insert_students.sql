@@ -8,7 +8,8 @@
 INSERT INTO yx_role (id, role_key, role_name, sort_order, status, remark) VALUES
   (1, 'admin', '管理员', 1, 1, '系统初始化角色'),
   (2, 'student', '学生', 2, 1, '系统初始化角色'),
-  (3, 'teacher', '教师', 3, 1, '系统初始化角色');
+  (3, 'teacher', '教师', 3, 1, '系统初始化角色')
+ON CONFLICT (id) DO NOTHING;
 
 -- 学生数据插入脚本
 -- 生成时间: 2026-04-05 23:52:09

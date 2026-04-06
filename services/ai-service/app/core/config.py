@@ -2,7 +2,13 @@
 应用配置 — 通过环境变量或 .env 文件读取
 """
 
+from pathlib import Path as _Path
+
 from pydantic_settings import BaseSettings
+
+# 自动计算 ai-service 根目录，跨平台兼容
+_AI_SERVICE_ROOT = _Path(__file__).resolve().parent.parent.parent
+_DEFAULT_CHROMA_DIR = str(_AI_SERVICE_ROOT / "data" / "chroma")
 
 
 class Settings(BaseSettings):
@@ -26,8 +32,7 @@ class Settings(BaseSettings):
     rag_temperature: float = 0.2
 
     # -- ChromaDB --
-    # 使用绝对路径避免工作目录问题
-    chroma_persist_dir: str = r"C:\Users\Administrator\Documents\code\yixiaoguan\services\ai-service\data\chroma"
+    chroma_persist_dir: str = _DEFAULT_CHROMA_DIR
     chroma_collection_kb: str = "kb_entries"
     chroma_collection_links: str = "quick_links"
 

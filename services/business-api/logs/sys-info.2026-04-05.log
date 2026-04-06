@@ -1,0 +1,64 @@
+12:54:28.975 [background-preinit] INFO  o.h.v.i.util.Version - [<clinit>,18] - HV000001: Hibernate Validator 9.0.1.Final
+12:54:29.019 [main] INFO  c.r.RuoYiApplication - [logStarting,54] - Starting RuoYiApplication using Java 21.0.10 with PID 2797321 (/home/easten/dev/yixiaoguan/services/business-api/ruoyi-admin/target/ruoyi-admin.jar started by easten in /home/easten/dev/yixiaoguan/services/business-api)
+12:54:29.021 [main] INFO  c.r.RuoYiApplication - [logStartupProfileInfo,658] - The following 1 profile is active: "druid"
+12:54:31.738 [main] INFO  o.a.c.h.Http11NioProtocol - [log,168] - Initializing ProtocolHandler ["http-nio-8080"]
+12:54:31.740 [main] INFO  o.a.c.c.StandardService - [log,168] - Starting service [Tomcat]
+12:54:31.740 [main] INFO  o.a.c.c.StandardEngine - [log,168] - Starting Servlet engine: [Apache Tomcat/11.0.18]
+12:54:33.192 [main] INFO  c.a.d.p.DruidDataSource - [init,865] - {dataSource-1} inited
+12:54:36.066 [main] INFO  o.q.c.SchedulerSignalerImpl - [<init>,62] - Initialized Scheduler Signaller of type: class org.quartz.core.SchedulerSignalerImpl
+12:54:36.067 [main] INFO  o.q.c.QuartzScheduler - [<init>,224] - Quartz Scheduler v2.5.2 created.
+12:54:36.068 [main] INFO  o.q.s.RAMJobStore - [initialize,152] - RAMJobStore initialized.
+12:54:36.068 [main] INFO  o.q.c.QuartzScheduler - [initialize,289] - Scheduler meta-data: Quartz Scheduler (v2.5.2) 'quartzScheduler' with instanceId 'NON_CLUSTERED'
+  Scheduler class: 'org.quartz.core.QuartzScheduler' - running locally.
+  NOT STARTED.
+  Currently in standby mode.
+  Number of jobs executed: 0
+  Using thread pool 'org.quartz.simpl.SimpleThreadPool' - with 10 threads.
+  Using job-store 'org.quartz.simpl.RAMJobStore' - which does not support persistence. and is not clustered.
+
+12:54:36.069 [main] INFO  o.q.c.QuartzScheduler - [setJobFactory,2250] - JobFactory set to: org.springframework.scheduling.quartz.SpringBeanJobFactory@2b1818d1
+12:54:36.331 [main] INFO  c.y.a.c.AiServiceClient - [init,59] - [AiServiceClient] 初始化完成，目标地址: http://127.0.0.1:8000
+12:54:36.870 [main] INFO  c.y.c.c.AsyncConfig - [yxAuditExecutor,43] - [AsyncConfig] 审计日志异步线程池初始化完成
+12:54:37.748 [main] INFO  o.a.c.h.Http11NioProtocol - [log,168] - Starting ProtocolHandler ["http-nio-8080"]
+12:54:37.788 [main] INFO  o.q.c.QuartzScheduler - [start,541] - Scheduler quartzScheduler_$_NON_CLUSTERED started.
+12:54:37.797 [main] INFO  c.r.RuoYiApplication - [logStarted,60] - Started RuoYiApplication in 9.2 seconds (process running for 9.955)
+12:55:15.090 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[.[.[/] - [log,168] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+13:41:01.201 [http-nio-8080-exec-17] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：admin 不存在.
+13:41:01.216 [schedule-pool-1] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][用户不存在/密码错误]
+13:41:01.330 [schedule-pool-1] INFO  n.b.p.u.u.YauaaVersion - [logVersion,104] - Yauaa 8.1.0 (v8.1.0 @ 2026-02-16T08:31:38Z)
+13:41:01.576 [schedule-pool-1] INFO  n.b.p.u.c.ConfigLoader - [loadResources,309] - - Loaded 122 files in  233 ms using expression: classpath*:UserAgents/**/*.yaml
+13:41:02.862 [schedule-pool-1] INFO  n.b.p.u.a.UserAgentStringMatchMaker - [finalizeLoadingRules,282] - Building all needed matchers for the requested 11 fields.
+13:41:02.930 [schedule-pool-1] INFO  n.b.p.u.a.UserAgentStringMatchMaker - [initializeMatchers,336] - Initializing Analyzer data structures
+13:41:04.001 [schedule-pool-1] INFO  n.b.p.u.a.UserAgentStringMatchMaker - [initializeMatchers,347] - Built in 1070 msec : Hashmap 199731, Ranges map:3004
+13:43:45.946 [http-nio-8080-exec-20] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：admin 不存在.
+13:43:45.956 [schedule-pool-1] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][用户不存在/密码错误]
+13:44:40.640 [http-nio-8080-exec-22] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：2024010001 不存在.
+13:44:40.650 [schedule-pool-2] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2024010001][Error][用户不存在/密码错误]
+13:45:30.519 [http-nio-8080-exec-27] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+13:45:30.530 [schedule-pool-1] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+13:59:54.674 [http-nio-8080-exec-31] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+13:59:54.684 [schedule-pool-3] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+14:00:36.923 [http-nio-8080-exec-34] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+14:00:36.934 [schedule-pool-2] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+14:01:02.776 [schedule-pool-4] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][验证码已失效]
+14:01:02.788 [schedule-pool-1] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][验证码已失效]
+14:02:12.971 [schedule-pool-5] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][验证码已失效]
+14:02:12.983 [schedule-pool-3] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][验证码已失效]
+14:02:45.556 [schedule-pool-6] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][验证码已失效]
+14:02:45.568 [schedule-pool-2] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][验证码已失效]
+14:20:44.245 [schedule-pool-7] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][验证码已失效]
+14:21:03.270 [http-nio-8080-exec-53] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+14:21:03.281 [schedule-pool-8] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+14:21:23.936 [http-nio-8080-exec-54] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：admin 不存在.
+14:21:23.946 [schedule-pool-4] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[admin][Error][用户不存在/密码错误]
+14:45:12.625 [http-nio-8080-exec-58] INFO  c.r.f.w.s.UserDetailsServiceImpl - [loadUserByUsername,48] - 登录用户：4523570155 不存在.
+14:45:12.636 [schedule-pool-1] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[4523570155][Error][用户不存在/密码错误]
+16:06:44.599 [schedule-pool-9] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[2524010001][Success][登录成功]
+16:06:47.672 [schedule-pool-10] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[2524010001][Success][登录成功]
+16:06:54.734 [schedule-pool-5] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[liang_s_huli_24][Success][登录成功]
+16:09:00.810 [schedule-pool-3] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2524010001][Success][登录成功]
+16:11:32.590 [schedule-pool-11] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[2524010001][Success][登录成功]
+16:12:12.708 [schedule-pool-12] INFO  sys-user - [run,55] - [192.168.100.209]内网IP[2524010001][Success][登录成功]
+16:25:26.944 [schedule-pool-6] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2524010001][Success][登录成功]
+16:29:05.095 [schedule-pool-2] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2524010001][Success][登录成功]
+17:51:07.736 [schedule-pool-13] INFO  sys-user - [run,55] - [127.0.0.1]内网IP[2524010001][Success][登录成功]
