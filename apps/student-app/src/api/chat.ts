@@ -147,6 +147,11 @@ export function aiChat(request: AIChatRequest): Promise<AIChatResponse> {
   })
 }
 
+// TODO: 后端实现 /api/chat/suggestions 后取消注释
+// export function getSuggestions(): Promise<string[]> {
+//   return get('/api/chat/suggestions')
+// }
+
 // ===== 辅助 HTTP 方法（request.ts 中已有，但为保持独立引用）=====
 
 import { request } from '@/utils/request'
