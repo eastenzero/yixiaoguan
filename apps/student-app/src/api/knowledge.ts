@@ -1,23 +1,24 @@
 import { request } from '@/utils/request'
-import type { KnowledgeEntry } from '@/types/knowledge'
 
-/**
- * 获取知识条目详情
- * 静默处理 404 错误，返回 null 让调用方展示 fallback
- */
-export async function getKnowledgeEntryDetail(id: number): Promise<KnowledgeEntry | null> {
+export interface KnowledgeEntryFull {
+  entry_id: string
+  title: string
+  content: string
+  material_file_url: string
+  material_title: string
+  page_start?: string | number
+  page_end?: string | number
+  metadata?: Record<string, string>
+}
+
+export async function getKnowledgeEntryFull(entryId: string): Promise<KnowledgeEntryFull | null> {
   try {
-    const entry = await request<KnowledgeEntry>({
-      url: `/api/v1/knowledge/entries/${id}`,
-      method: 'GET'
-    })
-    return entry
-  } catch (error: any) {
-    // 静默处理 404，让 detail.vue 展示 fallback
-    if (error?.message?.includes('404') || error?.message?.includes('资源不存在')) {
-      return null
+    const res = await request.get('/api/knowledge/entries/' + encodeURIComponent(entryId))
+    if (res.data?.code === 0) {
+      return res.data.data as KnowledgeEntryFull
     }
-    // 其他错误继续抛出
-    throw error
+    return null
+  } catch {
+    return null
   }
 }
