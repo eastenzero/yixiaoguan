@@ -186,6 +186,8 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@import '@/styles/theme.scss';
+
 .login-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #00685f 0%, #008c7f 100%);
