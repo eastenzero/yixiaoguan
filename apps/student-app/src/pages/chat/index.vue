@@ -223,8 +223,7 @@ import IconBookOpen from '@/components/icons/IconBookOpen.vue'
 import { 
   createConversation, 
   getHistory, 
-  sendMessage as sendMessageAPI,
-  getSuggestions
+  sendMessage as sendMessageAPI
 } from '@/api/chat'
 
 // ============ Markdown 渲染器 ============
@@ -309,18 +308,8 @@ onLoad((options: any) => {
   }
 })
 
-onMounted(async () => {
-  try {
-    // 从远程获取快捷问题
-    const suggestions = await getSuggestions()
-    if (suggestions && suggestions.length > 0) {
-      quickQuestions.value = suggestions
-    }
-  } catch (error) {
-    console.warn('获取快捷问题失败，使用默认列表', error)
-    // 保持 fallback
-  }
-})
+// TODO: 后端实现 /api/chat/suggestions 后可恢复远程获取
+// 当前使用本地 DEFAULT_QUESTIONS
 
 // ============ 历史消息加载 ============
 async function loadHistory() {
@@ -387,8 +376,8 @@ async function sendMessage() {
   if (conversationId.value) {
     try {
       await sendMessageAPI(conversationId.value, {
-        role: 'user',
-        content: content
+        content: content,
+        messageType: 1
       })
     } catch (error) {
       console.error('保存用户消息失败:', error)
@@ -399,18 +388,8 @@ async function sendMessage() {
   // 开始流式响应
   const aiResponse = await streamResponse(content)
   
-  // AI 回复完成后保存到后端
-  if (conversationId.value && aiResponse) {
-    try {
-      await sendMessageAPI(conversationId.value, {
-        role: 'assistant',
-        content: aiResponse
-      })
-    } catch (error) {
-      console.error('保存 AI 消息失败:', error)
-      // 不影响前端显示
-    }
-  }
+  // TODO: AI 回复持久化需后端提供专用接口（当前 sendMessage 会将 sender_type 设为学生）
+  // 暂不保存 AI 消息，避免消息归属错误
 }
 
 // ============ 快捷问题发送 ============
