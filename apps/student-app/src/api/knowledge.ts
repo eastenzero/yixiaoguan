@@ -1,5 +1,3 @@
-import { request } from '@/utils/request'
-
 export interface KnowledgeEntryFull {
   entry_id: string
   title: string
@@ -11,14 +9,19 @@ export interface KnowledgeEntryFull {
   metadata?: Record<string, string>
 }
 
-export async function getKnowledgeEntryFull(entryId: string): Promise<KnowledgeEntryFull | null> {
-  try {
-    const res = await request.get('/api/knowledge/entries/' + encodeURIComponent(entryId))
-    if (res.data?.code === 0) {
-      return res.data.data as KnowledgeEntryFull
-    }
-    return null
-  } catch {
-    return null
-  }
+export function getKnowledgeEntryFull(entryId: string): Promise<KnowledgeEntryFull | null> {
+  return new Promise((resolve) => {
+    uni.request({
+      url: '/api/knowledge/entries/' + encodeURIComponent(entryId),
+      method: 'GET',
+      success: (res: any) => {
+        if (res.statusCode === 200 && res.data?.code === 0) {
+          resolve(res.data.data as KnowledgeEntryFull)
+        } else {
+          resolve(null)
+        }
+      },
+      fail: () => resolve(null),
+    })
+  })
 }
