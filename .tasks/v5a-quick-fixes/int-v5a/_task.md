@@ -2,7 +2,7 @@
 id: "int-v5a"
 parent: "v5a-quick-fixes"
 type: "integration-test"
-status: "pending"
+status: "done"
 tier: "T2"
 priority: "high"
 risk: "low"
