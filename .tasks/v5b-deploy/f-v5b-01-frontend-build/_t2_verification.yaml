@@ -1,0 +1,48 @@
+# T2 Verification Report: f-v5b-01-frontend-build
+# Generated: 2026-04-06 09:12
+
+task_id: "f-v5b-01-frontend-build"
+scope_compliance: "PASS"
+scope_violations: []
+
+verification:
+  L0: |
+    PASS - 两个构建产物均存在：
+    - apps/student-app/dist/build/h5/index.html (835 bytes)
+    - apps/teacher-web/dist/index.html (503 bytes)
+    
+  L1: |
+    PASS - 构建过程无 error（Sass deprecation warning 可接受）
+    
+    student-app 构建命令：
+    cd ~/dev/yixiaoguan/apps/student-app && npx uni build -p h5
+    输出：DONE Build complete.
+    
+    teacher-web 构建命令（需使用 Node 24）：
+    source ~/.nvm/nvm.sh && nvm use 24 && cd ~/dev/yixiaoguan/apps/teacher-web && npm run build-only
+    输出：✓ built in 1.43s
+    
+    注意：teacher-web 在 Node 18.19.1 上会失败，需切换到 Node 24.13.0
+    
+  L2: |
+    PASS - 文件存在且大小正常：
+    - student-app: ls -lh ~/dev/yixiaoguan/apps/student-app/dist/build/h5/index.html
+      -rw-rw-r-- 1 easten easten 835 Apr  6 09:03 index.html
+    - teacher-web: ls -lh ~/dev/yixiaoguan/apps/teacher-web/dist/index.html
+      -rw-rw-r-- 1 easten easten 503 Apr  6 09:04 index.html
+
+consistency_with_report: |
+  不一致 - T3 报告状态为 BLOCKED（SSH 连接超时）
+  实际验证结果：PASS（SSH 已恢复，构建成功）
+  
+  T3 报告中声称已修复的 SCSS 文件：
+  - questions/index.vue ✓ 确认已添加 $primary: #006a64
+  - apply/classroom.vue ✓ 确认已添加 $primary: #006a64
+  - apply/detail.vue ✓ 确认已添加 $primary: #006a64
+
+result: "PASS"
+recommendation: "可标记 done"
+
+notes:
+  - teacher-web 构建需要 Node 20+，165 服务器默认 Node 18，需手动切换到 nvm 中的 Node 24
+  - Sass deprecation warning 属于正常输出，不影响构建产物

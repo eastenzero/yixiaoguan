@@ -1,0 +1,48 @@
+# T2 Verification Report: f-v5b-02-backend-dockerfile
+# Generated: 2026-04-06 09:12
+
+task_id: "f-v5b-02-backend-dockerfile"
+scope_compliance: "PASS"
+scope_violations: []
+
+verification:
+  L0: |
+    PASS - Dockerfile 文件存在
+    路径：services/business-api/Dockerfile
+    内容符合规格要求
+    
+  L1: |
+    PASS - Docker 镜像构建成功
+    
+    构建命令：
+    cd ~/dev/yixiaoguan/services/business-api && docker build -t yx_business_api_test .
+    
+    输出：
+    Successfully built e114005ee9f7
+    Successfully tagged yx_business_api_test:latest
+    
+    注意：jar 文件已存在于 target/ 目录（86MB）
+    
+  L2: |
+    PASS - JRE 21 版本确认
+    
+    验证命令：
+    docker run --rm --entrypoint '' yx_business_api_test java -version
+    
+    输出：
+    openjdk version "21.0.10" 2026-01-20 LTS
+    OpenJDK Runtime Environment Temurin-21.0.10+7 (build 21.0.10+7-LTS)
+    OpenJDK 64-Bit Server VM Temurin-21.0.10+7 (build 21.0.10+7-LTS, mixed mode, sharing)
+
+consistency_with_report: |
+  不一致 - T3 报告状态为 BLOCKED（SSH 连接超时）
+  实际验证结果：PASS（SSH 已恢复，构建成功）
+  
+  Dockerfile 内容与 T3 报告一致，无硬编码密码
+
+result: "PASS"
+recommendation: "可标记 done"
+
+notes:
+  - docker-compose.yml 中尚未定义 business-api 服务（属于 batch-3 任务）
+  - 镜像构建使用缓存，实际部署时需确保 jar 文件是最新的
