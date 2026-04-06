@@ -1368,7 +1368,7 @@ function scrollToBottom() {
   right: 0;
   top: 0;
   bottom: 0;
-  z-index: 30;
+  z-index: 9999;
   display: flex;
   align-items: flex-end;
   background: rgba(0, 0, 0, 0.38);
@@ -1459,7 +1459,7 @@ function scrollToBottom() {
   display: flex;
   gap: 10px;
   margin-top: 16px;
-  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0));
+  padding-bottom: calc(18px + env(safe-area-inset-bottom) + 60rpx);
 }
 
 .preview-btn {
