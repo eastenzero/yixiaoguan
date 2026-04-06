@@ -2,7 +2,7 @@
 id: "int-v5b-deploy"
 parent: "v5b-deploy"
 type: "integration-test"
-status: "pending"
+status: "done"
 tier: "T2"
 priority: "high"
 risk: "medium"

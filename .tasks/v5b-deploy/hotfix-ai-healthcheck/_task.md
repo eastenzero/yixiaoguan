@@ -38,6 +38,8 @@ done_criteria:
 
 depends_on: ["f-v5b-04-compose-integration"]
 created_at: "2026-04-06"
+verified_at: "2026-04-06"
+verified_by: "T2-L2"
 ---
 
 # hotfix-ai-healthcheck: 修复 ai-service healthcheck

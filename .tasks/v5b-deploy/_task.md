@@ -36,11 +36,15 @@ batches:
   - name: "batch-hotfix"
     tasks: ["hotfix-ai-healthcheck"]
     depends_on: "batch-4"
-    status: "in_progress"
-    note: "ISSUE-1: ai-service healthcheck curl 不存在，改用 python urllib"
+    status: "done"
+    verified_at: "2026-04-06"
+    note: "ISSUE-1 RESOLVED: ai-service healthy，nginx 已启动，全栈 5 服务 Up"
   - name: "batch-int"
     tasks: ["int-v5b-deploy"]
     depends_on: "batch-hotfix"
+    status: "done"
+    verified_at: "2026-04-06"
+    note: "自动化测试全部通过 (6/6)，3 项人工验收待 T1"
 
 created_at: "2026-04-06"
 ---

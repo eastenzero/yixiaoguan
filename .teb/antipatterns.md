@@ -15,6 +15,10 @@
 
 ## 已知模式
 
+### AP-002：在 python:3.11-slim 容器中使用 curl 做健康检查
+- **现象**：docker-compose.yml 的 ai-service healthcheck 写 `CMD curl -f http://localhost:8000/`，但 `python:3.11-slim`（Debian slim）不含 curl，导致每次检查都 exit 1，ai-service 永远 unhealthy，下游 nginx 依赖阻塞无法启动
+- **正确做法**：Python 镜像的 healthcheck 必须用 Python 本身：`CMD-SHELL python -c 'import urllib.request; urllib.request.urlopen("http://localhost:8000/")' || exit 1`；Alpine 镜像（如 eclipse-temurin:21-jre-alpine）可用 wget
+
 ### AP-001：假设服务器 Node 版本满足 package.json engines 要求
 - **现象**：teacher-web `package.json` 声明 `engines: "node": "^20.19.0 || >=22.12.0"`，AI 在任务文件中仅提示"可能失败"，实际 165 服务器默认 Node 18.19.1，Vite 8 确实无法运行
 - **正确做法**：任务文件中明确写出切换命令 `source ~/.nvm/nvm.sh && nvm use 24`，并将其列为前置步骤而非可选建议；T1 在任务规格中应预先验证服务器工具链版本
