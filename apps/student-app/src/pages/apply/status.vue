@@ -347,6 +347,8 @@ onShow(() => {
 </script>
 
 <style scoped lang="scss">
+@import '@/styles/theme.scss';
+
 page {
   background-color: #f0f7f5;
 }
