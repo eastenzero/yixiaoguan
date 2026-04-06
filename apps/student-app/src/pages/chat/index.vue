@@ -35,7 +35,7 @@
             class="chip"
             @click="sendQuickQuestion(q)"
           >
-            <IconBookOpen :size="14" color="#006a64" />
+            <IconBookOpen :size="14" color="var(--color-primary, #006a64)" />
             <text>{{ q }}</text>
           </view>
         </view>
@@ -1173,7 +1173,8 @@ function scrollToBottom() {
     width: 100%;
     padding: 8px 10px;
     border-radius: 8px;
-    background: $md-sys-color-surface-container-low;
+    background: rgba(0, 106, 100, 0.06);
+    border: 1px solid rgba(0, 106, 100, 0.15);
     transition: all 0.2s ease;
 
     .source-num {
