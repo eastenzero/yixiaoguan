@@ -32,6 +32,11 @@
       <view v-else class="detail-card plain-content">
         <text>{{ displaySummary || '暂无可展示内容' }}</text>
       </view>
+      <button
+        v-if="materialFileUrl"
+        class="view-original-btn"
+        @click="openOriginalFile"
+      >查看原始文件</button>
     </view>
   </view>
 </template>
@@ -41,6 +46,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import MarkdownIt from 'markdown-it'
 import type { KnowledgeEntry, KnowledgeTag } from '@/types/knowledge'
+import { getKnowledgeEntryFull } from '@/api/knowledge'
 
 const md = new MarkdownIt({
   html: false,
@@ -52,6 +58,11 @@ const md = new MarkdownIt({
 const isLoading = ref(true)
 const loadFailed = ref(false)
 const entryId = ref<number | null>(null)
+const entryIdStr = ref<string>('')
+const materialFileUrl = ref<string>('')
+const materialTitle = ref<string>('')
+const pageStart = ref<number>(0)
+const pageEnd = ref<number>(0)
 const entry = ref<KnowledgeEntry | null>(null)
 const fallbackTitle = ref('')
 const fallbackSummary = ref('')
@@ -127,22 +138,63 @@ function parseTags(raw: unknown): KnowledgeTag[] {
 }
 
 async function loadDetail() {
-  // 方案 B：不调后端 API，直接使用 URL 参数中的 fallback 数据
-  // ChromaDB entry_id 为字符串格式（如 KB-20260323-0001-chunk-5），
-  // 后端 API 期望数字 ID，因此直接使用 fallback 展示
-  loadFailed.value = true
+  if (!entryIdStr.value) {
+    loadFailed.value = true
+    isLoading.value = false
+    return
+  }
+  try {
+    const data = await getKnowledgeEntryFull(entryIdStr.value)
+    if (data) {
+      entry.value = {
+        title: data.title,
+        content: data.content,
+      } as any
+      if (data.material_file_url) materialFileUrl.value = data.material_file_url
+      if (data.material_title) materialTitle.value = data.material_title
+      if (data.page_start) pageStart.value = parseInt(String(data.page_start)) || 0
+      if (data.page_end) pageEnd.value = parseInt(String(data.page_end)) || 0
+      loadFailed.value = false
+    } else {
+      loadFailed.value = true
+    }
+  } catch {
+    loadFailed.value = true
+  }
   isLoading.value = false
 }
 
-onLoad((options) => {
-  entryId.value = parseEntryId(options?.id)
-  fallbackTitle.value = decodeText(options?.title)
-  fallbackSummary.value = decodeText(options?.summary)
-  fallbackScore.value = parseScore(options?.score)
-  fallbackTags.value = parseTags(options?.tags)
-
+onLoad((options: any) => {
+  entryIdStr.value = decodeURIComponent(options?.entry_id || options?.id || '')
+  fallbackTitle.value = decodeURIComponent(options?.title || '')
+  fallbackSummary.value = decodeURIComponent(options?.summary || '')
+  fallbackScore.value = parseFloat(options?.score || '0') || 0
+  materialFileUrl.value = decodeURIComponent(options?.material_file_url || '')
+  materialTitle.value = decodeURIComponent(options?.material_title || '')
   loadDetail()
 })
+function openOriginalFile() {
+  let pdfUrl: string
+  const ttl = encodeURIComponent(
+    materialTitle.value || fallbackTitle.value || '原始文件'
+  )
+
+  if (pageStart.value > 0 && materialFileUrl.value) {
+    const file = materialFileUrl.value.split('/').pop() || ''
+    const endPage = pageEnd.value || (pageStart.value + 4)
+    pdfUrl = encodeURIComponent(
+      '/api/materials/slice?file=' + file + '&start=' + pageStart.value + '&end=' + endPage
+    )
+  } else if (materialFileUrl.value) {
+    pdfUrl = encodeURIComponent(materialFileUrl.value)
+  } else {
+    return
+  }
+
+  uni.navigateTo({
+    url: '/pages/viewer/pdf?url=' + pdfUrl + '&title=' + ttl
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -311,5 +363,15 @@ onLoad((options) => {
     border-left: 3px solid rgba(0, 106, 100, 0.35);
     color: $neutral-40;
   }
+}
+
+.view-original-btn {
+  margin: 16px 16px 0;
+  height: 44px;
+  background: #006a64;
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
 }
 </style>
