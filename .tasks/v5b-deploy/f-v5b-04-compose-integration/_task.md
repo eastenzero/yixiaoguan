@@ -47,6 +47,8 @@ done_criteria:
 
 depends_on: ["f-v5b-02-backend-dockerfile", "f-v5b-03-nginx-config"]
 created_at: "2026-04-06"
+verified_at: "2026-04-06"
+verified_by: "T1-L3"
 ---
 
 # F-V5B-04: Docker Compose 全栈编排

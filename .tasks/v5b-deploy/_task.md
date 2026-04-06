@@ -26,11 +26,11 @@ batches:
     depends_on: "batch-2"
     status: "done"
     verified_at: "2026-04-06"
-    note: "L0/L1 验证通过，L2 运行时验证留待 batch-int"
-    status: "in_progress"
+    note: "L3 PASS: Spring Druid+Redis env var 覆盖语义正确，依赖链正确"
   - name: "batch-4"
     tasks: ["f-v5b-05-deploy-script"]
     depends_on: "batch-3"
+    status: "in_progress"
   - name: "batch-int"
     tasks: ["int-v5b-deploy"]
     depends_on: "batch-4"
