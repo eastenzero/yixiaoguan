@@ -33,7 +33,7 @@
         <text>{{ displaySummary || '暂无可展示内容' }}</text>
       </view>
       <button
-        v-if="materialFileUrl"
+        v-if="materialFileUrl && pageStart > 0"
         class="view-original-btn"
         @click="openOriginalFile"
       >查看原始文件</button>
