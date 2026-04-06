@@ -1,0 +1,62 @@
+task_id: "f-v5b-05-deploy-script"
+verified_at: "2026-04-06T18:40:00+08:00"
+verified_by: "T2"
+
+scope_compliance: "PASS"
+scope_violations: []
+note: "仅修改 deploy/start-prod.sh 和 deploy/README.md，未触碰禁区"
+
+verification:
+  L0:
+    status: "PASS"
+    details: |
+      实际检查：ls deploy/start-prod.sh deploy/README.md
+      结果：
+      - start-prod.sh: 2458 bytes ✓
+      - README.md: 7773 bytes ✓
+  
+  L1:
+    status: "PASS"
+    details: |
+      命令：ssh 192.168.100.165 "bash -n ~/dev/yixiaoguan/deploy/start-prod.sh"
+      结果：Syntax OK
+      注：脚本语法正确，可在 Linux 环境执行
+  
+  L2:
+    status: "N/A"
+    details: "任务定义为暂无 L2，功能性验证在 batch-int 覆盖"
+  
+  L3:
+    status: "DEFERRED_TO_T1"
+    details: "脚本步骤完整性和 README 内容完整性的语义判定由 T1 负责"
+
+consistency_with_report: "一致"
+cross_check_notes: |
+  T3 报告中的关键点实现与实际文件内容一致：
+  - ✅ start-prod.sh 包含 6 个步骤（.env 检查、Node 切换、前端构建x2、jar 检测、docker compose）
+  - ✅ set -e 错误立即退出
+  - ✅ Node 版本自动切换（解决 AP-001）
+  - ✅ 智能跳过已存在的 node_modules
+  - ✅ README.md 包含所有必需章节
+
+script_structure_verification:
+  step1_env_check: "✅ [ ! -f .env ] 检查存在"
+  step2_node_version: "✅ source ~/.nvm/nvm.sh && nvm use 存在"
+  step3_student_build: "✅ npx uni build -p h5 存在"
+  step4_teacher_build: "✅ npm run build-only 存在"
+  step5_jar_check: "✅ [ ! -f $JAR ] 检测存在"
+  step6_docker_compose: "✅ docker compose build + up -d 存在"
+  step7_status_output: "✅ docker compose ps + 访问地址输出存在"
+
+readme_structure_verification:
+  quick_deploy: "✅ 一行命令章节存在"
+  architecture: "✅ 服务架构图章节存在"
+  prerequisites: "✅ 前置条件章节存在"
+  manual_steps: "✅ 手动步骤章节存在"
+  service_commands: "✅ 服务管理命令章节存在"
+  access_urls: "✅ 访问地址章节存在"
+
+result: "PASS"
+recommendation: "L0/L1 验证通过，可标记 done"
+
+git_commit: "pending"

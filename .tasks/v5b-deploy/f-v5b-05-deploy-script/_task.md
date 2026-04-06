@@ -2,7 +2,7 @@
 id: "f-v5b-05-deploy-script"
 parent: "v5b-deploy"
 type: "feature"
-status: "pending"
+status: "done"
 tier: "T3"
 priority: "medium"
 risk: "low"

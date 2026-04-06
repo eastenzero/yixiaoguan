@@ -61,8 +61,31 @@ created_at: "2026-04-06"
 
 ## 验收前置检查
 
+### Step 0：L2 运行时验证（batch-4 完成后、本任务开始前必须先完成）
+
 ```bash
-# 在 165 服务器执行
+cd ~/dev/yixiaoguan/deploy
+# 构建 business-api 镜像（首次需要）
+docker compose build business-api
+# 启动全栈
+docker compose up -d
+# 等待 Spring Boot 启动（约 60s）
+sleep 60
+# 检查所有服务状态
+docker compose ps
+# 确认 business-api 日志无 DB 连接错误
+docker compose logs business-api --tail=30 | grep -iE 'started|error|exception|fail'
+```
+
+**预期**：全部服务 `Up`/`healthy`，日志显示 `Started RuoYiApplication` 无 ERROR。
+
+> ⚠️ 数据库前置条件：165 服务器 yx_postgres 容器自 batch-1 起持续运行，
+> 表结构和用户数据（包括 2524010001）已存在于 postgres_data volume，
+> business-api 容器化启动后直接连接同一 volume，无需重新初始化。
+
+### Step 1：检查日志
+
+```bash
 cd ~/dev/yixiaoguan/deploy
 docker compose ps                          # 全部 healthy
 docker compose logs business-api --tail=5  # 无 ERROR

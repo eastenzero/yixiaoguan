@@ -30,6 +30,9 @@ batches:
   - name: "batch-4"
     tasks: ["f-v5b-05-deploy-script"]
     depends_on: "batch-3"
+    status: "done"
+    verified_at: "2026-04-06"
+    note: "部署脚本和文档完成"
     status: "in_progress"
   - name: "batch-int"
     tasks: ["int-v5b-deploy"]

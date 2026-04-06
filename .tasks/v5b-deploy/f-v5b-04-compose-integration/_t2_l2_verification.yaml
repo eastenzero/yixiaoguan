@@ -1,0 +1,78 @@
+task_id: "f-v5b-04-compose-integration"
+verified_at: "2026-04-06T18:35:00+08:00"
+verified_by: "T2"
+verification_type: "L2_RUNTIME"
+
+execution_summary:
+  command: "cd ~/dev/yixiaoguan/deploy && docker compose build business-api && docker compose up -d"
+  executed_on: "192.168.100.165"
+  duration: "~90 seconds (build + startup)"
+
+results:
+  docker_build:
+    business-api:
+      status: "SUCCESS"
+      image_size: "~90MB"
+      note: "Built from eclipse-temurin:21-jre-alpine"
+    ai-service:
+      status: "SUCCESS"
+      image_size: "~500MB"
+      note: "Built from python:3.11-slim, pip install took ~30s"
+  
+  docker_compose_up:
+    status: "PARTIAL_SUCCESS"
+    services_started: 4
+    services_expected: 5
+    
+  service_status:
+    postgres:
+      status: "UP_HEALTHY"
+      uptime: "22 hours"
+      note: "Pre-existing from batch-1, data persisted"
+    redis:
+      status: "UP_HEALTHY"
+      uptime: "22 hours"
+      note: "Pre-existing from batch-1, data persisted"
+    business-api:
+      status: "UP_HEALTHY"
+      startup_time: "~9 seconds"
+      log_verification: "✅ Started RuoYiApplication in 8.668 seconds"
+      healthcheck: "✅ wget http://localhost:8080/captchaImage successful"
+    ai-service:
+      status: "UP_UNHEALTHY"
+      startup_time: "~3 seconds"
+      log_verification: "✅ Uvicorn running on http://0.0.0.0:8000"
+      healthcheck: "❌ curl not available in python:3.11-slim container"
+      issue: "Healthcheck command uses 'curl' but container only has Python"
+    nginx:
+      status: "NOT_STARTED"
+      reason: "Depends on ai-service being healthy"
+      blocker: "ai-service healthcheck failure"
+
+issues_found:
+  - id: "ISSUE-1"
+    severity: "MEDIUM"
+    component: "ai-service"
+    description: "Healthcheck uses 'curl' but python:3.11-slim doesn't include it"
+    impact: "ai-service marked unhealthy, nginx won't start"
+    root_cause: "docker-compose.yml line 103: test: [ 'CMD', 'curl', '-f', 'http://localhost:8000/' ]"
+    fix_required: "Change healthcheck to use wget or python -c 'import urllib.request'"
+    workaround: "Service is actually running correctly, only healthcheck fails"
+
+verification_result: "PARTIAL_PASS"
+recommendation: |
+  L2 运行时验证部分通过：
+  - ✅ business-api 启动成功，Spring Boot 正常运行
+  - ✅ 数据库和 Redis 连接正常（无 ERROR 日志）
+  - ⚠️ ai-service 运行正常但 healthcheck 失败（需修复 docker-compose.yml）
+  - ❌ nginx 未启动（被 ai-service healthcheck 阻塞）
+  
+  建议：
+  1. 修复 ai-service healthcheck（使用 wget 或 python）
+  2. 修复后重新执行 docker compose up -d
+  3. 验证 nginx 正常启动并可访问前端页面
+
+next_steps:
+  - "Create hotfix task for ai-service healthcheck"
+  - "Re-run docker compose up -d after fix"
+  - "Verify nginx starts and serves frontend"
