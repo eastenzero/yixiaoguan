@@ -33,11 +33,14 @@ wheels/
 services/ai-service/data/chroma/
 _references/
 knowledge-base/raw/first-batch-processing/converted/pdf/
+knowledge-base/raw/原始材料/
+deploy/materials/
 services/business-api/**/target/
 *.jar
 
 # IDE local settings
 .claude/
+.windsurf/
 
 # Embedded git repos (use submodule if needed)
 teb-starter-kit/
