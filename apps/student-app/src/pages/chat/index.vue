@@ -200,7 +200,7 @@
             :disabled="!sourcePreview.materialFileUrl && !sourcePreview.entryId"
             @click="openSourceDetailFromPreview"
           >
-            {{ sourcePreview.materialFileUrl ? '查看原始文件' : '查看参考摘要' }}
+            查看详细资料
           </button>
           <button class="preview-btn preview-btn-ghost" @click="closeSourcePreview">
             知道了
@@ -620,6 +620,11 @@ function normalizeEntryId(rawEntryId: string): number | null {
   return parsed
 }
 
+function extractBaseEntryId(rawEntryId: string): string {
+  if (!rawEntryId) return ''
+  return rawEntryId.split('__chunk_')[0]
+}
+
 function buildKnowledgeDetailUrl(source: Source, entryId: number): string {
   const title = encodeURIComponent(source.title || '')
   const summary = encodeURIComponent((source.content || '').slice(0, 300))
@@ -654,49 +659,44 @@ function closeSourcePreview() {
 
 async function openSourceDetailFromPreview() {
   const source = sourcePreview.value
-  if (source.materialFileUrl) {
-    const pdfUrl = encodeURIComponent(source.materialFileUrl)
-    const title = encodeURIComponent(source.title)
+  const baseEntryId = extractBaseEntryId(source.entryId)
+  if (baseEntryId) {
     try {
-      await navigateToPage('/pages/viewer/pdf?url=' + pdfUrl + '&title=' + title)
+      await navigateToPage(
+        '/pages/knowledge/detail?entry_id=' + encodeURIComponent(baseEntryId)
+        + '&title=' + encodeURIComponent(source.title)
+        + '&summary=' + encodeURIComponent(source.content)
+        + '&score=' + (source.score ?? '')
+        + '&material_file_url=' + encodeURIComponent(source.materialFileUrl || '')
+      )
       closeSourcePreview()
       return
     } catch {}
   }
-  if (!source.entryId) { closeSourcePreview(); return }
-  try {
-    await navigateToPage('/pages/knowledge/detail?id=' + encodeURIComponent(source.entryId) + '&title=' + encodeURIComponent(source.title) + '&summary=' + encodeURIComponent(source.content) + '&score=' + (source.score ?? ''))
-    closeSourcePreview()
-  } catch {
-    uni.showToast({ title: '详情页暂不可用', icon: 'none' })
-  }
+  closeSourcePreview()
 }
 
 async function handleSourceClick(source: Source) {
-  // 优先跳知识详情页
   if (source.entry_id) {
-    const entryId = normalizeEntryId(source.entry_id)
-    if (entryId) {
+    const baseEntryId = extractBaseEntryId(source.entry_id)
+    if (baseEntryId) {
       try {
-        await navigateToPage(buildKnowledgeDetailUrl(source, entryId))
+        await navigateToPage(
+          '/pages/knowledge/detail?entry_id=' + encodeURIComponent(baseEntryId)
+          + '&title=' + encodeURIComponent(source.title || '')
+          + '&summary=' + encodeURIComponent((source.content || '').slice(0, 300))
+          + '&score=' + (source.score ?? '')
+          + '&material_file_url=' + encodeURIComponent(source.material_file_url || '')
+          + '&material_title=' + encodeURIComponent(source.material_title || '')
+        )
         return
       } catch (error) {
-        console.warn('来源详情跳转失败，尝试降级展示：', error)
+        console.warn('知识详情跳转失败，降级弹层:', error)
       }
     }
   }
-  
-  // 降级：弹层显示摘要
-  if (source.content) {
-    showSourcePreviewPopup(source)
-    return
-  }
-  
-  // 兜底：外链
-  if (source.url) {
-    handleLinkClick(source.url)
-    return
-  }
+  if (source.content) { showSourcePreviewPopup(source); return }
+  if (source.url) { handleLinkClick(source.url); return }
 }
 
 // ============ Markdown 链接解析 ============
