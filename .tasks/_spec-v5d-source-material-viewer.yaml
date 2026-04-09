@@ -1,0 +1,335 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v5d
+# 日期: 2026-04-06
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v5b (deploy, completed), spec-v5c (UI fixes, completed)
+# ===================================================================
+#
+# 背景:
+#   参考资料功能的核心价值是让同学看到"原始文件"——
+#   带截图的操作指南（如电费缴纳步骤）、带原始格式的比赛通知等。
+#   当前管道将所有材料转成纯文本 markdown 后切 chunk 入 ChromaDB，
+#   图片和格式全部丢失。前端只能展示 chunk 碎片摘要。
+#
+# 目标:
+#   方案 C（混合方案）——
+#   1. AI 检索继续使用 chunk（不影响 RAG 质量）
+#   2. "查看完整资料"按钮 → 打开原始 PDF（浏览器内置阅读器）
+#   3. 弹层摘要保留作为快速预览
+#   4. 附带修复 chunker 虚拟标题 + UI 精修
+#
+# 原始材料位置:
+#   - 学生手册 PDF: C:\Users\Administrator\MinerU\图片合集.pdf-5ce86808-...\..._origin.pdf
+#   - 知识库 PDF:   C:\Users\Administrator\MinerU\医小管知识库二次修改版.pdf-b2456411-...\..._origin.pdf
+#   - 其他 .docx:   参见 knowledge-base/raw/first-batch-material-index.csv
+#   - 62 个原始材料，格式为 .doc/.docx/.pdf/.md
+#
+# 约束:
+#   - 不新增后端 Java API
+#   - 不修改 RAG 检索逻辑（保持现有防幻觉阈值）
+#   - PDF 预览使用浏览器内置阅读器，不引入第三方库
+#   - .docx 文件统一转 PDF（libreoffice --headless）
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v5d
+date: 2026-04-06
+author: T0-Architect
+status: ready_for_t1
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5D-01: 原始材料收集与 PDF 标准化
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5D-01
+    title: 原始材料收集与 PDF 标准化
+    priority: P1
+    estimated_effort: 2h
+    description: |
+      将所有知识库原始材料统一为 PDF 格式，放入项目的静态托管目录。
+
+      数据来源:
+        1. 学生手册（含截图）:
+           C:\Users\Administrator\MinerU\图片合集.pdf-5ce86808-...\ea8dcd68-..._origin.pdf
+           → 重命名为: student-handbook.pdf
+
+        2. 知识库二次修改版:
+           C:\Users\Administrator\MinerU\医小管知识库二次修改版.pdf-b2456411-...\9124f779-..._origin.pdf
+           → 重命名为: knowledge-base-v2.pdf
+
+        3. 其他 .doc/.docx/.pdf 文件:
+           参见 knowledge-base/raw/first-batch-material-index.csv
+           每个 material_id 对应一个原始文件
+           → .docx/.doc 转 PDF: libreoffice --headless --convert-to pdf <file>
+           → .pdf 直接复制
+           → 文件名标准化: {material_id}.pdf (如 MAT-20260323-0006.pdf)
+
+      目标目录结构:
+        deploy/materials/
+        ├── student-handbook.pdf          # 学生手册（含截图）
+        ├── knowledge-base-v2.pdf         # 知识库文本版
+        ├── MAT-20260323-0002.pdf         # 学籍注册核对方法
+        ├── MAT-20260323-0003.pdf         # 学信网核对指南
+        ├── MAT-20260323-0006.pdf         # 助学金一网通办操作说明
+        ├── ...                           # 其他材料
+        └── material-index.json           # 映射索引
+
+      映射索引 material-index.json 格式:
+        {
+          "学生手册-生活服务": {
+            "pdf": "student-handbook.pdf",
+            "title": "学生手册（含图片版）",
+            "pages": null
+          },
+          "MAT-20260323-0006": {
+            "pdf": "MAT-20260323-0006.pdf",
+            "title": "助学金评审一网通办操作说明"
+          },
+          ...
+        }
+
+      注意:
+        - material_id 来自 KB 条目 frontmatter 和 material-index.csv
+        - 只处理 processing_action 为 "可转知识" 或 "提炼规则后入库" 的材料
+        - 过期 (value_level=C) 或纯模板 (is_template=是) 可跳过
+        - 优先处理 value_level=A 的高价值材料
+
+    files_to_create:
+      - deploy/materials/  (目录 + PDF 文件)
+      - deploy/materials/material-index.json
+
+    acceptance_criteria:
+      - deploy/materials/ 目录包含至少 student-handbook.pdf 和 knowledge-base-v2.pdf
+      - material-index.json 包含所有已处理材料的映射
+      - 所有 PDF 可正常打开（非损坏文件）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5D-02: Nginx 材料静态托管
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5D-02
+    title: Nginx 材料静态托管路由
+    priority: P1
+    estimated_effort: 15min
+    depends_on: [F-V5D-01]
+    description: |
+      在现有 Nginx 配置中添加 /materials/ 路由，托管 PDF 文件。
+
+      修改 deploy/nginx/conf.d/student.conf，添加:
+
+        location /materials/ {
+            alias /usr/share/nginx/html/materials/;
+            types {
+                application/pdf pdf;
+            }
+            add_header Content-Disposition inline;
+            add_header Cache-Control "public, max-age=86400";
+        }
+
+      修改 deploy/docker-compose.yml，nginx 服务增加 volume:
+        - ../deploy/materials:/usr/share/nginx/html/materials:ro
+
+      注意:
+        - Content-Disposition: inline 确保浏览器内嵌显示而非下载
+        - 如果 materials/ 目录较大，可考虑 gzip 但 PDF 已压缩，效果有限
+
+    files_to_modify:
+      - deploy/nginx/conf.d/student.conf
+      - deploy/docker-compose.yml
+
+    acceptance_criteria:
+      - 浏览器访问 http://192.168.100.165/materials/student-handbook.pdf 可直接预览 PDF
+      - PDF 在浏览器内嵌显示（非下载）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5D-03: ChromaDB 元数据补充 material_file_url
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5D-03
+    title: ChromaDB chunk 元数据补充原件链接
+    priority: P1
+    estimated_effort: 1h
+    depends_on: [F-V5D-01]
+    description: |
+      修改知识库入库脚本，在 chunk metadata 中新增 material_file_url 字段，
+      指向对应的 PDF 文件 URL。
+
+      修改 scripts/batch_ingestion.py 或 services/ai-service/scripts/batch_ingestion.py:
+
+      1. 加载 deploy/materials/material-index.json 作为映射表
+      2. 解析每个 KB 条目 frontmatter 中的 material_id
+      3. 查找映射表得到 PDF 文件名
+      4. 在 chunk_metadata 中注入:
+         material_file_url: "/materials/{pdf_filename}"
+         material_title: "{原始材料标题}"
+
+      同时修复 chunker.py 第 122-123 行:
+        当前: if not text.lstrip().startswith('#'):
+                  text = "# Document\n" + text
+        改为: if not text.lstrip().startswith('#'):
+                  text = f"# {title}\n" + text
+        → 用实际标题替代 "Document"，避免弹层显示 "Document" 字样
+
+      完成后需要在 165 上重新执行入库:
+        cd ~/dev/yixiaoguan/services/ai-service
+        source venv/bin/activate
+        python scripts/batch_ingestion.py --source-dir ../../knowledge-base/raw/first-batch-processing/converted/markdown
+
+    files_to_modify:
+      - services/ai-service/scripts/batch_ingestion.py
+      - services/ai-service/app/core/chunker.py (第 122-123 行)
+    files_to_check:
+      - deploy/materials/material-index.json
+
+    acceptance_criteria:
+      - 重新入库后，ChromaDB 中的 chunk metadata 包含 material_file_url 字段
+      - chunker 不再注入 "# Document" 虚拟标题
+      - 入库日志无报错
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5D-04: AI service 检索结果传递 material_file_url
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5D-04
+    title: 检索结果传递原件链接
+    priority: P1
+    estimated_effort: 30min
+    depends_on: [F-V5D-03]
+    description: |
+      确保 AI 对话 API 的 sources 列表中包含 material_file_url 字段，
+      前端可以直接使用。
+
+      检查 services/ai-service/app/ 中的 chat 处理逻辑：
+      - search_similar 返回的 metadata 已含 material_file_url（F-V5D-03 注入）
+      - 确保 SSE 流式响应的 sources 数据结构包含此字段
+      - 如有字段过滤/白名单，需加入 material_file_url 和 material_title
+
+      无需修改 RAG 检索逻辑本身，仅确保字段透传。
+
+    files_to_check:
+      - services/ai-service/app/api/chat.py
+      - services/ai-service/app/core/rag_engine.py (或对应文件)
+
+    acceptance_criteria:
+      - /api/chat/stream 的 sources 中每个 source 包含 material_file_url
+      - 字段值为 "/materials/xxx.pdf" 格式
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5D-05: 前端参考资料交互升级
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5D-05
+    title: 前端参考资料交互升级
+    priority: P1
+    estimated_effort: 2h
+    depends_on: [F-V5D-02, F-V5D-04]
+    description: |
+      升级前端参考资料的交互流程，核心变更:
+
+      1. "查看完整资料" 按钮行为变更:
+         当前: navigateToPage(buildKnowledgeDetailUrl(...))
+               → 跳转知识详情页 → 显示 chunk 文本摘要
+         改为: 如果 source.material_file_url 存在
+               → window.open(material_file_url) 或 uni.navigateTo 到 PDF 预览页
+               否则 → 保持现有降级逻辑
+
+      2. 摘要弹层内容优化:
+         - 标题: 用 source.material_title || source.title 替代 chunk 标题
+         - 正文: 继续显示 chunk 文本作为快速预览
+         - "查看完整资料" 按钮: 文案改为 "查看原始文件"
+         - 如果无 material_file_url: 按钮灰显或隐藏
+
+      3. PDF 预览方式选择（按优先级）:
+         方案 A: 直接 window.open(url) — 跳转浏览器 PDF 阅读器
+           优点: 零代码，浏览器原生支持
+           缺点: H5 嵌入 uni-app 时可能跳出 WebView
+         方案 B: 使用 <iframe> 或 <embed> 嵌入
+           优点: 不跳出应用
+           缺点: 移动端兼容性一般
+         方案 C: 创建一个简单的 pdf-viewer 页面
+           <web-view :src="pdfUrl" />
+           优点: 控制在应用内，体验好
+           缺点: 需新建页面
+
+         推荐方案 C，创建:
+           apps/student-app/src/pages/viewer/pdf.vue
+           路由: /pages/viewer/pdf?url=xxx&title=xxx
+
+      4. UI 精修（附带解决 v5c 反馈）:
+         - 参考资料卡片: 边框与圆角对齐
+         - 弹层按钮: 文字居中
+         - 移除知识详情页的 "暂不可用" 逻辑（不再需要）
+
+    files_to_modify:
+      - apps/student-app/src/pages/chat/index.vue
+    files_to_create:
+      - apps/student-app/src/pages/viewer/pdf.vue
+    files_to_check:
+      - apps/student-app/src/pages/knowledge/detail.vue (可能不再需要)
+      - apps/student-app/src/pages.json (注册新路由)
+
+    acceptance_criteria:
+      - 点击参考资料 → 弹层显示摘要 + "查看原始文件" 按钮
+      - 点击 "查看原始文件" → 打开 PDF 预览页，PDF 内容含图片可正常阅读
+      - 无 material_file_url 的来源 → 按钮灰显或隐藏
+      - 弹层按钮文字居中，卡片边框对齐
+      - 手机端 H5 可正常预览 PDF
+
+# ===================================================================
+# 验收标准汇总
+# ===================================================================
+acceptance_criteria_global:
+  - AC-1: deploy/materials/ 包含原始 PDF 文件和映射索引
+  - AC-2: http://192.168.100.165/materials/student-handbook.pdf 可在浏览器预览
+  - AC-3: ChromaDB chunks 含 material_file_url 元数据
+  - AC-4: AI 对话的 sources 透传 material_file_url
+  - AC-5: 前端 "查看原始文件" 可打开 PDF 预览
+  - AC-6: PDF 内含图片（如电费缴纳截图）可正常显示
+  - AC-7: 弹层 UI 精修（按钮居中、卡片对齐）
+
+# ===================================================================
+# 执行顺序
+# ===================================================================
+execution_order:
+  phase1:
+    - F-V5D-01 (材料收集 + PDF 转换)
+  phase2_parallel:
+    - F-V5D-02 (Nginx 路由)
+    - F-V5D-03 (ChromaDB 元数据)
+  phase3:
+    - F-V5D-04 (API 透传)
+  phase4:
+    - F-V5D-05 (前端交互)
+
+# ===================================================================
+# 风险与注意事项
+# ===================================================================
+risks:
+  - id: RISK-1
+    description: |
+      62 个原始材料中部分 .docx 可能在 165 服务器上用 libreoffice
+      转 PDF 时格式走样。解决: 在 Windows 上用 Office 导出 PDF，
+      然后 scp 到 165。
+  - id: RISK-2
+    description: |
+      deploy/materials/ 目录可能较大（几十 MB）。
+      Mutagen 同步可能慢。解决: 可直接在 165 上操作，
+      或排除 deploy/materials/ 不同步。
+  - id: RISK-3
+    description: |
+      KB 条目的 material_id 与 material-index.csv 的 material_id
+      不是同一命名空间。KB-0150~0170 用 "学生手册-生活服务"，
+      CSV 用 "MAT-20260323-xxxx"。映射索引需覆盖两种命名。
+  - id: RISK-4
+    description: |
+      H5 环境下 <web-view> 组件在某些浏览器中可能不支持 PDF。
+      备选: 引导用户到系统浏览器打开。
+
+# ===================================================================
+# 材料来源汇总
+# ===================================================================
+material_sources:
+  mineru_dir: "C:\\Users\\Administrator\\MinerU\\"
+  student_handbook_pdf: "图片合集.pdf-5ce86808-.../ea8dcd68-..._origin.pdf"
+  kb_v2_pdf: "医小管知识库二次修改版.pdf-b2456411-.../9124f779-..._origin.pdf"
+  docx_materials: "参见 knowledge-base/raw/first-batch-material-index.csv"
+  docx_original_dir: "数据库部分材料/数据库部分材料/ (用户本地)"
+  conversion_tool: "libreoffice --headless --convert-to pdf <file>"

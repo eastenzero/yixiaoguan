@@ -1,0 +1,439 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v5f
+# 日期: 2026-04-07
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v5e (closed), DEBT-V5E-01 / DEBT-V5D-02
+# ===================================================================
+#
+# 背景:
+#   spec-v5e 实现了两级导航：来源 → 知识详情页 → "查看原始文件" → PDF。
+#   但 PDF 仍全量加载 120MB / 182 页，用户明确要求：
+#     "原文件也应该直接截取相关的页面，而不是全量放出来，
+#      既不便于阅读，也增加了很多网络消耗"
+#
+# 目标:
+#   点击"查看原始文件"时，仅加载 KB 条目对应的 PDF 页范围（如 3-5 页），
+#   而非全量 182 页。关闭 DEBT-V5E-01 / DEBT-V5D-02。
+#
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v5f
+date: 2026-04-07
+author: T0-Architect
+status: ready_for_t1
+
+# ===================================================================
+# 技术方案
+# ===================================================================
+#
+#   [知识详情页] 点击"查看原始文件"
+#     │
+#     ▼  GET /api/materials/slice?file=student-handbook.pdf&start=42&end=45
+#     │
+#   [AI Service] pypdf 读取 PDF → 提取 page 42-45 → 返回子 PDF (~200KB)
+#     │
+#     ▼
+#   [PDF 预览页] web-view 加载子 PDF（而非 120MB 全量）
+#
+# 页码数据来源:
+#   KB 条目 frontmatter 新增 page_start / page_end 字段
+#   → 入库时写入 chunk metadata
+#   → knowledge API 透传
+#   → 前端拼接请求参数
+#
+# ===================================================================
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5F-01: KB 条目页码标注
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5F-01
+    title: KB 条目 frontmatter 页码标注
+    priority: P1
+    estimated_effort: 2h
+    depends_on: []
+    description: |
+      为每个来自 student-handbook.pdf 的 KB 条目添加 page_start / page_end。
+
+      === 数据来源 ===
+
+      MinerU 输出:
+        knowledge-base/raw/student-handbook-mineru/content_list_v2.json
+        结构: JSON 数组，每个顶级元素 = 1 页的内容块列表
+        共 122 页（MinerU 处理后的逻辑页，与 PDF 物理页可能有偏移）
+
+      === 实施方式 ===
+
+      方案 A（推荐）: 编写一次性 Python 脚本 scripts/build_page_mapping.py
+        1. 加载 content_list_v2.json
+        2. 为每页提取纯文本（拼接 title/paragraph/list content）
+        3. 对每个 KB 条目（material_id 含 "学生手册" 或 "HANDBOOK"）:
+           - 读取 KB .md 正文
+           - 在每页文本中搜索正文关键句（取前 100 字和后 100 字）
+           - 记录匹配到的最小页码（page_start）和最大页码（page_end）
+        4. 写入 KB 条目 frontmatter: page_start: N, page_end: M
+        5. 输出映射报告（CSV 或 JSON）供人工校验
+
+      方案 B（兜底）: 手工标注
+        - 打开 student-handbook.pdf，逐条查找 KB 条目标题对应的页码
+        - 手工编辑 frontmatter
+        - 35 个条目中约 34 个来自学生手册，工作量约 1h
+
+      === 注意事项 ===
+
+      - MinerU 逻辑页与 PDF 物理页的偏移:
+        content_list_v2.json 有 122 页，PDF 有 182 页。
+        可能因 MinerU 跳过纯图片页/空白页。
+        脚本应输出映射结果，人工抽查 3-5 条验证页码正确性。
+      - 不来自学生手册的 KB 条目（如 MAT-CP-xxx）暂不标注，
+        因为它们的源文件是独立 Word/PDF，文件本身就是完整内容。
+
+      === frontmatter 示例 ===
+
+      修改前:
+        ---
+        material_id: "学生手册-生活服务"
+        title: "电费缴纳指南"
+        category: "生活服务"
+        source: "学生手册-生活服务.md 行 4927-5041"
+        ---
+
+      修改后:
+        ---
+        material_id: "学生手册-生活服务"
+        title: "电费缴纳指南"
+        category: "生活服务"
+        source: "学生手册-生活服务.md 行 4927-5041"
+        page_start: 155
+        page_end: 158
+        ---
+
+    files_to_create:
+      - scripts/build_page_mapping.py (一次性脚本，可选)
+    files_to_modify:
+      - knowledge-base/entries/first-batch-drafts/KB-015*.md (约22个)
+      - knowledge-base/entries/first-batch-drafts/KB-20260324-013[89]*.md (约12个)
+
+    acceptance_criteria:
+      - AC-F01: 所有来自 student-handbook.pdf 的 KB 条目有 page_start/page_end
+      - AC-F02: 抽查 3 条，page_start 对应 PDF 中该内容的实际起始页
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5F-02: 入库 & API 透传页码
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5F-02
+    title: 入库 & API 层页码透传
+    priority: P1
+    estimated_effort: 1h
+    depends_on: [F-V5F-01]
+    description: |
+      让 page_start/page_end 从 KB frontmatter 流转到前端。
+
+      === batch_ingest_kb.py 变更 ===
+
+      在 ingest_kb_entry() 中:
+        base_metadata = {
+            ...
+            "page_start": metadata.get('page_start', ''),    # 新增
+            "page_end": metadata.get('page_end', ''),        # 新增
+        }
+      → 入库后 ChromaDB chunk metadata 包含 page_start/page_end
+
+      === knowledge.py API 变更 ===
+
+      在 get_entry() 返回中添加:
+        'page_start': fm.get('page_start', ''),
+        'page_end': fm.get('page_end', ''),
+
+      注: 知识条目 API 直接读 frontmatter，不需要从 ChromaDB 取。
+
+      === chat API 变更（可选） ===
+
+      如果需要在聊天流程中也透传页码:
+      - SourceItem 添加 page_start/page_end 字段
+      - SourceItemDTO 添加对应字段
+      - _build_sources 从 metadata 读取
+      本轮可选，因为主入口已改为知识详情页的"查看原始文件"按钮。
+
+    files_to_modify:
+      - scripts/batch_ingest_kb.py (base_metadata 加 page_start/page_end)
+      - services/ai-service/app/api/knowledge.py (返回值加 page_start/page_end)
+
+    acceptance_criteria:
+      - AC-F03: GET /api/knowledge/entries/{id} 返回 page_start/page_end
+      - AC-F04: ChromaDB chunk metadata 含 page_start/page_end（重新入库后）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5F-03: PDF 页码裁剪后端服务
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5F-03
+    title: AI Service — PDF 页码裁剪端点
+    priority: P1
+    estimated_effort: 2h
+    depends_on: []
+    description: |
+      新增 API 端点，按页码范围裁剪 PDF 并返回子文件。
+
+      === 端点 ===
+
+      GET /api/materials/slice?file={filename}&start={page}&end={page}
+
+      参数:
+        - file: PDF 文件名（如 student-handbook.pdf）
+        - start: 起始页码（1-indexed，含）
+        - end: 结束页码（1-indexed，含）
+
+      响应:
+        - Content-Type: application/pdf
+        - Content-Disposition: inline; filename="student-handbook_p42-45.pdf"
+        - Body: 裁剪后的 PDF 二进制
+
+      === 实现 ===
+
+      1. 安装 pypdf 依赖:
+         services/ai-service/requirements.txt 添加: pypdf>=4.0
+
+      2. 新建 services/ai-service/app/api/materials.py:
+
+         from fastapi import APIRouter, Query, HTTPException
+         from fastapi.responses import StreamingResponse
+         from pypdf import PdfReader, PdfWriter
+         from pathlib import Path
+         import io
+
+         router = APIRouter(prefix='/api/materials', tags=['materials'])
+
+         # PDF 文件目录（与 docker-compose volume 对应）
+         _MATERIALS_DIR = Path('/app/materials')
+         if not _MATERIALS_DIR.exists():
+             # Local dev fallback
+             _MATERIALS_DIR = Path(__file__).parent.parent.parent.parent.parent / 'deploy' / 'materials'
+
+         # 简单内存缓存: (file, start, end) → bytes
+         _CACHE: dict[tuple, bytes] = {}
+         _MAX_CACHE = 50  # 最多缓存 50 个切片
+
+         @router.get('/slice')
+         async def slice_pdf(
+             file: str = Query(..., description="PDF 文件名"),
+             start: int = Query(..., ge=1, description="起始页码(1-indexed)"),
+             end: int = Query(..., ge=1, description="结束页码(1-indexed)"),
+         ):
+             # 安全校验：防止路径穿越
+             if '/' in file or '\\' in file or '..' in file:
+                 raise HTTPException(400, '非法文件名')
+
+             pdf_path = _MATERIALS_DIR / file
+             if not pdf_path.exists():
+                 raise HTTPException(404, 'PDF 文件不存在')
+
+             if end < start:
+                 raise HTTPException(400, 'end 必须 >= start')
+
+             # 限制最大页数（防滥用）
+             if end - start + 1 > 20:
+                 raise HTTPException(400, '单次最多裁剪 20 页')
+
+             cache_key = (file, start, end)
+             if cache_key in _CACHE:
+                 pdf_bytes = _CACHE[cache_key]
+             else:
+                 try:
+                     reader = PdfReader(str(pdf_path))
+                     total = len(reader.pages)
+                     # 页码校验
+                     if start > total:
+                         raise HTTPException(400, f'起始页超出范围(共{total}页)')
+                     actual_end = min(end, total)
+                     writer = PdfWriter()
+                     for i in range(start - 1, actual_end):  # 0-indexed
+                         writer.add_page(reader.pages[i])
+                     buf = io.BytesIO()
+                     writer.write(buf)
+                     pdf_bytes = buf.getvalue()
+                     # 缓存
+                     if len(_CACHE) >= _MAX_CACHE:
+                         _CACHE.pop(next(iter(_CACHE)))  # LRU-ish
+                     _CACHE[cache_key] = pdf_bytes
+                 except HTTPException:
+                     raise
+                 except Exception as e:
+                     raise HTTPException(500, f'PDF 裁剪失败: {str(e)}')
+
+             slug = file.replace('.pdf', '')
+             return StreamingResponse(
+                 io.BytesIO(pdf_bytes),
+                 media_type='application/pdf',
+                 headers={
+                     'Content-Disposition': f'inline; filename="{slug}_p{start}-{end}.pdf"'
+                 }
+             )
+
+      3. 注册路由:
+         在 main.py 中: from app.api.materials import router as materials_router
+                        app.include_router(materials_router)
+
+      === Nginx 路由 ===
+
+      在 student.conf 中添加（/api/chat 和 /api/knowledge/ 同级）:
+
+        location /api/materials/ {
+            proxy_pass http://ai-service:8000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+      === 安全 ===
+
+      - 文件名不允许含 / \ .. → 防路径穿越
+      - 单次最多 20 页 → 防全量下载绕过
+      - 缓存限制 50 条 → 防内存耗尽
+
+    files_to_create:
+      - services/ai-service/app/api/materials.py
+    files_to_modify:
+      - services/ai-service/requirements.txt (添加 pypdf>=4.0)
+      - services/ai-service/app/main.py (注册路由)
+      - deploy/nginx/conf.d/student.conf (添加 /api/materials/ 路由)
+
+    acceptance_criteria:
+      - AC-F05: GET /api/materials/slice?file=student-handbook.pdf&start=1&end=3 返回 3 页 PDF
+      - AC-F06: 返回的 PDF 文件大小远小于原始 120MB（预期 < 2MB）
+      - AC-F07: file 参数含 .. 时返回 400
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5F-04: 前端对接裁剪 PDF
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5F-04
+    title: 前端对接裁剪 PDF
+    priority: P1
+    estimated_effort: 1h
+    depends_on: [F-V5F-02, F-V5F-03]
+    description: |
+      修改知识详情页和 PDF 预览页，使用裁剪 API。
+
+      === knowledge/detail.vue 变更 ===
+
+      1. loadDetail() 成功后，保存 page_start/page_end:
+         const pageStart = ref<number>(0)
+         const pageEnd = ref<number>(0)
+
+         // 在 loadDetail 的 data 回调中:
+         pageStart.value = parseInt(data.page_start) || 0
+         pageEnd.value = parseInt(data.page_end) || 0
+
+      2. openOriginalFile() 根据是否有页码决定 URL:
+
+         function openOriginalFile() {
+           let pdfUrl: string
+           const ttl = encodeURIComponent(
+             materialTitle.value || fallbackTitle.value || '原始文件'
+           )
+
+           if (pageStart.value > 0 && materialFileUrl.value) {
+             // 有页码 → 使用裁剪 API
+             const file = materialFileUrl.value.split('/').pop() || ''
+             const end = pageEnd.value || pageStart.value + 4
+             pdfUrl = encodeURIComponent(
+               `/api/materials/slice?file=${file}&start=${pageStart.value}&end=${end}`
+             )
+           } else if (materialFileUrl.value) {
+             // 无页码 → 降级全量（保持现有行为）
+             pdfUrl = encodeURIComponent(materialFileUrl.value)
+           } else {
+             return
+           }
+
+           uni.navigateTo({
+             url: '/pages/viewer/pdf?url=' + pdfUrl + '&title=' + ttl
+           })
+         }
+
+      === viewer/pdf.vue ===
+
+      无需改动，已通过 URL 参数接收 src，裁剪 API 返回的也是合法 PDF URL。
+
+    files_to_modify:
+      - apps/student-app/src/pages/knowledge/detail.vue
+
+    acceptance_criteria:
+      - AC-F08: 有页码的条目 → "查看原始文件"请求裁剪 API → 加载 < 2MB
+      - AC-F09: 无页码的条目 → 降级全量 PDF（保持现有行为不回退）
+      - AC-F10: PDF 预览页正常显示裁剪后的 PDF 内容
+
+# ===================================================================
+# 全局验收标准
+# ===================================================================
+acceptance_criteria_global:
+  - AC-F01: KB 条目有 page_start/page_end
+  - AC-F02: 页码抽查正确
+  - AC-F03: knowledge API 返回 page_start/page_end
+  - AC-F04: ChromaDB metadata 含 page_start/page_end
+  - AC-F05: 裁剪 API 返回子 PDF
+  - AC-F06: 子 PDF 大小远小于原始
+  - AC-F07: 路径穿越拦截
+  - AC-F08: 前端使用裁剪 API
+  - AC-F09: 无页码时降级
+  - AC-F10: 预览页正常显示
+
+# ===================================================================
+# 执行顺序
+# ===================================================================
+execution_order:
+  batch1_parallel:
+    - F-V5F-01 (页码标注, 纯数据, 无代码依赖)
+    - F-V5F-03 (裁剪 API, AI service, 无前置依赖)
+  batch2:
+    - F-V5F-02 (入库+API透传, 依赖 F-V5F-01 的 frontmatter)
+  batch3:
+    - F-V5F-04 (前端对接, 依赖 F-V5F-02 + F-V5F-03)
+  post:
+    - 重新执行 batch_ingest_kb.py 入库（更新 ChromaDB metadata）
+    - docker compose 重建 ai-service（新增 pypdf + materials 路由）
+
+# ===================================================================
+# T1 分工建议
+# ===================================================================
+t1_assignment:
+  T1-A:
+    modules: [F-V5F-01]
+    scope: 页码标注（脚本或手工）
+    effort: 2h
+  T1-B:
+    modules: [F-V5F-02, F-V5F-03, F-V5F-04]
+    scope: 后端裁剪 API + API 透传 + 前端对接
+    effort: 4h
+  note: |
+    T1-A 和 T1-B batch1 可并行（F-V5F-01 改 .md 文件, F-V5F-03 改 AI service）。
+    F-V5F-02 需要 F-V5F-01 的 frontmatter 完成后才能验证。
+    F-V5F-04 需要 F-V5F-02 + F-V5F-03 都完成。
+    最后需要重新入库 + 重建容器。
+
+# ===================================================================
+# 风险
+# ===================================================================
+risks:
+  - id: RISK-1
+    description: |
+      MinerU 逻辑页 vs PDF 物理页偏移:
+      content_list_v2.json 有 122 页，PDF 有 182 页。
+      MinerU 可能跳过纯图片页、空白页、封面等。
+      解决: 脚本输出映射报告，人工抽查验证。
+      如果偏移不可忽略，则改用手工标注方案。
+  - id: RISK-2
+    description: |
+      pypdf 处理 120MB PDF 的内存和延迟:
+      PdfReader 首次加载 120MB 文件可能需要 1-2 秒。
+      解决: 内存缓存切片结果；PdfReader 可复用（单例模式）。
+  - id: RISK-3
+    description: |
+      H5 web-view 加载 API URL（非静态文件）:
+      裁剪 API 返回二进制 PDF，web-view 的 src 需要是完整 URL。
+      解决: 使用绝对 URL（如 http://192.168.100.165/api/materials/slice?...）
+      或相对 URL（/api/materials/slice?...），取决于 web-view 的 base URL 行为。
+      如有问题，可将 API URL 改为 Blob URL。

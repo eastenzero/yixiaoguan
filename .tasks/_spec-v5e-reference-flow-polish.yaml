@@ -1,0 +1,384 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v5e
+# 日期: 2026-04-07
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v5d (completed), v5c push (3397994)
+# ===================================================================
+#
+# 背景:
+#   v5d 实现了"点击参考来源 → 直接打开全量 PDF"的一级跳转，
+#   但用户明确要求的是 **两级导航**：
+#     一级：点击来源 → 知识详情页（KB 条目的 MD 渲染，完整文本预览）
+#     二级：知识详情页 → "查看原始文件" → 裁剪后的 PDF（仅相关页码）
+#
+#   当前问题：
+#   1. handleSourceClick 中 normalizeEntryId 只接受数字 ID，
+#      但 ChromaDB entry_id 为字符串（如 "KB-20260323-0001__chunk_0"），
+#      导致一级跳转永远失败 → 降级到弹层。
+#   2. 知识详情页 loadDetail() 直接标记 loadFailed=true，不调 API，
+#      只展示 URL 参数传入的 chunk 摘要（碎片）。
+#   3. 没有后端 API 提供完整 KB 条目内容。
+#   4. PDF 全量加载 182 页，无页码裁剪。
+#   5. 残留 CSS DEBT（卡片溢出、弹层遮挡、硬编码颜色）。
+#
+# 已关闭的 DEBT:
+#   - DEBT-V5A-02 (验证码 500): 用户确认已修复 → closed
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v5e
+date: 2026-04-07
+author: T0-Architect
+status: ready_for_t1
+
+# ===================================================================
+# 核心交互流程（目标状态）
+# ===================================================================
+#
+#   [聊天页] 点击参考来源卡片
+#     │
+#     ▼
+#   [知识详情页] /pages/knowledge/detail?entry_id=KB-xxx
+#     ├── 顶部 Hero 卡: 标题 + 相关度 + 分类标签
+#     ├── 正文区: 完整 KB 条目 Markdown 渲染（全文，非 chunk 碎片）
+#     ├── 底部按钮: "查看原始文件"（仅当 material_file_url 存在时显示）
+#     │     │
+#     │     ▼
+#     │   [PDF 预览页] /pages/viewer/pdf?url=xxx&page=42&title=xxx
+#     │     └── 浏览器 PDF 阅读器，自动跳转到相关页码
+#     │
+#     └── 降级: 如果 API 加载失败 → 显示 chunk 摘要（fallback，同当前行为）
+#
+# ===================================================================
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5E-01: CSS/UI 快速修复
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5E-01
+    title: CSS/UI 快速修复（合并清理 4 项 DEBT）
+    priority: P1
+    estimated_effort: 1h
+    depends_on: []
+    description: |
+      合并修复 4 项视觉/代码质量问题。
+
+      1. DEBT-V5D-01 — 参考资料卡片右侧溢出:
+         文件: apps/student-app/src/pages/chat/index.vue
+         位置: .source-item 样式 (约 L1181)
+         修复: 添加 box-sizing: border-box; 父容器 .message-sources 加 overflow: hidden
+
+      2. UI-02 — 摘要弹层底部按钮被导航栏遮挡:
+         文件: apps/student-app/src/pages/chat/index.vue
+         位置: .source-preview-panel .source-preview-actions 样式
+         修复: actions 区增加 padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px)
+         或固定 actions 在弹层底部，content 区 scrollable
+
+      3. UI-01 — 参考资料卡片边框/背景色不协调:
+         文件: apps/student-app/src/pages/chat/index.vue
+         位置: .source-item 样式 (约 L1188-1189)
+         当前: background: #ffffff; border: 1px solid rgba(0,106,100,0.2)
+         改为: background: rgba(0,106,100,0.04); border: 1px solid rgba(0,106,100,0.15)
+         → 轻微主题色底色，与整体视觉统一
+
+      4. DEBT-V3-01/V4-01 — #006a64 硬编码清理:
+         影响文件: 11 个文件 12 处（见下方列表）
+         改为: 引用 theme.scss 中已定义的 $primary 变量
+         注意: pages.json 中的 navigationBarTextStyle 等原生配置项
+               不支持 SCSS 变量，可保留硬编码并加注释标记
+
+         硬编码位置清单:
+         - App.vue (1处)
+         - components/CustomTabBar.vue (1处)
+         - pages/apply/detail.vue (2处)
+         - pages/apply/classroom.vue (1处)
+         - pages/apply/status.vue (1处)
+         - pages/chat/index.vue (1处, .back-icon)
+         - pages/knowledge/detail.vue (1处, .fallback-notice text)
+         - pages/questions/index.vue (1处)
+         - pages/viewer/pdf.vue (1处, .back-icon)
+         - styles/theme.scss (1处, 这是定义处，保留)
+         - pages.json (1处, 原生配置，保留并加注释)
+
+    files_to_modify:
+      - apps/student-app/src/pages/chat/index.vue
+      - apps/student-app/src/App.vue
+      - apps/student-app/src/components/CustomTabBar.vue
+      - apps/student-app/src/pages/apply/detail.vue
+      - apps/student-app/src/pages/apply/classroom.vue
+      - apps/student-app/src/pages/apply/status.vue
+      - apps/student-app/src/pages/knowledge/detail.vue
+      - apps/student-app/src/pages/questions/index.vue
+      - apps/student-app/src/pages/viewer/pdf.vue
+
+    acceptance_criteria:
+      - AC-E01: 参考资料卡片不再溢出父容器
+      - AC-E02: 摘要弹层底部按钮完全可见、不被遮挡
+      - AC-E03: 卡片背景色与主题协调
+      - AC-E04: 除 pages.json 和 theme.scss 外，无 #006a64 硬编码
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5E-02: 知识条目完整内容 API
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5E-02
+    title: AI Service — 知识条目完整内容 API
+    priority: P1
+    estimated_effort: 2h
+    depends_on: []
+    description: |
+      新增 API 端点，返回指定知识条目的完整 Markdown 内容。
+
+      端点: GET /api/knowledge/entries/{entry_id}
+
+      逻辑:
+      1. 接收 entry_id（chunk ID 或 base entry ID 均可）
+         - chunk ID 示例: "KB-20260323-0001__chunk_0"
+         - base ID 示例: "KB-20260323-0001"
+      2. 提取 base_entry_id: entry_id.split("__chunk_")[0]
+      3. 在 ChromaDB 中查询所有以 base_entry_id 为前缀的 chunks
+         - 按 chunk index 排序
+         - 拼接所有 chunk content → 完整文档
+      4. 从第一个 chunk 的 metadata 提取:
+         - title
+         - material_file_url
+         - material_title
+         - 其他元数据 (category, tags 等)
+      5. 返回响应
+
+      响应格式:
+        {
+          "code": 0,
+          "msg": "success",
+          "data": {
+            "entry_id": "KB-20260323-0001",
+            "title": "学生手册-电费缴纳指南",
+            "content": "## 电费缴纳指南\n\n完美校园APP...(完整 Markdown)",
+            "material_file_url": "/materials/student-handbook.pdf",
+            "material_title": "学生手册（含图片版）",
+            "chunk_count": 3,
+            "metadata": { "category": "生活服务", ... }
+          }
+        }
+
+      错误处理:
+        - entry_id 不存在 → 404 { "code": 404, "msg": "条目不存在" }
+        - ChromaDB 异常 → 500
+
+      替代方案（如果 ChromaDB 查询前缀不方便）:
+        直接读取知识库 .md 文件:
+        1. 根据 entry_id 定位 knowledge-base/entries/ 下的 .md 文件
+        2. 读取并解析 frontmatter + content
+        3. 返回完整内容
+        → 这个方案更简单，但需要文件系统访问
+
+      推荐: 先尝试 ChromaDB 聚合方案；如果 ChromaDB 不支持前缀查询，
+      降级到文件读取方案。
+
+    files_to_create:
+      - services/ai-service/app/api/knowledge.py (新路由文件)
+    files_to_modify:
+      - services/ai-service/app/api/__init__.py 或 main.py (注册路由)
+
+    acceptance_criteria:
+      - AC-E05: GET /api/knowledge/entries/KB-20260323-0001 返回完整 MD 内容
+      - AC-E06: GET /api/knowledge/entries/KB-20260323-0001__chunk_0 同样工作（提取 base ID）
+      - AC-E07: 返回 material_file_url 字段
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5E-03: 前端导航流程重构
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5E-03
+    title: 前端参考资料导航流程重构
+    priority: P1
+    estimated_effort: 2h
+    depends_on: [F-V5E-02]
+    description: |
+      重构 handleSourceClick 和知识详情页，实现两级导航。
+
+      === chat/index.vue 变更 ===
+
+      1. handleSourceClick(source):
+         当前逻辑:
+           - normalizeEntryId 尝试转数字 → 失败 → 降级弹层
+         改为:
+           - 直接使用字符串 entry_id（不再转数字）
+           - 提取 base_entry_id: source.entry_id.split("__chunk_")[0]
+           - navigateTo 知识详情页，传 base_entry_id + chunk 摘要作为 fallback
+           - URL 格式: /pages/knowledge/detail?entry_id={base_id}
+                       &title={title}&summary={chunk_content}&score={score}
+                       &material_file_url={url}
+
+      2. 删除或简化 normalizeEntryId:
+         不再需要数字转换，entry_id 始终为字符串
+
+      3. 移除 openSourceDetailFromPreview 中的 PDF 直跳逻辑:
+         弹层只作为 API 加载失败的降级，不再作为 PDF 入口
+         "查看详细资料" 按钮 → 跳知识详情页
+
+      === knowledge/detail.vue 变更 ===
+
+      1. loadDetail():
+         当前: 直接标记 loadFailed = true
+         改为:
+           - 调用 GET /api/knowledge/entries/{entry_id}
+           - 成功 → 渲染完整 Markdown 内容
+           - 失败 → fallback 到 URL 参数中的 chunk 摘要（保持现有降级）
+
+      2. 新增 "查看原始文件" 按钮:
+         - 仅当 material_file_url 存在时显示
+         - 点击 → navigateTo PDF 预览页
+         - 按钮样式: 主题色填充按钮，放在正文区下方
+
+      3. onLoad 解析 entry_id 改为字符串（不再 parseEntryId 转数字）
+
+      === api/knowledge.ts 变更 ===
+
+      4. 新增 API 函数:
+         export async function getKnowledgeEntryFull(entryId: string) {
+           const res = await request.get(`/api/knowledge/entries/${entryId}`)
+           return res.data?.data || null
+         }
+
+    files_to_modify:
+      - apps/student-app/src/pages/chat/index.vue
+      - apps/student-app/src/pages/knowledge/detail.vue
+      - apps/student-app/src/api/knowledge.ts
+
+    acceptance_criteria:
+      - AC-E08: 点击参考资料卡片 → 跳转知识详情页（非弹层）
+      - AC-E09: 知识详情页展示完整 KB 条目 Markdown（非 chunk 碎片）
+      - AC-E10: 知识详情页有 "查看原始文件" 按钮 → 跳转 PDF 预览
+      - AC-E11: API 加载失败时降级显示 chunk 摘要（兼容现有行为）
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V5E-04: PDF 页码定位（增量优化）
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V5E-04
+    title: PDF 页码定位
+    priority: P2
+    estimated_effort: 3h
+    depends_on: [F-V5E-02, F-V5E-03]
+    description: |
+      让 PDF 预览自动跳转到相关页码，而非展示全量 182 页。
+
+      === 方案选型 ===
+
+      方案 A: URL fragment #page=N（最简单）
+        - PDF 预览 URL 改为: /materials/student-handbook.pdf#page=42
+        - 浏览器内置 PDF 阅读器支持此 fragment
+        - 优点: 零后端开发
+        - 缺点: 仍加载全量 PDF（120MB），只是滚动到指定页
+        - 适用: 桌面浏览器
+
+      方案 B: 后端 pypdf 切片服务（推荐）
+        - 新端点: GET /api/materials/slice?file=student-handbook.pdf&start=40&end=45
+        - 后端用 pypdf 按页码范围切片，返回子 PDF
+        - 优点: 只传输几页（几百 KB），带宽友好
+        - 缺点: 需要 pypdf 依赖 + 新端点 + PDF 文件需在 AI 服务可访问路径
+        - 适用: 移动端 H5（网络带宽敏感）
+
+      方案 C: 混合方案（推荐实施）
+        - 先实现方案 A（#page=N），立即可用
+        - 后续迭代实现方案 B（pypdf 切片）优化体验
+        - F-V5E-04 本轮只做方案 A
+
+      === 页码数据来源 ===
+
+      MinerU 输出的 content_list_v2.json 包含每个内容块的页码信息。
+      在 batch_ingestion.py 中解析此文件，将 page_start/page_end
+      写入 chunk metadata → 透传到 API → 前端拼接 #page=N。
+
+      如果 MinerU 输出不可用或映射复杂，可简化:
+        - 手工为 material-index.json 中的 2 个 PDF 添加默认 page_start
+        - 或暂不传 page 参数（PDF 从头展示，后续迭代补充）
+
+      === 实施步骤（方案 A 最小化） ===
+
+      1. chunk metadata 中如有 page_start → 透传到 SourceItem.page_start
+      2. 前端 PDF URL 拼接: url + '#page=' + page_start
+      3. viewer/pdf.vue 的 web-view src 支持 fragment
+
+      本轮 MVP: 如果 page_start 不可用，先跳过此模块，
+      PDF 仍全量展示但入口已移到知识详情页（而非聊天页直跳）。
+
+    files_to_modify:
+      - services/ai-service/app/core/llm_chat.py (SourceItem 添加 page_start)
+      - services/ai-service/app/api/chat.py (SourceItemDTO 添加 page_start)
+      - apps/student-app/src/pages/knowledge/detail.vue (PDF URL 拼接 #page=N)
+      - apps/student-app/src/pages/viewer/pdf.vue (确保 web-view 支持 fragment)
+
+    acceptance_criteria:
+      - AC-E12: PDF 预览 URL 包含 #page=N（如果 page_start 可用）
+      - AC-E13: 浏览器打开 PDF 自动滚动到指定页码
+
+# ===================================================================
+# 验收标准汇总
+# ===================================================================
+acceptance_criteria_global:
+  - AC-E01: 参考资料卡片不再溢出
+  - AC-E02: 弹层按钮不被遮挡
+  - AC-E03: 卡片背景色协调
+  - AC-E04: #006a64 硬编码清理（除 pages.json/theme.scss）
+  - AC-E05: GET /api/knowledge/entries/{id} 返回完整 MD
+  - AC-E06: chunk ID 自动提取 base ID
+  - AC-E07: API 返回 material_file_url
+  - AC-E08: 点击来源 → 跳知识详情页
+  - AC-E09: 详情页展示完整 KB 条目 Markdown
+  - AC-E10: 详情页有 "查看原始文件" 按钮
+  - AC-E11: API 失败时降级显示 chunk 摘要
+  - AC-E12: PDF URL 含 #page=N（可选，依赖页码数据）
+  - AC-E13: PDF 自动滚动到指定页码（可选）
+
+# ===================================================================
+# 执行顺序
+# ===================================================================
+execution_order:
+  batch1_parallel:
+    - F-V5E-01 (CSS 修复, 纯前端, 无依赖)
+    - F-V5E-02 (API 端点, AI service, 无依赖)
+  batch2:
+    - F-V5E-03 (前端导航重构, 依赖 F-V5E-02)
+  batch3_optional:
+    - F-V5E-04 (PDF 页码, 依赖 F-V5E-02+03, P2 可后续)
+
+# ===================================================================
+# T1 分工建议
+# ===================================================================
+t1_assignment:
+  T1-A:
+    modules: [F-V5E-01]
+    scope: 纯前端 CSS 修复
+    effort: 1h
+  T1-B:
+    modules: [F-V5E-02, F-V5E-03, F-V5E-04]
+    scope: AI service API + 前端导航重构 + PDF 页码
+    effort: 5-7h
+  note: |
+    T1-A 和 T1-B batch1 可并行（无文件冲突，F-V5E-01 改 CSS，F-V5E-02 改 AI service）。
+    F-V5E-03 改 chat/index.vue 和 knowledge/detail.vue，与 F-V5E-01 有文件重叠
+    （chat/index.vue），所以 F-V5E-01 必须先合并再启动 F-V5E-03。
+
+# ===================================================================
+# 风险
+# ===================================================================
+risks:
+  - id: RISK-1
+    description: |
+      ChromaDB 不支持 ID 前缀查询（WHERE id LIKE 'KB-xxx%'）。
+      解决: ChromaDB 的 get() 方法支持传入 IDs 列表，
+      可先 get(where={"entry_id": base_id}) 或遍历。
+      或者降级到直接读取 .md 文件（更简单可靠）。
+  - id: RISK-2
+    description: |
+      知识条目 .md 文件路径与 entry_id 的映射不确定。
+      KB 文件命名格式: KB-0150-电费缴纳指南.md
+      chunk ID 格式: KB-0150-电费缴纳指南__chunk_0
+      → base_entry_id = "KB-0150-电费缴纳指南" = 文件名（去 .md 后缀）
+      → 可直接拼接路径读取文件。
+  - id: RISK-3
+    description: |
+      H5 环境 web-view 可能不支持 PDF #page=N fragment。
+      解决: 如果不支持，降级为不带 fragment 的 URL（全量展示）。
+      长期方案: 后端 pypdf 切片。
