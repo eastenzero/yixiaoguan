@@ -4,7 +4,7 @@ id: ""                    # 任务唯一标识，如 "auth-login-api"
 parent: ""                # 父任务 ID，顶层任务留空
 type: "feature"           # feature / bugfix / integration-test
 status: "pending"         # pending → in_progress → verify → done / failed / blocked
-tier: "T3"                # T0=架构设计 T1=任务分解 T2=分发验证 T3=具体执行
+tier: "T3"                # T0=架构设计 T1=分解派发 T2=独立验证 T3=具体执行
 priority: "medium"        # high / medium / low
 risk: "medium"            # high / medium / low（high 优先安排人工审查）
 foundation: false         # true = 地基模块，其他模块依赖它，必须优先完成
@@ -30,7 +30,7 @@ done_criteria:
 depends_on: []            # 前置依赖任务 ID 列表
 created_at: ""            # 格式：2026-04-03 20:41:30
 completed_at: ""          # 格式同上
-verified_by: ""           # "human" / "script" / "t2-foreman" 等
+verified_by: ""           # "human" / "script" / "t2-reviewer" 等
 
 # ===== Bugfix 专用（type: bugfix 时填写）=====
 # reproduction_steps:     # 精确的复现步骤
