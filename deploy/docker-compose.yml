@@ -92,6 +92,8 @@ services:
       - "8000:8000"
     volumes:
       - ../services/ai-service/data/chroma:/app/data/chroma
+      - ../knowledge-base:/app/knowledge-base:ro
+      - ./materials:/app/materials:ro
     depends_on:
       postgres:
         condition: service_healthy
