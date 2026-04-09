@@ -31,6 +31,7 @@ wheels/
 
 # ChromaDB data files (large binary files)
 services/ai-service/data/chroma/
+data/chroma/
 _references/
 knowledge-base/raw/first-batch-processing/converted/pdf/
 knowledge-base/raw/原始材料/
