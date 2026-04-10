@@ -38,6 +38,20 @@ knowledge-base/raw/原始材料/
 deploy/materials/
 services/business-api/**/target/
 *.jar
+wechat-meta/
+wechat-exports/
+wechat-exports-full/
+wechat-articles/
+wechat-articles-full/
+.playwright-cli/
+*.log
+temp/
+temp_*.py
+temp_*.json
+services/ai-service/chroma_db/
+services/ai-service/data/chroma_db/
+knowledge-base/entries/
+knowledge-base/entries/first-batch-drafts/
 
 # IDE local settings
 .claude/
