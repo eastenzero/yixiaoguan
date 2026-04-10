@@ -1,0 +1,400 @@
+# 医小管 RAG 检索质量评测集 v3
+# 生成时间: 2026-04-10
+# 总题数: 60
+# 基于 v2（52题）扩充，新增8题覆盖 v7 学院探索内容
+
+# ==================== 应命中 (hit) - 25题 ====================
+
+- id: "eval-001"
+  question: "我想申请国家励志奖学金，需要满足啥条件？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0002", "KB-20260324-0054"]
+
+- id: "eval-002"
+  question: "助学金评审在一网通办系统里怎么操作啊？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0007", "KB-20260324-0022"]
+
+- id: "eval-003"
+  question: "新生心理测评啥时候开始，要怎么登录系统？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0009", "KB-20260324-0010"]
+
+- id: "eval-004"
+  question: "校园卡丢了怎么办，去哪补办？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0012", "KB-20260324-0018"]
+
+- id: "eval-005"
+  question: "第二课堂积分怎么认定，多少分能换学分？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0013", "KB-20260324-0019"]
+
+- id: "eval-006"
+  question: "毕业生档案去向核对了发现有错误咋改？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0016"]
+
+- id: "eval-007"
+  question: "我想当兵，毕业生应征入伍有什么政策？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0020"]
+
+- id: "eval-008"
+  question: "勤工助学岗位怎么申请，一个月最多能干多久？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0008"]
+
+- id: "eval-009"
+  question: "家庭经济困难认定要在系统里怎么填？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0027", "KB-20260324-0029", "KB-20260324-0056"]
+
+- id: "eval-010"
+  question: "学信网学籍注册完了，在哪能看到自己的学籍信息？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0004"]
+
+- id: "eval-011"
+  question: "综合素质测评成绩是怎么算的，德育占多少分？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0060", "KB-20260324-0105"]
+
+- id: "eval-012"
+  question: "外研社英语比赛今年有啥赛项，怎么报名？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0041", "KB-20260324-0111"]
+
+- id: "eval-013"
+  question: "入团申请书怎么写，有啥格式要求？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0109"]
+
+- id: "eval-014"
+  question: "体测免测申请要怎么弄，需要医院证明吗？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0036", "KB-20260324-0107"]
+
+# 原 boundary/reject 题，因新 KB 覆盖现改为 hit（5题更新）
+
+- id: "eval-025"
+  question: "图书馆能借几本书，借多久？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0026"]
+
+- id: "eval-026"
+  question: "校医院上班时间是什么时候？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0006"]
+
+- id: "eval-028"
+  question: "宿舍水管坏了，怎么报修？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0031"]
+
+- id: "eval-029"
+  question: "电费在哪交，怎么充值？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-0150-电费缴纳指南"]
+
+- id: "eval-030"
+  question: "宿舍WiFi密码是多少，网连不上找谁？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0021"]
+
+- id: "eval-032"
+  question: "校园卡充值的机器在哪，能现金充值吗？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0023"]
+
+# ==================== 应拒答 (reject) - 8题 ====================
+
+- id: "eval-015"
+  question: "明天天气怎么样？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-016"
+  question: "北京大学图书馆几点开门？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-017"
+  question: "帮我写一份Java简历"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-018"
+  question: "清华大学今年的考研分数线是多少？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-019"
+  question: "马斯克最近又发了什么推特？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-020"
+  question: "推荐几部最近好看的电影"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-021"
+  question: "怎么制作红烧肉？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+- id: "eval-022"
+  question: "iPhone 16多少钱？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+# ==================== 边界情况 (boundary) - 3题 ====================
+
+- id: "eval-023"
+  question: "学校附近有什么好吃的？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+- id: "eval-024"
+  question: "辅导员办公室在哪栋楼？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+- id: "eval-027"
+  question: "学校食堂有哪些档口？"
+  expected_behavior: "boundary"
+  expected_entry_ids: []
+
+# ==================== 生活服务类应拒答 (life-reject) - 1题 ====================
+
+- id: "eval-031"
+  question: "热水供应时间是几点到几点？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+
+# ==================== 防幻觉验证 - 范围外问题 (grounding-verify-out) - 5题 ====================
+
+- id: "eval-033"
+  question: "北京今天天气怎么样？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+  category: "grounding-verify-out"
+
+- id: "eval-034"
+  question: "Python 如何安装 numpy？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+  category: "grounding-verify-out"
+
+- id: "eval-035"
+  question: "最新的 iPhone 价格是多少？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+  category: "grounding-verify-out"
+
+- id: "eval-036"
+  question: "如何做番茄炒蛋？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+  category: "grounding-verify-out"
+
+- id: "new-009"
+  question: "山东大学图书馆几点开门？"
+  expected_behavior: "reject"
+  expected_entry_ids: []
+  category: "grounding-verify-out"
+
+# ==================== 防幻觉验证 - 范围内问题 (grounding-verify-in) - 10题 ====================
+
+- id: "gr-in-001"
+  question: "如何申请空教室？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0014"]
+  expected_keywords: ["申请", "教室", "流程"]
+  category: "grounding-verify-in"
+
+- id: "gr-in-002"
+  question: "奖学金评定标准是什么？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0002", "KB-20260324-0054"]
+  expected_keywords: ["奖学金", "评定", "标准"]
+  category: "grounding-verify-in"
+
+- id: "gr-in-003"
+  question: "图书馆开放时间？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0025", "KB-0158-图书馆使用指南"]
+  expected_keywords: ["图书馆", "开放", "时间"]
+  category: "grounding-verify-in"
+
+- id: "gr-in-004"
+  question: "如何办理请假手续？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260324-0030"]
+  expected_keywords: ["请假", "手续", "办理"]
+  category: "grounding-verify-in"
+
+- id: "gr-in-005"
+  question: "电费怎么交？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-0150-电费缴纳指南"]
+  expected_keywords: ["电费", "充值", "完美校园", "支付宝"]
+  category: "grounding-verify-boundary"
+
+- id: "gr-in-006"
+  question: "宿舍报修流程是什么？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-0151-宿舍报修流程", "KB-20260409-0031"]
+  expected_keywords: ["报修", "后勤", "宿舍"]
+  category: "grounding-verify-boundary"
+
+# 新增 10 题（覆盖新入库主题）
+
+- id: "new-001"
+  question: "上午第三节课几点开始，几点结束？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0001"]
+  category: "grounding-verify-in"
+
+- id: "new-002"
+  question: "信息门户密码忘了怎么重置？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0014"]
+  category: "grounding-verify-in"
+
+- id: "new-003"
+  question: "山一大企业微信怎么加入，有什么功能？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0016"]
+  category: "grounding-verify-in"
+
+- id: "new-004"
+  question: "黄河图书馆24小时自习室在哪，怎么进？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0027"]
+  category: "grounding-verify-in"
+
+- id: "new-005"
+  question: "泰安校区怎么连接有线网，认证页地址是多少？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0019"]
+  category: "grounding-verify-in"
+
+- id: "new-006"
+  question: "期末考试那天生病了，怎么申请缓考？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0046"]
+  category: "grounding-verify-in"
+
+- id: "new-007"
+  question: "毕业离校需要办哪些手续，线上怎么提交离校单？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0060", "KB-20260409-0061"]
+  category: "grounding-verify-in"
+
+- id: "new-008"
+  question: "山东第一医科大学有几个校区，地址在哪？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0069", "KB-20260409-0070"]
+  category: "grounding-verify-in"
+
+- id: "new-010"
+  question: "济南校区心理咨询热线是多少？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0064"]
+  category: "grounding-verify-in"
+
+# ==================== v7 学院探索内容新增 (8题) ====================
+
+- id: "v7-001"
+  question: "大创项目怎么申报？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0078"]
+  category: "grounding-verify-in"
+
+- id: "v7-002"
+  question: "研究生招生什么时候报名？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0073", "KB-20260410-0020"]
+  category: "grounding-verify-in"
+
+- id: "v7-003"
+  question: "药学院有哪些专业？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0023"]
+  category: "grounding-verify-in"
+
+- id: "v7-004"
+  question: "护理学院在哪个校区？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0045", "KB-20260410-0046"]
+  category: "grounding-verify-in"
+
+- id: "v7-005"
+  question: "怎么联系眼科学院？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0021", "KB-20260410-0045"]
+  category: "grounding-verify-in"
+
+- id: "v7-006"
+  question: "有哪些出国交流项目？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0027", "KB-20260410-0043"]
+  category: "grounding-verify-in"
+
+- id: "v7-007"
+  question: "推免保研需要什么条件？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0074", "KB-20260410-0034"]
+  category: "grounding-verify-in"
+
+- id: "v7-008"
+  question: "成人高考怎么报名？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260409-0080", "KB-20260410-0047"]
+  category: "grounding-verify-in"
+
+# ==================== v8 公众号来源内容 (7题) ====================
+
+- id: "v8-001"
+  question: "开学通勤车几点发车，在哪坐？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0101", "KB-20260410-0102"]
+  category: "grounding-verify-in"
+
+- id: "v8-002"
+  question: "假期水管坏了报修电话是多少？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0105"]
+  category: "grounding-verify-in"
+
+- id: "v8-003"
+  question: "假期食堂还开着吗？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0106"]
+  category: "grounding-verify-in"
+
+- id: "v8-004"
+  question: "2026年硕士研究生调剂怎么申请？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0109", "KB-20260410-0110"]
+  category: "grounding-verify-in"
+
+- id: "v8-005"
+  question: "学校有没有去加拿大或英国的暑期项目？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0113", "KB-20260410-0114"]
+  category: "grounding-verify-in"
+
+- id: "v8-006"
+  question: "山东省大学生就业服务平台网址是什么？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0115"]
+  category: "grounding-verify-in"
+
+- id: "v8-007"
+  question: "个人所得税怎么做年度汇算清缴？"
+  expected_behavior: "hit"
+  expected_entry_ids: ["KB-20260410-0118", "KB-20260410-0119"]
+  category: "grounding-verify-in"
