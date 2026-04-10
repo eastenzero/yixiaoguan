@@ -1,0 +1,104 @@
+{
+  "total_synced": 102,
+  "in_time_range": 101,
+  "after_exclude": 99,
+  "final": 33,
+  "by_account": {
+    "山东第一医科大学教务部": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 0,
+      "type": "A"
+    },
+    "山东第一医科大学就业": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 2,
+      "type": "A"
+    },
+    "山东第一医科大学科研部": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 0,
+      "type": "A"
+    },
+    "山东第一医科大学图书馆": {
+      "synced": 19,
+      "in_time": 19,
+      "keyword_hit": 15,
+      "type": "A"
+    },
+    "山东第一医科大学研究生处": {
+      "synced": 5,
+      "in_time": 4,
+      "keyword_hit": 2,
+      "type": "A"
+    },
+    "山一大后勤": {
+      "synced": 7,
+      "in_time": 7,
+      "keyword_hit": 3,
+      "type": "A"
+    },
+    "山一大心理健康教育中心": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 1,
+      "type": "A"
+    },
+    "山一大学工": {
+      "synced": 7,
+      "in_time": 7,
+      "keyword_hit": 1,
+      "type": "A"
+    },
+    "青春山一大": {
+      "synced": 7,
+      "in_time": 7,
+      "keyword_hit": 1,
+      "type": "B"
+    },
+    "山东第一医科大学 山东省医学科学院": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 1,
+      "type": "B"
+    },
+    "山东第一医科大学对外合作交流部": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 2,
+      "type": "B"
+    },
+    "山东第一医科大学计划财务处": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 3,
+      "type": "B"
+    },
+    "山东第一医科大学科创中心": {
+      "synced": 6,
+      "in_time": 6,
+      "keyword_hit": 0,
+      "type": "B"
+    },
+    "山东第一医科大学医药管理学院": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 1,
+      "type": "B"
+    },
+    "山一大饮食": {
+      "synced": 6,
+      "in_time": 6,
+      "keyword_hit": 1,
+      "type": "B"
+    },
+    "山一大招生办": {
+      "synced": 5,
+      "in_time": 5,
+      "keyword_hit": 0,
+      "type": "B"
+    }
+  }
+}

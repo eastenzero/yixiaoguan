@@ -1,0 +1,565 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v8
+# 日期: 2026-04-10
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v7 (completed, 259条入库), 公众号抓取可行性测试 (report-wechat-scrape-test.md)
+# ===================================================================
+#
+# 背景:
+#   v7 完成后知识库 259 条 / 290 chunks / Recall@5=86%。
+#   先前 Kimi 直接抓取公众号文章受搜狗反爬阻断（验证码+频率限制），
+#   无法自动获取文章正文。
+#
+#   用户发现开源工具 wechat-article-exporter：
+#   https://github.com/wechat-article/wechat-article-exporter
+#
+#   该工具原理: 利用微信公众号后台"搜索其他公众号文章"接口，
+#   用户扫码登录自己的公众号后，即可搜索任意公众号并批量拉取全部文章。
+#   支持 Docker 私有化部署、RESTful API、多种导出格式(md/html/json/txt/excel)。
+#
+#   本轮目标: 部署该工具，抓取学校相关公众号文章，筛选有 KB 价值的
+#   内容，转化为知识库条目入库。
+#
+# 工具核心能力:
+#   - Docker 一键部署，端口 3000
+#   - 用户扫码登录（需微信公众号，auth-key 有效期 4 天）
+#   - API: 搜索公众号 / 获取文章列表 / 下载文章 / 导出格式
+#   - 支持导出: markdown / html / json / txt / excel / word
+#   - 文章过滤: 标题/作者/时间范围/原创标识
+#   - 缓存文章列表，减少重复请求
+#
+# 参考文档:
+#   - 项目: https://github.com/wechat-article/wechat-article-exporter
+#   - 文档: https://docs.mptext.top
+#   - API:  https://docs.mptext.top/advanced/api.html
+#   - 部署: https://docs.mptext.top/advanced/private-deploy.html
+#
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v8
+date: 2026-04-10
+author: T0-Architect
+status: ready_for_t1
+
+# ===================================================================
+# 整体策略
+# ===================================================================
+#
+# PHASE 1 — 环境部署
+#   Docker 部署 wechat-article-exporter 到服务器
+#   用户手动扫码登录（唯一人工步骤）
+#   验证 API 可用性
+#
+# PHASE 2 — 公众号发现与文章抓取
+#   通过 API 搜索学校相关公众号（"山东第一医科大学" / "山一大"）
+#   逐个同步文章列表
+#   按时间/标题筛选有价值文章
+#   批量下载导出为 Markdown
+#
+# PHASE 3 — 内容筛选与 KB 生成
+#   从导出的 Markdown 中筛选适合 KB 的内容
+#   按模板生成 KB 条目
+#   去重（对比 v6/v7 已有 259 条）
+#
+# PHASE 4 — QA + 入库 + 评测
+#   质量审查 → ChromaDB 重入库 → RAG 回归验证
+#
+# ===================================================================
+
+# ===================================================================
+# 目标公众号画像
+# ===================================================================
+#
+# 搜索关键词:
+#   - "山东第一医科大学"
+#   - "山一大"
+#   - "山东省医学科学院" (学校另一个名称)
+#
+# 预期发现的公众号类型:
+#   - 学校官方号（校级新闻/通知）
+#   - 教务处/学工部/研究生院/招生办 等职能部门号
+#   - 团委/学生会/社团 等学生组织号
+#   - 各学院号（如药学院、护理学院等）
+#   - 图书馆/信息中心/后勤 等服务部门号
+#   - 附属医院号（KB 价值较低，可选择性跳过）
+#
+# 文章筛选策略:
+#   时间范围: 最近 2 年 (2024-04-01 ~ 2026-04-10)
+#   优先抓取:
+#     - 通知公告类（含"通知""公告""安排""指南""须知"）
+#     - 政策解读类（含"政策""规定""办法""细则"）
+#     - 指南攻略类（含"攻略""指南""流程""教程""如何"）
+#     - 服务信息类（含"服务""办理""报名""缴费"）
+#   低优跳过:
+#     - 纯新闻报道/活动回顾/领导讲话
+#     - 招聘信息（非学生就业）
+#     - 科研论文/学术会议
+#
+# ===================================================================
+
+modules:
+
+  # ════════════════════════════════════════════════════════════════
+  # PHASE 1: 环境部署
+  # ════════════════════════════════════════════════════════════════
+
+  - id: DEPLOY
+    title: "Docker 部署 wechat-article-exporter"
+    priority: P0
+    estimated_effort: 0.5h
+    depends_on: []
+    description: |
+      在服务器上用 Docker 部署 wechat-article-exporter。
+
+      === 步骤 ===
+
+      1. 拉取 Docker 镜像:
+         docker pull ghcr.io/wechat-article/wechat-article-exporter:latest
+
+      2. 启动容器:
+         docker run -d \
+           --restart always \
+           --name wechat-article-exporter \
+           -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+           -p 3000:3000 \
+           -v /opt/wechat-exporter/.data:/app/.data \
+           ghcr.io/wechat-article/wechat-article-exporter:latest
+
+         注意:
+         - 端口 3000 如与其他服务冲突可改为 3001 等
+         - 数据目录 /opt/wechat-exporter/.data 持久化存储
+         - 如在本地 Windows 部署，路径调整为 Windows 格式
+
+      3. 验证容器运行:
+         docker ps | grep wechat-article-exporter
+         curl http://localhost:3000
+
+      === 部署位置选择 ===
+      优先部署在本地 Windows 开发机（方便用户扫码登录）。
+      如需服务器部署，需确保用户能通过浏览器访问 3000 端口。
+
+    acceptance_criteria:
+      - AC-DEP-01: 容器正常运行 (docker ps 状态 Up)
+      - AC-DEP-02: http://localhost:3000 可访问，显示登录页面
+      - AC-DEP-03: 数据目录已挂载
+
+  - id: LOGIN
+    title: "用户手动扫码登录"
+    priority: P0
+    estimated_effort: 5min
+    depends_on: [DEPLOY]
+    description: |
+      ⚠️ 本步骤必须由用户手动完成。
+
+      === 步骤 ===
+
+      1. 用户在浏览器打开 http://localhost:3000
+      2. 点击【登录】按钮
+      3. 用微信扫描二维码
+      4. 选择一个公众号（订阅号或服务号）进行登录
+         - 不能选小程序，只能选公众号/服务号
+      5. 登录成功后系统生成 API 密钥 (auth-key)，有效期 4 天
+      6. 在 API 页面复制 auth-key，提供给 T1
+
+      === 前提条件 ===
+      用户需要拥有一个微信公众号（订阅号即可，免费注册）。
+      注册地址: https://mp.weixin.qq.com/cgi-bin/registermidpage?action=index
+
+      === 输出 ===
+      auth-key 字符串（T1 后续 API 调用需要）
+
+    acceptance_criteria:
+      - AC-LOG-01: 登录成功，页面显示已登录状态
+      - AC-LOG-02: API 密钥可用 (GET /api/public/v1/authkey 返回 code:0)
+
+  # ════════════════════════════════════════════════════════════════
+  # PHASE 2: 公众号发现与文章抓取
+  # ════════════════════════════════════════════════════════════════
+
+  - id: DISCOVER
+    title: "搜索并盘点学校相关公众号"
+    priority: P0
+    estimated_effort: 1h
+    depends_on: [LOGIN]
+    description: |
+      通过 API 搜索学校相关公众号，建立完整的账号清单。
+
+      === API 调用 ===
+
+      搜索公众号:
+        GET /api/public/v1/account?keyword=山东第一医科大学
+        GET /api/public/v1/account?keyword=山一大
+        GET /api/public/v1/account?keyword=山东省医学科学院
+        Header: X-Auth-Key: {auth-key}
+
+      也可通过 Web UI 搜索（更直观）。
+
+      === 输出 ===
+      生成公众号清单文件: kimi/wechat-accounts-list.md
+
+      格式:
+      | 序号 | 公众号名称 | 微信号(fakeid) | 类型 | KB价值 | 备注 |
+      |------|-----------|---------------|------|--------|------|
+
+      === 分类标准 ===
+      A 类(高价值): 教务处/学工部/研究生院/招生办/图书馆/信息中心
+      B 类(中价值): 团委/学生会/各学院号
+      C 类(低价值): 附属医院/纯新闻号/校友会
+      D 类(跳过): 非学校官方号/第三方营销号
+
+    acceptance_criteria:
+      - AC-DIS-01: 至少发现 10 个学校相关公众号
+      - AC-DIS-02: 每个账号标注 KB 价值等级 (A/B/C/D)
+      - AC-DIS-03: 清单包含 fakeid（后续 API 调用需要）
+
+  - id: SYNC-ARTICLES
+    title: "同步文章列表（A/B 类公众号）"
+    priority: P0
+    estimated_effort: 2h
+    depends_on: [DISCOVER]
+    description: |
+      对 A 类和 B 类公众号同步文章列表。
+
+      === API 调用 ===
+
+      获取文章列表（分页）:
+        GET /api/public/v1/article?fakeid={fakeid}&begin=0&size=20
+        Header: X-Auth-Key: {auth-key}
+
+      每次返回 20 条，需翻页直到末尾。
+      也可通过 Web UI 点击【同步】按钮自动完成。
+
+      === 注意事项 ===
+      - 微信接口有频率限制，每次最多 20 条
+      - 工具会自动缓存文章列表
+      - 大号可能有数千篇文章，同步需要时间
+      - 建议从 A 类公众号开始，逐步扩展
+
+      === 输出 ===
+      Web UI 中可查看各公众号文章列表。
+      可导出 Excel 格式的文章链接清单备查。
+
+    acceptance_criteria:
+      - AC-SYN-01: A 类公众号文章列表全部同步完成
+      - AC-SYN-02: B 类公众号至少同步 5 个以上
+      - AC-SYN-03: 记录各公众号文章总数
+
+  - id: FILTER-DOWNLOAD
+    title: "筛选并下载有价值文章"
+    priority: P0
+    estimated_effort: 3h
+    depends_on: [SYNC-ARTICLES]
+    description: |
+      对同步的文章列表进行筛选，下载有 KB 价值的文章内容。
+
+      === 筛选条件 ===
+
+      时间范围: 2024-04-01 ~ 2026-04-10
+      标题关键词（包含以下任一即纳入）:
+        通知 / 公告 / 安排 / 须知 / 指南 / 攻略
+        流程 / 办理 / 报名 / 缴费 / 政策 / 规定
+        奖学金 / 助学金 / 选课 / 考试 / 成绩
+        宿舍 / 校园卡 / 图书馆 / 网络 / VPN
+        毕业 / 就业 / 考研 / 保研 / 实习
+        社团 / 竞赛 / 志愿 / 心理 / 讲座
+
+      排除关键词（标题含以下则跳过）:
+        招聘 / 聘用 / 人才引进（非学生就业类）
+        论文发表 / SCI / 学术会议
+        领导调研 / 视察 / 座谈
+        转发 / 转载
+
+      === 下载方式 ===
+
+      方式一: Web UI 批量下载
+        1. 在【文章下载】页面选择公众号
+        2. 设置筛选条件（时间范围、标题关键词）
+        3. 勾选目标文章 → 点击【抓取】
+        4. 点击【导出】→ 选择 Markdown 格式
+        5. 选择输出目录（建议: wechat-exports/）
+
+      方式二: API 批量下载（适合自动化）
+        GET /api/public/v1/download?url={article_url}&format=markdown
+        Header: X-Auth-Key: {auth-key}
+
+        T1 可编写 Python 脚本:
+        1. 从文章列表中筛选符合条件的 URL
+        2. 逐个调用 download API
+        3. 保存 Markdown 文件到本地
+
+      === 输出 ===
+      目录: wechat-exports/{公众号名称}/
+      格式: Markdown 文件（每篇文章一个 .md 文件）
+
+      === 预估 ===
+      预计筛选后下载 200-500 篇文章（取决于公众号数量和内容质量）
+
+    acceptance_criteria:
+      - AC-FDL-01: A 类公众号有价值文章全部下载
+      - AC-FDL-02: 导出格式为 Markdown
+      - AC-FDL-03: 文件按公众号分目录存储
+      - AC-FDL-04: 记录下载统计（公众号名/文章数/总大小）
+
+  # ════════════════════════════════════════════════════════════════
+  # PHASE 3: 内容筛选与 KB 生成
+  # ════════════════════════════════════════════════════════════════
+
+  - id: CONTENT-TRIAGE
+    title: "文章内容分类与价值评估"
+    priority: P1
+    estimated_effort: 2h
+    depends_on: [FILTER-DOWNLOAD]
+    description: |
+      对下载的文章进行二次筛选和分类，确定哪些适合转化为 KB 条目。
+
+      === 分类标准 ===
+
+      Tier-1 (直接转 KB): 包含具体流程、规定、指南、联系方式的文章
+        例: "2025年秋季学期选课通知" → 提取选课时间+流程
+        例: "图书馆暑假开放时间调整" → 提取开放时间表
+        例: "奖学金评审办法" → 提取评审条件+流程
+
+      Tier-2 (提取部分内容): 文章部分段落有 KB 价值
+        例: 新生入学须知（长文）→ 提取报到流程/材料清单
+        例: 年度工作总结（长文）→ 提取关键数据/成果
+
+      Tier-3 (跳过): 纯新闻/活动回顾/无实用价值
+
+      === 执行方式 ===
+      可通过 Kimi CLI 对文章批量分类:
+      - 读取每篇文章标题 + 前 200 字
+      - 判定 Tier 等级
+      - 输出分类报告
+
+      === 输出 ===
+      kimi/wechat-content-triage.md
+      包含: 各 Tier 的文章清单、预估可转化 KB 条目数
+
+    acceptance_criteria:
+      - AC-TRI-01: 所有下载文章均被分类
+      - AC-TRI-02: Tier-1 文章提取关键信息点标注
+      - AC-TRI-03: 预估 KB 条目数量
+
+  - id: KB-GEN-WECHAT
+    title: "从公众号文章生成 KB 条目"
+    priority: P1
+    estimated_effort: 4h
+    depends_on: [CONTENT-TRIAGE]
+    description: |
+      将 Tier-1 和 Tier-2 文章转化为标准 KB 条目。
+
+      === KB 生成规则 ===
+
+      1. 一篇文章可能产出 0~3 条 KB:
+         - 内容聚焦的短文章 → 1 条 KB
+         - 包含多个独立信息点的长文章 → 拆分为多条 KB
+         - 纯新闻无实用信息 → 0 条
+
+      2. KB 内容要求:
+         - 提取文章中的事实性信息（时间/地点/流程/要求/联系方式）
+         - 去除时效性过强的表述（如"本学期""今年"改为具体日期）
+         - 去除公众号特有的营销语句/表情包引用
+         - 补充上下文（文章可能省略的背景信息）
+
+      3. 去重规则:
+         - 与 v6/v7 已有 259 条 KB 对比
+         - 同一主题取信息量最大的版本
+         - 公众号文章更新频繁，相同主题可能有多篇，取最新
+
+      === KB 格式 ===
+      与 v6/v7 一致:
+        - YAML frontmatter: title, category, tags, source, source_url, campus, status
+        - source 格式: "wechat/{公众号名称}"
+        - source_url: 原始公众号文章 URL
+        - 新增 tag: "公众号来源"
+
+      === 编号规则 ===
+      KB-20260410-0101 起（承接 v7 的 KB-20260410-0051 之后，留 50 号缓冲）
+
+      === 预估 ===
+      Tier-1 文章约 50-100 篇 → 预计产出 60-120 条 KB
+      Tier-2 文章约 50-100 篇 → 预计产出 20-40 条 KB
+      合计: 80-160 条新 KB（具体取决于文章质量和去重结果）
+
+      === 执行方式 ===
+      通过 Kimi CLI 分批次生成:
+      - 每批次处理 1 个公众号的文章
+      - 先处理 A 类公众号，再处理 B 类
+
+    output_dir: knowledge-base/entries/first-batch-drafts/
+    naming: "KB-20260410-{NNNN}.md"
+    id_range: "0101+"
+
+    acceptance_criteria:
+      - AC-KGW-01: Tier-1 文章全部转化为 KB
+      - AC-KGW-02: 每条 KB 有合法 frontmatter
+      - AC-KGW-03: source_url 指向原始公众号文章
+      - AC-KGW-04: 与已有 259 条 KB 无实质重复
+      - AC-KGW-05: 时效性信息标注具体日期
+
+  # ════════════════════════════════════════════════════════════════
+  # PHASE 4: QA + 入库 + 评测
+  # ════════════════════════════════════════════════════════════════
+
+  - id: QA-REVIEW-V8
+    title: "质量审查"
+    priority: P0
+    estimated_effort: 1h
+    depends_on: [KB-GEN-WECHAT]
+    description: |
+      对所有新 KB 条目进行质量审查。
+
+      === 检查项（与 v6/v7 一致）===
+      1. frontmatter 完整性
+      2. category 在枚举列表中
+      3. tags 至少 2 个
+      4. "标准答复"段落不少于 50 字
+      5. 无幻觉内容（公众号文章是实际来源，幻觉风险低）
+      6. 新条目之间无重复
+      7. 与已有 KB 无重复
+      8. source_url 有效
+
+      === 特别检查（公众号来源特有）===
+      9. 时效性: 确保不含过期信息（已过的报名截止日期等）
+         - 如信息已过期但规则/流程仍有参考价值，在 KB 中注明"以最新通知为准"
+      10. 准确性: 公众号文章可能有非官方解读，确保只提取原始事实
+      11. 完整性: 公众号文章可能被截断（篇幅限制），标注是否需要补充
+
+      === 输出 ===
+      kimi/qa-review-v8-report.md
+
+    acceptance_criteria:
+      - AC-QA8-01: 审查报告覆盖所有新条目
+      - AC-QA8-02: frontmatter 100% 通过
+      - AC-QA8-03: 无重复条目
+      - AC-QA8-04: 时效性标注完成
+
+  - id: INGEST-V8
+    title: "ChromaDB 全量重入库"
+    priority: P0
+    estimated_effort: 0.5h
+    depends_on: [QA-REVIEW-V8]
+    description: |
+      QA 通过后执行全量重入库。
+
+      === 步骤 ===
+      1. 同步文件 (Mutagen)
+      2. 停止 ai-service
+      3. 清空 ChromaDB
+      4. 全量入库: python scripts/batch_ingestion.py --yes
+      5. 重启 ai-service
+      6. GET /kb/stats 确认
+
+      === 预期 ===
+      入库总量: 259 (v7) + v8 新增 80-160 = 339-419 条
+      chunks: 500-600+
+
+    acceptance_criteria:
+      - AC-ING8-01: batch_ingestion.py 无异常
+      - AC-ING8-02: /kb/stats entry_count ≥ 330
+      - AC-ING8-03: 抽查 5 条新入库的公众号来源 KB
+
+  - id: RAG-EVAL-V8
+    title: "RAG 评测"
+    priority: P1
+    estimated_effort: 1h
+    depends_on: [INGEST-V8]
+    description: |
+      入库完成后验证 RAG 质量。
+
+      === 新增测试问题（覆盖公众号来源内容）===
+      根据实际抓取到的文章主题添加 5-10 个新测试问题。
+      例如:
+      - 公众号中发现的新通知/政策相关问题
+      - 公众号独有的服务信息（如社团招新、讲座安排等）
+
+      === 回归基线 ===
+      v7 最终: Recall@5=86.0%, 拒答=92.9%
+
+    acceptance_criteria:
+      - AC-EVAL8-01: 评测集新增 5-10 题
+      - AC-EVAL8-02: 整体 Recall@5 ≥ 85%
+      - AC-EVAL8-03: 原有题目 Recall 不退化
+      - AC-EVAL8-04: 拒答准确率 ≥ 90%
+
+# ===================================================================
+# 执行编排
+# ===================================================================
+#
+# ┌──────────────────────────────────────────────────────────────┐
+# │ PHASE 1: 环境部署                                           │
+# │                                                              │
+# │   DEPLOY ──→ LOGIN (👤 用户手动)                            │
+# │                                                              │
+# │   T1 部署 Docker → 用户扫码登录 → T1 获取 auth-key          │
+# └──────────────────────────────────────────────────────────────┘
+#            │
+#            ▼
+# ┌──────────────────────────────────────────────────────────────┐
+# │ PHASE 2: 发现与抓取                                         │
+# │                                                              │
+# │   DISCOVER ──→ SYNC-ARTICLES ──→ FILTER-DOWNLOAD            │
+# │                                                              │
+# │   T1 可通过 API 脚本自动化，或结合 Web UI 半自动操作         │
+# │   Web UI 操作更直观，API 适合批量自动化                      │
+# └──────────────────────────────────────────────────────────────┘
+#            │
+#            ▼
+# ┌──────────────────────────────────────────────────────────────┐
+# │ PHASE 3: KB 生成                                            │
+# │                                                              │
+# │   CONTENT-TRIAGE ──→ KB-GEN-WECHAT                          │
+# │                                                              │
+# │   Kimi CLI 分批次处理                                       │
+# └──────────────────────────────────────────────────────────────┘
+#            │
+#            ▼
+# ┌──────────────────────────────────────────────────────────────┐
+# │ PHASE 4: 收尾                                               │
+# │                                                              │
+# │   QA-REVIEW-V8 ──→ INGEST-V8 ──→ RAG-EVAL-V8              │
+# └──────────────────────────────────────────────────────────────┘
+#
+# 预计总工时: ~15h (含 Kimi 执行时间)
+# 预计新增 KB: 80-160 条
+# 预计入库后总量: 339-419 条, 500-600 chunks
+#
+# ===================================================================
+
+# ===================================================================
+# T1 执行指南
+# ===================================================================
+#
+# 1. 关键依赖:
+#    - Docker (服务器或本地)
+#    - 用户的微信公众号（扫码登录用）
+#    - auth-key（有效期 4 天，过期需用户重新扫码）
+#
+# 2. API 速查:
+#    Base URL: http://localhost:3000
+#    认证 Header: X-Auth-Key: {key}
+#
+#    搜索公众号:  GET /api/public/v1/account?keyword=xxx
+#    文章列表:    GET /api/public/v1/article?fakeid=xxx&begin=0&size=20
+#    下载文章:    GET /api/public/v1/download?url=xxx&format=markdown
+#    验证密钥:    GET /api/public/v1/authkey
+#
+# 3. 自动化建议:
+#    T1 可编写 Python 辅助脚本:
+#    - scripts/wechat/discover_accounts.py  — 搜索并列出公众号
+#    - scripts/wechat/sync_articles.py      — 同步文章列表
+#    - scripts/wechat/download_articles.py  — 筛选+批量下载
+#    - scripts/wechat/triage_articles.py    — 内容分类
+#    这些脚本可复用，后续定期更新 KB 时再次使用。
+#
+# 4. 注意事项:
+#    - auth-key 4 天过期，长时间任务注意续期
+#    - 微信接口有频率限制，同步大号文章时注意间隔
+#    - 文章内容版权归原作者，仅用于内部知识库
+#    - 某些公众号可能关闭搜索功能，搜不到属正常
+#    - 下载的 Markdown 可能含图片链接，KB 条目中
+#      只需保留文字信息，图片链接可去除
+#
+# ===================================================================

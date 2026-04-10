@@ -1,0 +1,150 @@
+﻿{
+    "auth_key":  "b982b119ba0744358c1dbcd6711c06fe",
+    "sync_time":  "2026-04-10T13:40:38",
+    "accounts":  [
+                     {
+                         "name":  "山东第一医科大学教务部",
+                         "fakeid":  "Mzg3ODMyNjg1Nw==",
+                         "type":  "A",
+                         "total_count":  157,
+                         "latest_date":  "2026-02-13",
+                         "earliest_date":  "2020-08-17",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学就业",
+                         "fakeid":  "MzkwMDQxNDA2Nw==",
+                         "type":  "A",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学科研部",
+                         "fakeid":  "MzkzOTE5OTI5Mg==",
+                         "type":  "A",
+                         "total_count":  68,
+                         "latest_date":  "2026-03-26",
+                         "earliest_date":  "2021-03-14",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学图书馆",
+                         "fakeid":  "MzU1OTI5MzIwNA==",
+                         "type":  "A",
+                         "total_count":  259,
+                         "latest_date":  "2026-04-09",
+                         "earliest_date":  "2018-10-10",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学研究生处",
+                         "fakeid":  "Mzg5MTY0Njg2NA==",
+                         "type":  "A",
+                         "total_count":  37,
+                         "latest_date":  "2026-04-10",
+                         "earliest_date":  "2025-09-28",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山一大后勤",
+                         "fakeid":  "Mzg5NTQyMzg4NQ==",
+                         "type":  "A",
+                         "total_count":  146,
+                         "latest_date":  "2026-03-30",
+                         "earliest_date":  "2021-05-08",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山一大心理健康教育中心",
+                         "fakeid":  "MzkxNzU2NTQxMg==",
+                         "type":  "A",
+                         "total_count":  128,
+                         "latest_date":  "2026-03-29",
+                         "earliest_date":  "2023-09-10",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山一大学工",
+                         "fakeid":  "Mzg5MDc2MDMwNA==",
+                         "type":  "A",
+                         "total_count":  483,
+                         "latest_date":  "2026-04-05",
+                         "earliest_date":  "2022-04-06",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "青春山一大",
+                         "fakeid":  "MzIyMTA3MDc4OA==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学 山东省医学科学院",
+                         "fakeid":  "MjM5NjA2NjcyMg==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学对外合作交流部",
+                         "fakeid":  "Mzg2MzYwNDM0MQ==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学计划财务处",
+                         "fakeid":  "Mzg4NDUxNDU1OA==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学科创中心",
+                         "fakeid":  "Mzg3NDcwOTc0Mw==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山东第一医科大学医药管理学院",
+                         "fakeid":  "Mzg2NTY5ODAwNA==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山一大饮食",
+                         "fakeid":  "MzkxOTU2MTMyNg==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     },
+                     {
+                         "name":  "山一大招生办",
+                         "fakeid":  "MzAxNzYyMzM1OA==",
+                         "type":  "B",
+                         "total_count":  0,
+                         "latest_date":  "N/A",
+                         "earliest_date":  "N/A",
+                         "status":  "✅"
+                     }
+                 ]
+}
