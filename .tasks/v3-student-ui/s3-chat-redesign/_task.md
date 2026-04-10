@@ -2,7 +2,7 @@
 id: "s3-chat-redesign"
 parent: "v3-student-ui"
 type: "feature"
-status: "pending"
+status: "done"
 tier: "T2"
 priority: "high"
 risk: "high"
