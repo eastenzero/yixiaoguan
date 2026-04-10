@@ -9,17 +9,17 @@
 
 ### 1.1 项目技术栈
 
-| 技术类别 | 具体技术 | 版本/说明 |
-|---------|---------|----------|
-| **前端框架** | Vue | 3.4.21 |
-| **跨平台方案** | UniApp (dcloudio) | 3.0.0-4080420251103001 |
-| **构建工具** | Vite | 5.2.8 |
-| **状态管理** | Pinia | 2.1.7 + pinia-plugin-persistedstate |
-| **CSS 方案** | SCSS | sass 1.72.0 |
-| **HTTP 客户端** | uni.request (封装) | 自定义 request.ts |
-| **Markdown 渲染** | markdown-it | 14.1.1 |
-| **国际化** | vue-i18n | 9.1.9 |
-| **TypeScript** | TypeScript | 4.9.4 |
+| 技术类别　　　　　| 具体技术　　　　　 | 版本/说明　　　　　　　　　　　　　 |
+| -------------------| --------------------| -------------------------------------|
+| **前端框架**　　　| Vue　　　　　　　　| 3.4.21　　　　　　　　　　　　　　　|
+| **跨平台方案**　　| UniApp (dcloudio)　| 3.0.0-4080420251103001　　　　　　　|
+| **构建工具**　　　| Vite　　　　　　　 | 5.2.8　　　　　　　　　　　　　　　 |
+| **状态管理**　　　| Pinia　　　　　　　| 2.1.7 + pinia-plugin-persistedstate |
+| **CSS 方案**　　　| SCSS　　　　　　　 | sass 1.72.0　　　　　　　　　　　　 |
+| **HTTP 客户端**　 | uni.request (封装) | 自定义 request.ts　　　　　　　　　 |
+| **Markdown 渲染** | markdown-it　　　　| 14.1.1　　　　　　　　　　　　　　　|
+| **国际化**　　　　| vue-i18n　　　　　 | 9.1.9　　　　　　　　　　　　　　　 |
+| **TypeScript**　　| TypeScript　　　　 | 4.9.4　　　　　　　　　　　　　　　 |
 
 **UniApp 目标平台**：H5、微信小程序、支付宝小程序、百度小程序、抖音小程序、QQ小程序、快手小程序、飞书小程序、HarmonyOS、快应用等
 
