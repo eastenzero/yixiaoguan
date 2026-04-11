@@ -20,7 +20,7 @@
       <view class="welcome-banner animate-fade-up">
         <view class="welcome-content">
           <view class="welcome-text">
-            <text class="welcome-greeting">早上好，梁老师 👋</text>
+            <text class="welcome-greeting">早上好，{{ displayName }} 👋</text>
             <text class="welcome-subtitle">今天有 3 条待处理提问</text>
           </view>
           <view class="avatar-placeholder"></view>
@@ -126,7 +126,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useUserStore } from '@/stores/user'
 import IconDashboard from '../../components/icons/IconDashboard.vue'
 import IconBell from '../../components/icons/IconBell.vue'
 import IconPlus from '../../components/icons/IconPlus.vue'
@@ -138,6 +139,18 @@ import IconBook from '../../components/icons/IconBook.vue'
 import IconCheck from '../../components/icons/IconCheck.vue'
 import IconArrowRight from '../../components/icons/IconArrowRight.vue'
 import BottomNavBar from '../../components/BottomNavBar.vue'
+
+// 用户状态
+const userStore = useUserStore()
+
+// 计算显示名称
+const displayName = computed(() => {
+  const info = userStore.userInfo
+  if (info) {
+    return info.nickName || info.realName || info.username || '老师'
+  }
+  return '老师'
+})
 
 // 主题色
 const primaryColor = '#702ae1'

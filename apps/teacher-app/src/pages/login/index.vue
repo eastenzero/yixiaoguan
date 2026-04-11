@@ -19,7 +19,7 @@
         </view>
 
         <!-- 表单区域 -->
-        <form class="form-section" @submit.prevent="handleLogin">
+        <view class="form-section">
           <!-- 用户名输入框 -->
           <view class="input-group">
             <text class="input-label">USERNAME</text>
@@ -55,6 +55,31 @@
             </view>
           </view>
 
+          <!-- 验证码区域 -->
+          <view class="input-group">
+            <text class="input-label">验证码</text>
+            <view class="captcha-row">
+              <view class="input-wrapper captcha-input">
+                <input
+                  v-model="captchaCode"
+                  class="input-field"
+                  type="text"
+                  placeholder="请输入验证码"
+                />
+              </view>
+              <image 
+                v-if="captchaImg" 
+                class="captcha-image" 
+                :src="captchaImg" 
+                mode="aspectFit"
+                @click="refreshCaptcha"
+              />
+              <view v-else class="captcha-image captcha-placeholder" @click="refreshCaptcha">
+                <text class="captcha-placeholder-text">点击刷新</text>
+              </view>
+            </view>
+          </view>
+
           <!-- 记住我和忘记密码 -->
           <view class="form-options">
             <view class="remember-me" @click="toggleRememberMe">
@@ -67,11 +92,11 @@
           </view>
 
           <!-- 登录按钮 -->
-          <button class="login-btn" type="submit" @click="handleLogin">
-            <text class="login-btn-text">立即登录</text>
-            <IconArrowRight :size="20" color="#ffffff" />
+          <button class="login-btn" :disabled="loading" @click="handleLogin">
+            <text class="login-btn-text">{{ loading ? '登录中...' : '立即登录' }}</text>
+            <IconArrowRight v-if="!loading" :size="20" color="#ffffff" />
           </button>
-        </form>
+        </view>
 
         <!-- 其他登录方式 -->
         <view class="alt-login">
@@ -97,7 +122,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { getCaptcha, login as loginApi, getUserInfo } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
 import IconGraduationCap from '../../components/icons/IconGraduationCap.vue'
 import IconUser from '../../components/icons/IconUser.vue'
 import IconLock from '../../components/icons/IconLock.vue'
@@ -111,11 +139,30 @@ import IconFingerprint from '../../components/icons/IconFingerprint.vue'
 const primaryColor = '#702ae1'
 const onSurfaceVariantColor = '#5d5b5f'
 
+// 用户状态
+const userStore = useUserStore()
+
 // 表单数据
-const username = ref('EDU-2024-0892')
-const password = ref('password123')
+const username = ref('')
+const password = ref('')
+const captchaCode = ref('')
+const captchaImg = ref('')
+const captchaUuid = ref('')
+const loading = ref(false)
 const rememberMe = ref(true)
 const showPassword = ref(false)
+
+// 获取验证码
+const refreshCaptcha = async () => {
+  try {
+    const res = await getCaptcha()
+    captchaImg.value = 'data:image/png;base64,' + res.img
+    captchaUuid.value = res.uuid
+  } catch (e) {
+    console.error('获取验证码失败', e)
+    uni.showToast({ title: '获取验证码失败', icon: 'none' })
+  }
+}
 
 // 切换密码可见性
 const togglePasswordVisibility = () => {
@@ -128,8 +175,37 @@ const toggleRememberMe = () => {
 }
 
 // 登录处理
-const handleLogin = () => {
-  uni.switchTab({ url: '/pages/dashboard/index' })
+const handleLogin = async () => {
+  if (!username.value || !password.value) {
+    uni.showToast({ title: '请输入账号和密码', icon: 'none' })
+    return
+  }
+  if (!captchaCode.value) {
+    uni.showToast({ title: '请输入验证码', icon: 'none' })
+    return
+  }
+  loading.value = true
+  try {
+    const loginRes = await loginApi({
+      username: username.value,
+      password: password.value,
+      code: captchaCode.value,
+      uuid: captchaUuid.value
+    })
+    userStore.setToken(loginRes.token)
+    
+    // 获取用户信息
+    const userInfoRes = await getUserInfo(loginRes.token)
+    userStore.setUserInfo(userInfoRes.user)
+    
+    uni.switchTab({ url: '/pages/dashboard/index' })
+  } catch (e: any) {
+    uni.showToast({ title: e?.message || '登录失败', icon: 'none' })
+    refreshCaptcha()
+    captchaCode.value = ''
+  } finally {
+    loading.value = false
+  }
 }
 
 // 忘记密码
@@ -146,6 +222,14 @@ const handleQrLogin = () => {
 const handleFingerprintLogin = () => {
   uni.showToast({ title: '指纹登录', icon: 'none' })
 }
+
+// 生命周期
+onMounted(() => {
+  refreshCaptcha()
+})
+onShow(() => {
+  refreshCaptcha()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -304,6 +388,41 @@ const handleFingerprintLogin = () => {
   }
 }
 
+// 验证码区域
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.captcha-input {
+  flex: 1;
+  
+  .input-field {
+    padding-left: 16px;
+  }
+}
+
+.captcha-image {
+  width: 120px;
+  height: 56px;
+  border-radius: 12px;
+  background: $surface-container-low;
+}
+
+.captcha-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed $outline-variant;
+}
+
+.captcha-placeholder-text {
+  font-family: $font-body;
+  font-size: 12px;
+  color: $on-surface-variant;
+}
+
 .input-action {
   position: absolute;
   right: 16px;
@@ -376,6 +495,10 @@ const handleFingerprintLogin = () => {
   
   &:active {
     transform: scale(0.98);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
   }
 }
 

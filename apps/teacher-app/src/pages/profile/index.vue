@@ -17,14 +17,14 @@
             </view>
             
             <!-- 姓名 -->
-            <text class="user-name">梁老师</text>
+            <text class="user-name">{{ userName }}</text>
             
             <!-- 职称/院系 -->
-            <text class="user-title">高级讲师 / 临床医学院</text>
+            <text class="user-title">高级讲师 / {{ department }}</text>
             
             <!-- 工号标签 -->
             <view class="id-badge">
-              <text class="id-text">ID: EDU-2024-0892</text>
+              <text class="id-text">ID: {{ userId }}</text>
             </view>
           </view>
         </view>
@@ -142,10 +142,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useUserStore } from '@/stores/user'
 import TopAppBar from '../../components/TopAppBar.vue'
 import BottomNavBar from '../../components/BottomNavBar.vue'
 import { IconBell, IconVolume, IconBot, IconLock, IconInfo, IconLogout, IconChevronRight } from '../../components/icons'
+
+// 用户状态
+const userStore = useUserStore()
+
+// 计算用户信息
+const userName = computed(() => userStore.userInfo?.nickName || userStore.userInfo?.realName || '教师')
+const department = computed(() => userStore.userInfo?.department || '未知院系')
+const userId = computed(() => userStore.userInfo?.username || 'N/A')
 
 // 开关状态
 const notificationOn = ref(true)
@@ -154,6 +163,7 @@ const aiReplyOn = ref(false)
 
 // 退出登录
 const handleLogout = () => {
+  userStore.clearAuth()
   uni.reLaunch({ url: '/pages/login/index' })
 }
 </script>
