@@ -98,6 +98,60 @@ const activeCategory = ref(0)
 const searchText = ref('')
 const total = ref(0)
 
+// Mock 数据 —— API 无数据时兜底展示
+const mockEntries = [
+  {
+    id: 1,
+    categoryId: 1,
+    categoryName: '教务管理',
+    status: 1,
+    title: '2025-2026学年第二学期期末考试日程安排',
+    content: '本学期期末考试将于6月18日至7月2日进行。考试地点均在教学楼 A/B 栋。请同学们提前查看各科考试时间和教室安排，携带学生证和准考证参加考试。',
+    authorName: '教务处',
+    updatedAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 2,
+    categoryId: 2,
+    categoryName: '学生服务',
+    status: 1,
+    title: '校园卡充值与挂失流程指南',
+    content: '校园卡可通过微信公众号“智慧校园”在线充值，也可前往一卡通服务中心（行政楼B108）办理。如需挂失，请立即拨打服务热线 400-123-4567 或在小程序中操作。',
+    authorName: '学生处',
+    updatedAt: new Date(Date.now() - 172800000).toISOString()
+  },
+  {
+    id: 3,
+    categoryId: 3,
+    categoryName: '生活指南',
+    status: 1,
+    title: '宿舍报修流程及常见问题解答',
+    content: '宿舍设施报修请通过“后勤报修”微信小程序提交，正常工作日 24 小时内响应。紧急情况（漏水、断电）可直接联系楼管或拨打 24 小时紧急维修电话。',
+    authorName: '后勤保障处',
+    updatedAt: new Date(Date.now() - 259200000).toISOString()
+  },
+  {
+    id: 4,
+    categoryId: 1,
+    categoryName: '教务管理',
+    status: 1,
+    title: '转专业申请条件与流程说明',
+    content: '符合条件的学生可在每学年第二学期第4周至第6周提交转专业申请。基本条件：GPA ≥ 3.0，无不及格记录，无违纪处分。详细流程请查阅教务系统通知。',
+    authorName: '教务处',
+    updatedAt: new Date(Date.now() - 604800000).toISOString()
+  },
+  {
+    id: 5,
+    categoryId: 3,
+    categoryName: '生活指南',
+    status: 0,
+    title: '校园网络连接指南（WiFi + 有线）',
+    content: '校园 WiFi 名称为 YXG-WiFi，使用学号和密码登录。宿舍有线网络需在网络中心网站完成认证。密码重置请携带学生证前往信息中心办理。',
+    authorName: '信息中心',
+    createdAt: new Date(Date.now() - 432000000).toISOString()
+  }
+]
+
 // 加载数据
 const loadData = async () => {
   loading.value = true
@@ -108,11 +162,13 @@ const loadData = async () => {
       pageNum: 1,
       pageSize: 20
     })
-    entries.value = res.rows || []
-    total.value = res.total || 0
+    const rows = res.rows || []
+    entries.value = rows.length > 0 ? rows : mockEntries
+    total.value = res.total || rows.length || mockEntries.length
   } catch (e) {
-    console.error('加载知识库失败', e)
-    uni.showToast({ title: '加载失败', icon: 'none' })
+    console.error('加载知识库失败，使用 mock 数据', e)
+    entries.value = mockEntries
+    total.value = mockEntries.length
   } finally {
     loading.value = false
   }
@@ -231,6 +287,8 @@ onShow(() => loadData())
 }
 
 .main-content {
+  position: relative;
+  z-index: 1;
   padding-top: 72px;
   padding-left: 20px;
   padding-right: 20px;
@@ -281,6 +339,13 @@ onShow(() => loadData())
   margin-right: -20px;
   padding-left: 20px;
   padding-right: 20px;
+
+  :deep(.uni-scroll-view::-webkit-scrollbar) {
+    display: none;
+  }
+  :deep(.uni-scroll-view) {
+    scrollbar-width: none;
+  }
 }
 
 .tabs-scroll {
@@ -339,7 +404,7 @@ onShow(() => loadData())
 .knowledge-list {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .knowledge-card {

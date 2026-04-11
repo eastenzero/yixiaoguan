@@ -66,17 +66,18 @@ const handleTabClick = (index: number) => {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
-  height: calc(64px + env(safe-area-inset-bottom));
+  z-index: 9999;
+  height: calc(76px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 24px 24px 0 0;
+  border-radius: 16px 16px 0 0;
   box-shadow: 0 -4px 20px rgba(99, 14, 212, 0.05);
+  isolation: isolate;
 }
 
 .tab-item {
@@ -85,7 +86,7 @@ const handleTabClick = (index: number) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 64px;
+  height: 76px;
   position: relative;
 }
 
@@ -96,7 +97,7 @@ const handleTabClick = (index: number) => {
   justify-content: center;
   width: 24px;
   height: 24px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .tab-label {

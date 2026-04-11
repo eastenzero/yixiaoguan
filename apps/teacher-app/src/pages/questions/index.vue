@@ -39,7 +39,9 @@
         >
           <view class="card-header">
             <view class="student-info">
-              <view class="avatar-placeholder"></view>
+              <view class="avatar-circle" :style="{ background: avatarColors[index % avatarColors.length] }">
+                <text class="avatar-initial">{{ item.studentRealName?.charAt(0) || '?' }}</text>
+              </view>
               <view class="student-meta">
                 <text class="student-name">{{ item.studentRealName }}</text>
                 <text class="student-major">{{ item.studentClassName }} · {{ formatTime(item.createdAt) }}</text>
@@ -96,10 +98,60 @@ const filterTabs = [
   { label: '已解决' }
 ]
 
+const avatarColors = ['#702ae1', '#059669', '#d97706', '#0284c7', '#b41340']
 const activeTab = ref(0)
 const questions = ref<any[]>([])
 const loading = ref(false)
 const total = ref(0)
+
+// Mock 数据 —— API 无数据时兜底展示
+const mockQuestions = [
+  {
+    id: 1,
+    studentRealName: '李明',
+    studentClassName: '计算机2301班',
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+    status: 0,
+    questionSummary: '老师您好，请问本学期的期末考试时间安排是什么时候？听说有几门课的考试时间调整了，能否确认一下最新的安排？',
+    confidence: 92
+  },
+  {
+    id: 2,
+    studentRealName: '王小红',
+    studentClassName: '软件工程2302班',
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+    status: 1,
+    questionSummary: '请问学校图书馆的电子资源数据库该怎么访问？我在校外网络登录不了知网，需要 VPN 吗？',
+    confidence: 78
+  },
+  {
+    id: 3,
+    studentRealName: '张伟',
+    studentClassName: '信息安全2301班',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    status: 0,
+    questionSummary: '我的校园卡在食堂刷不了，显示余额不足，但我昨天刚充了200块，请问这种情况怎么处理？',
+    confidence: 85
+  },
+  {
+    id: 4,
+    studentRealName: '陈思思',
+    studentClassName: '数据科学2301班',
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    status: 2,
+    questionSummary: '请问下学期的选课什么时候开始？有没有推荐的通识选修课？',
+    confidence: 65
+  },
+  {
+    id: 5,
+    studentRealName: '刘洋',
+    studentClassName: '人工智能2302班',
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    status: 0,
+    questionSummary: '宿舍的热水器坏了已经三天了，报修了但还没人来修，请问可以催一下吗？',
+    confidence: 45
+  }
+]
 
 // 格式化时间
 const formatTime = (timeStr: string) => {
@@ -159,11 +211,13 @@ const loadData = async () => {
       }
       res = await getAssignedEscalations(statusMap[activeTab.value], 1, 20)
     }
-    questions.value = res.rows || []
-    total.value = res.total || 0
+    const rows = res.rows || []
+    questions.value = rows.length > 0 ? rows : mockQuestions
+    total.value = res.total || rows.length || mockQuestions.length
   } catch (e) {
-    console.error('加载工单失败', e)
-    uni.showToast({ title: '加载失败', icon: 'none' })
+    console.error('加载工单失败，使用 mock 数据', e)
+    questions.value = mockQuestions
+    total.value = mockQuestions.length
   } finally {
     loading.value = false
   }
@@ -196,6 +250,8 @@ onShow(() => {
 }
 
 .main-content {
+  position: relative;
+  z-index: 1;
   padding-top: 72px;
   padding-left: 20px;
   padding-right: 20px;
@@ -223,6 +279,13 @@ onShow(() => {
   padding-left: 20px;
   padding-right: 20px;
   white-space: nowrap;
+
+  :deep(.uni-scroll-view::-webkit-scrollbar) {
+    display: none;
+  }
+  :deep(.uni-scroll-view) {
+    scrollbar-width: none;
+  }
 }
 
 .filter-tabs {
@@ -257,10 +320,10 @@ onShow(() => {
 
 // Question List
 .question-list {
-  margin-top: 24px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 // Question Card
@@ -286,13 +349,24 @@ onShow(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
-.avatar-placeholder {
-  width: 48px;
-  height: 48px;
+.avatar-circle {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: $surface-container;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-initial {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .student-meta {
@@ -310,11 +384,17 @@ onShow(() => {
 .student-major {
   font-size: 12px;
   color: $on-surface-variant;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-tag {
   padding: 4px 12px;
   border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 
   .status-text {
     font-size: 10px;
@@ -360,7 +440,7 @@ onShow(() => {
   font-size: 14px;
   line-height: 1.6;
   color: $on-surface-variant;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

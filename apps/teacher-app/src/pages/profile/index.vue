@@ -176,6 +176,8 @@ const handleLogout = () => {
 }
 
 .main-content {
+  position: relative;
+  z-index: 1;
   padding-top: 72px;
   padding-left: 20px;
   padding-right: 20px;
