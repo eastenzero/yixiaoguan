@@ -264,7 +264,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(135deg, #004d47 0%, #00685f 100%);
+  background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%);
   flex-shrink: 0;
 
   .logo-icon {
@@ -335,7 +335,7 @@ const handleLogout = () => {
     border-right: 3px solid var(--primary-color);
 
     .menu-icon-wrapper {
-      background-color: rgba(0, 104, 95, 0.1);
+      background-color: rgba(124, 58, 237, 0.1);
     }
   }
 
@@ -381,12 +381,12 @@ const handleLogout = () => {
     border-radius: var(--radius-md);
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-container) 100%);
     border: none;
-    box-shadow: 0 4px 14px rgba(0, 104, 95, 0.3);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
     transition: all var(--transition-normal);
 
     &:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0, 104, 95, 0.4);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
     }
 
     &:active {

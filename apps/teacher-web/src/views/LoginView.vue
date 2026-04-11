@@ -222,7 +222,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 50%, #99F6E4 100%);
+  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%);
   padding: 20px;
 }
 
@@ -240,7 +240,7 @@ onMounted(() => {
 // 左侧品牌区
 .login-brand {
   flex: 1;
-  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+  background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -448,12 +448,12 @@ onMounted(() => {
   border-radius: 12px;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
   border: none;
-  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.35);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
   transition: all 0.3s;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.45);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
   }
 }
 

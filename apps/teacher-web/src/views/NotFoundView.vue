@@ -2,7 +2,7 @@
   <div class="not-found">
     <div class="not-found-content">
       <div class="error-icon">
-        <el-icon :size="80" color="#0D9488"><Warning /></el-icon>
+        <el-icon :size="80" color="#8B5CF6"><Warning /></el-icon>
       </div>
       <h1 class="error-code">404</h1>
       <h2 class="error-title">页面未找到</h2>

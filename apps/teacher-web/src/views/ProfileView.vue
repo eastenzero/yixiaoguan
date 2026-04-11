@@ -112,21 +112,21 @@
                   <span class="setting-name">消息通知</span>
                   <span class="setting-desc">接收系统推送和邮件通知</span>
                 </div>
-                <el-switch v-model="settings.notification" active-color="#0D9488" />
+                <el-switch v-model="settings.notification" active-color="#8B5CF6" />
               </div>
               <div class="setting-item">
                 <div class="setting-info">
                   <span class="setting-name">声音提醒</span>
                   <span class="setting-desc">新消息时播放提示音</span>
                 </div>
-                <el-switch v-model="settings.sound" active-color="#0D9488" />
+                <el-switch v-model="settings.sound" active-color="#8B5CF6" />
               </div>
               <div class="setting-item">
                 <div class="setting-info">
                   <span class="setting-name">自动回复</span>
                   <span class="setting-desc">AI置信度&gt;90%时自动回复</span>
                 </div>
-                <el-switch v-model="settings.autoReply" active-color="#0D9488" />
+                <el-switch v-model="settings.autoReply" active-color="#8B5CF6" />
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ const settings = reactive({
 // 个人信息卡片
 // ========================================
 .profile-header-card {
-  background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
   border-radius: var(--radius-lg);
   padding: 32px;
   display: flex;
