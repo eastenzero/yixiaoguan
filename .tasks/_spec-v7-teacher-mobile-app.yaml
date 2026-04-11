@@ -1,0 +1,752 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v7
+# 日期: 2026-04-11
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v6 Phase A (completed), spec-v6 Phase B backend (completed)
+# 取代: spec-v6 Phase C (teacher-mobile from scratch)
+# ===================================================================
+#
+# 背景:
+#   用户获得了两份高质量交付物：
+#   1. Stitch 原型图（7 页面高保真 PNG + HTML + 设计系统 DESIGN.md）
+#   2. React 实现（React 19 + Vite 6 + Tailwind v4，7 页面 + 2 组件，Mock 数据）
+#
+#   策略变更：
+#   - 原 spec-v6 Phase C 从零开发 → 改为基于 React 原型转换为 UniApp
+#   - 教师网页端(teacher-web)暂停，移动端先行跑通 API 对接
+#   - 移动端功能验证后，反哺网页端重构
+#
+#   技术决策：
+#   - 选 UniApp 而非纯 Vue 3 + Tailwind，因为未来需要出小程序
+#   - 样式方案: SCSS 变量定义色彩系统（对齐学生端），Tailwind 类名手工转为 SCSS
+#   - 图标: 内联 SVG 组件（复用学生端 icons/ 模式）
+#   - API/Store: 复用学生端 request.ts、stores/user.ts 的模式
+#
+# 源文件位置:
+#   - React 原型: D:\Backup_2025\下载\zip7-extracted\
+#   - Stitch 原型: D:\Backup_2025\下载\stitch4-extracted\stitch\
+#   - 设计系统: D:\Backup_2025\下载\stitch4-extracted\stitch\ametrine_scholar\DESIGN.md
+#   - React CSS 色彩: D:\Backup_2025\下载\zip7-extracted\src\index.css
+#
+# 依赖链:
+#   Phase 1 (UI 转换) 无外部依赖
+#   Phase 2 (API 对接) 依赖 165 服务器上 backend :8080 运行
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v7
+date: 2026-04-11
+author: T0-Architect
+status: ready_for_t1
+
+# ===================================================================
+# 参考资料清单
+# ===================================================================
+
+reference_materials:
+
+  react_source:
+    description: React 19 实现，7 页面 + 2 组件，含完整 Tailwind v4 色彩系统
+    location: D:\Backup_2025\下载\zip7-extracted\
+    files:
+      - src/index.css              # 色彩系统 (@theme 定义 ~50 个 MD3 令牌)
+      - src/App.tsx                # 路由定义
+      - src/components/TopBar.tsx  # 顶部导航组件
+      - src/components/BottomNav.tsx # 底部导航组件
+      - src/pages/Login.tsx        # 登录页
+      - src/pages/Dashboard.tsx    # 工作台
+      - src/pages/Questions.tsx    # 提问列表
+      - src/pages/QuestionDetail.tsx # 提问详情（最核心页面）
+      - src/pages/Knowledge.tsx    # 知识库列表
+      - src/pages/KnowledgeDetail.tsx # 知识详情
+      - src/pages/Profile.tsx      # 个人中心
+
+  stitch_prototype:
+    description: Stitch 高保真原型图，每页含 screen.png + code.html
+    location: D:\Backup_2025\下载\stitch4-extracted\stitch\
+    screens:
+      - login_screen/screen.png
+      - dashboard/screen.png
+      - question_list/screen.png
+      - question_detail/screen.png
+      - knowledge_base/screen.png
+      - knowledge_detail/screen.png
+      - profile_settings/screen.png
+
+  design_system:
+    description: "The Ethereal Educator" 设计系统文档
+    location: D:\Backup_2025\下载\stitch4-extracted\stitch\ametrine_scholar\DESIGN.md
+    key_principles:
+      - "No-Line Rule: 禁 1px 实线边框，用背景色层级区分"
+      - "Tonal Stacking: Surface 4 级层级 (Level 0-3)"
+      - "Pill-Shaped: 药丸形按钮/标签"
+      - "禁用纯黑文字: 全用 #2f2e32"
+      - "Ghost Border: 如需边框，outline-variant 15% 透明度"
+      - "Ambient Shadows: 阴影带 primary 色调，非灰色"
+
+  student_app_scaffold:
+    description: 学生端 UniApp 项目骨架（复用模板）
+    location: apps/student-app/
+    reusable_files:
+      - src/utils/request.ts       # HTTP 封装 (uni.request, JWT 注入, 401 处理)
+      - src/stores/user.ts         # 用户状态 (token, userInfo, login/logout)
+      - src/stores/index.ts        # Store 入口
+      - src/api/auth.ts            # 登录认证 API
+      - src/styles/theme.scss      # 紫色主题色（部分可参考）
+      - vite.config.ts             # 代理配置参考
+      - pages.json                 # 结构参考
+
+# ===================================================================
+# 色彩系统映射 (React Tailwind v4 @theme → SCSS 变量)
+# ===================================================================
+
+color_mapping:
+  description: |
+    React index.css 中 @theme 定义的色彩需转为 SCSS 变量。
+    以下是关键映射（完整映射见 React index.css）。
+
+  primary_colors:
+    $primary:                  "#702ae1"    # 品牌主色
+    $primary-dim:              "#6411d5"    # 深主色
+    $primary-container:        "#b28cff"    # 主色容器
+    $primary-fixed-dim:        "#a67aff"    # 固定暗主色
+    $on-primary:               "#f8f0ff"    # 主色上文字
+    $on-primary-container:     "#2e006c"    # 主色容器上文字
+
+  surface_colors:
+    $surface:                  "#faf5fb"    # 基础背景
+    $surface-container-lowest: "#ffffff"    # L0 最低层
+    $surface-container-low:    "#f4eff5"    # L1 低层
+    $surface-container:        "#ebe7ed"    # L2 标准层
+    $surface-container-high:   "#e5e1e8"    # L3 高层
+    $surface-container-highest: "#e0dbe3"   # L4 最高层
+
+  text_colors:
+    $on-surface:               "#2f2e32"    # 主文字（禁纯黑）
+    $on-surface-variant:       "#5d5b5f"    # 辅助文字
+    $outline:                  "#78767b"    # 边框
+    $outline-variant:          "#afacb1"    # 浅边框
+
+  semantic_colors:
+    $error:                    "#b41340"    # 错误/紧急
+    $error-dim:                "#a70138"
+    $error-container:          "#f74b6d"
+    $secondary:                "#7742a6"
+    $secondary-container:      "#e6c5ff"
+    $tertiary:                 "#9e3657"
+    $tertiary-container:       "#ff8eac"
+
+# ===================================================================
+# 模块定义
+# ===================================================================
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # Phase 1: UniApp 项目初始化 + React → UniApp 模板转换
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-01
+    title: 教师移动端 UniApp 项目初始化
+    priority: P0
+    estimated_effort: 2-3h
+    depends_on: []
+    phase: 1
+    description: |
+      在 apps/ 下创建 teacher-app UniApp 项目，复用学生端脚手架。
+
+      === 执行步骤 ===
+
+      1. 复制 apps/student-app/ 为 apps/teacher-app/
+      2. 清理学生端业务代码:
+         - 删除 src/pages/ 下所有学生端页面
+         - 删除 src/components/ 下学生端专用组件
+         - 删除 src/api/ 下学生端专用 API（保留 auth.ts）
+         - 保留: utils/request.ts, stores/user.ts, stores/index.ts, styles/
+      3. 修改 package.json:
+         - name: "teacher-app"
+         - 确认依赖与学生端一致（vue 3, @dcloudio/uni-app, sass 等）
+      4. 创建 SCSS 色彩系统文件 src/styles/theme.scss:
+         - 将 React index.css 中的 @theme 色彩映射为 SCSS 变量
+         - 参考上方 color_mapping 部分
+         - 确保所有 ~50 个 MD3 色彩令牌都有对应 SCSS 变量
+      5. 创建全局样式 src/styles/global.scss:
+         - 字体: Manrope + PingFang SC + Microsoft YaHei
+         - 基础 reset
+         - 动画 keyframes (fadeUp, 阶梯延迟类)
+         - 工具类: .no-scrollbar, .line-clamp-1, .line-clamp-2, .pb-safe
+      6. 配置 pages.json (空壳，页面在后续模块填充):
+         - 全局样式配置
+         - "custom" tabBar 声明
+      7. 配置 vite.config.ts:
+         - 代理: /api/* → 192.168.100.165:8080
+         - host: true (LAN 访问)
+      8. 确认 `npx uni -p h5` 可以启动空项目
+
+    files_to_create:
+      - apps/teacher-app/package.json
+      - apps/teacher-app/vite.config.ts
+      - apps/teacher-app/src/styles/theme.scss
+      - apps/teacher-app/src/styles/global.scss
+      - apps/teacher-app/src/pages.json
+      - apps/teacher-app/src/manifest.json
+
+    files_to_copy_from_student:
+      - src/utils/request.ts
+      - src/stores/user.ts
+      - src/stores/index.ts
+      - src/api/auth.ts
+      - src/env.d.ts
+      - src/App.vue
+      - src/main.ts
+      - tsconfig.json
+      - index.html
+
+    acceptance_criteria:
+      - AC-01: apps/teacher-app/ 目录存在
+      - AC-02: package.json name 为 teacher-app
+      - AC-03: src/styles/theme.scss 包含 ≥ 40 个 SCSS 色彩变量
+      - AC-04: npx uni -p h5 可成功启动（无报错，显示空白页即可）
+      - AC-05: 代理配置正确（/api/* 指向 165:8080）
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-02
+    title: 公共组件转换 (TopAppBar + BottomNavBar + 图标)
+    priority: P0
+    estimated_effort: 3-4h
+    depends_on: [F-V7-01]
+    phase: 1
+    description: |
+      将 React TopBar.tsx 和 BottomNav.tsx 转换为 UniApp Vue 3 组件，
+      并创建教师端需要的 SVG 图标组件。
+
+      === TopAppBar.vue ===
+      参考: React src/components/TopBar.tsx
+      转换要点:
+      - JSX → <template> + <view>/<text>
+      - useNavigate() → uni.navigateBack()
+      - Lucide icons → 内联 SVG 组件
+      - Tailwind 类名 → SCSS (使用 theme.scss 变量)
+      - Props: title, showBack, action ('search'|'settings'|'add'|'edit'|'none')
+      视觉规格:
+      - 毛玻璃: backdrop-filter: blur(20px); background: rgba(255,255,255,0.8)
+      - 高度: 44px (uni-app 建议) 或 56px
+      - fixed 定位
+
+      === BottomNavBar.vue (Custom TabBar) ===
+      参考: React src/components/BottomNav.tsx
+      转换要点:
+      - 4 Tab: 工作台(/pages/dashboard/index), 学生提问(/pages/questions/index),
+        知识库(/pages/knowledge/index), 我的(/pages/profile/index)
+      - "学生提问" Tab 右上角红色数字徽章
+      - 激活态: 图标填充 + 主色文字 + 底部小圆点
+      - 毛玻璃背景
+      - safe-area-inset-bottom 适配
+      视觉规格:
+      - 参考 React BottomNav.tsx 的样式：rounded-t-3xl, shadow
+      - 激活态图标 strokeWidth 2.5, fill currentColor
+
+      === 图标组件 ===
+      在 src/components/icons/ 下创建以下 SVG 图标组件
+      （参考学生端 icons/ 模式，每个图标一个 .vue 文件）:
+      
+      教师端需要的图标清单（从 React Lucide 用量提取）:
+      - IconDashboard (LayoutDashboard)
+      - IconMessage (MessageSquare)
+      - IconBook (BookOpen)
+      - IconUser (User)
+      - IconBell (Bell)
+      - IconPlus (PlusCircle)
+      - IconMegaphone (Megaphone)
+      - IconChart (BarChart2)
+      - IconSettings (Settings)
+      - IconAlert (AlertCircle)
+      - IconCheck (CheckCircle2)
+      - IconArrowRight (ArrowRight)
+      - IconArrowLeft (ArrowLeft)
+      - IconSearch (Search)
+      - IconBrain (BrainCircuit)
+      - IconBot (Bot)
+      - IconLock (Lock)
+      - IconEye (Eye)
+      - IconInfo (Info)
+      - IconLogout (LogOut)
+      - IconChevronRight (ChevronRight)
+      - IconEdit (Edit2)
+      - IconVolume (Volume2)
+      - IconGraduationCap (GraduationCap)
+      - IconQrCode (QrCode)
+      - IconFingerprint (Fingerprint)
+      - IconUserCheck (UserCheck)
+
+      每个图标组件 Props: size (默认 24), color (默认 currentColor)
+
+    files_to_create:
+      - apps/teacher-app/src/components/TopAppBar.vue
+      - apps/teacher-app/src/components/BottomNavBar.vue
+      - apps/teacher-app/src/components/icons/*.vue (27 个图标)
+
+    acceptance_criteria:
+      - AC-06: TopAppBar 渲染正确，showBack 时显示返回箭头
+      - AC-07: BottomNavBar 4 个 Tab 可点击切换，激活态样式正确
+      - AC-08: 徽章数字显示在"学生提问"Tab 上
+      - AC-09: 所有 27 个图标组件可正常渲染
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-03
+    title: 页面转换 — 登录页 + 工作台
+    priority: P0
+    estimated_effort: 3-4h
+    depends_on: [F-V7-02]
+    phase: 1
+    description: |
+      转换 React Login.tsx 和 Dashboard.tsx 为 UniApp 页面。
+
+      === LoginView (pages/login/index.vue) ===
+      参考: React src/pages/Login.tsx + Stitch login_screen/screen.png
+      
+      转换要点:
+      - 全屏紫色渐变背景 (from-primary-fixed-dim via-primary to-primary-dim)
+      - 中央白色登录卡片 (surface-container-lowest/95, backdrop-blur)
+      - Logo 区域: GraduationCap 图标 + "医小管" + "教师工作台"
+      - 表单: 用户名 + 密码 + 记住我 + 登录按钮
+      - 底部: "其他登录方式" (QR + 指纹图标)
+      - 底部版权: "山东第一医科大学 · 医小管智能管理系统"
+      
+      Mock 行为: 点击登录 → uni.switchTab 到工作台
+      注意: 此页面无 TopAppBar 和 BottomNavBar
+
+      === DashboardView (pages/dashboard/index.vue) ===
+      参考: React src/pages/Dashboard.tsx + Stitch dashboard/screen.png
+      
+      区块 A — 欢迎横幅:
+      - 紫色渐变卡片，"早上好，梁老师 👋" + "今天有 3 条待处理提问"
+      - 右侧教师头像圆形
+      
+      区块 B — 快捷操作 (横向滚动):
+      - 4 个药丸形按钮: 新建知识、发布通知、数据报告、系统设置
+      
+      区块 C — 2×2 统计网格:
+      - 今日提问(12) / 待处理(3) / 知识条目(731) / 今日审批(5)
+      - 每个格子不同背景色（紫/红/绿/橙浅色）
+      
+      区块 D — 待处理提问列表:
+      - "待处理提问" + "查看全部 →"
+      - 3 张提问卡片（姓名、院系标签、摘要、状态、时间）
+      - 点击 → navigateTo('/pages/questions/detail?id=xxx')
+
+      注意: 此页面有自定义 TopAppBar（"工作台" + 铃铛图标）+ BottomNavBar
+
+    files_to_create:
+      - apps/teacher-app/src/pages/login/index.vue
+      - apps/teacher-app/src/pages/dashboard/index.vue
+
+    acceptance_criteria:
+      - AC-10: 登录页视觉与 Stitch login_screen/screen.png 一致
+      - AC-11: 点击登录跳转到工作台
+      - AC-12: 工作台 4 个统计卡片正确显示 Mock 数据
+      - AC-13: 待处理提问列表 3 条数据正确渲染
+      - AC-14: "查看全部" 跳转到提问列表页
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-04
+    title: 页面转换 — 提问列表 + 提问详情
+    priority: P0
+    estimated_effort: 4-5h
+    depends_on: [F-V7-02]
+    phase: 1
+    description: |
+      转换 React Questions.tsx 和 QuestionDetail.tsx。
+      QuestionDetail 是最核心最复杂的页面。
+
+      === QuestionsView (pages/questions/index.vue) ===
+      参考: React src/pages/Questions.tsx + Stitch question_list/screen.png
+      
+      - 顶部: TopAppBar("学生提问", 返回箭头, 搜索图标)
+      - 筛选 Tab: 全部(28) | 待处理(3) | 处理中(5) | 已解决(20)
+        激活态: 紫色实心药丸; 未激活: surface-container 药丸
+      - 提问卡片列表 (4 条 Mock):
+        - 头像(圆形) + 姓名 + 专业 + 时间
+        - 状态标签(右上角): 待处理(红) / 处理中(紫) / 已解决(绿)
+        - 问题摘要 (2行截断)
+        - AI 匹配度进度条 + 百分比
+          - 进度条颜色: <50% 红, 50-80% 橙, >80% 绿
+      - 点击卡片 → navigateTo 到详情页
+      - BottomNavBar
+
+      === QuestionDetailView (pages/questions/detail.vue) ===
+      参考: React src/pages/QuestionDetail.tsx + Stitch question_detail/screen.png
+      
+      **这是最核心的页面，必须重点打磨。**
+      
+      区块 A — 学生信息卡片:
+      - 头像(56px) + 姓名 + 学院·年级 + 在线指示点(绿色)
+      - 右侧: 状态标签
+
+      区块 B — 对话气泡 (4 种角色):
+      
+      1. 学生消息 (右对齐):
+         - 背景: $primary, 圆角: 左上+左下+右下圆, 右上方角
+         - 文字: $on-primary
+         - 阴影: 带 primary 色调
+      
+      2. AI 回复 (左对齐):
+         - 左侧: Bot 图标圆形头像 ($secondary-container 背景)
+         - 背景: white, 带左侧红色竖条 (拒答时)
+         - 普通回复无红色竖条
+      
+      3. 系统消息 (居中):
+         - 药丸形 $surface-container 背景
+         - Bell 图标 + "学生已呼叫老师 — 14:32"
+      
+      4. 教师消息 (左对齐，Phase 2 对接后使用):
+         - 与 AI 不同背景色 ($primary/10 背景)
+         - 头像旁显示"梁老师"
+
+      区块 C — 底部操作区 (fixed):
+      - 待处理状态: 大按钮 "接单处理"（渐变紫色 + UserCheck 图标）
+      - 处理中状态: 输入框 + 发送按钮（类似聊天输入）
+      - 已解决状态: 解决信息文字
+
+      Mock 行为: 点击"接单处理" → 按钮变为输入框模式
+
+      注意: 此页面无 BottomNavBar（底部是操作区）
+
+    files_to_create:
+      - apps/teacher-app/src/pages/questions/index.vue
+      - apps/teacher-app/src/pages/questions/detail.vue
+
+    acceptance_criteria:
+      - AC-15: 提问列表筛选 Tab 切换工作正常
+      - AC-16: AI 匹配度进度条颜色按阈值变化
+      - AC-17: 提问详情 4 种气泡样式正确区分
+      - AC-18: AI 拒答气泡有红色左边框
+      - AC-19: "接单处理" 点击后切换为输入框模式
+      - AC-20: 视觉与 Stitch question_detail/screen.png 一致
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-05
+    title: 页面转换 — 知识库列表 + 知识详情
+    priority: P0
+    estimated_effort: 3-4h
+    depends_on: [F-V7-02]
+    phase: 1
+    description: |
+      转换 React Knowledge.tsx 和 KnowledgeDetail.tsx。
+
+      === KnowledgeView (pages/knowledge/index.vue) ===
+      参考: React src/pages/Knowledge.tsx + Stitch knowledge_base/screen.png
+      
+      - TopAppBar("知识库", 返回箭头, "+" 添加按钮 - 紫色背景圆形)
+      - 搜索框: surface-container 背景, 2xl 圆角, Search 图标
+      - 分类 Tab: 全部 | 教务管理 | 学生服务 | 生活指南
+      - 知识卡片列表 (3 条 Mock):
+        - 分类标签(彩色药丸) + 状态(已发布/草稿/审核中 + 彩色圆点)
+        - 标题(粗体) + 摘要(2行截断)
+        - 底部分割线 + 作者头像+名称 + 时间
+      - BottomNavBar
+
+      === KnowledgeDetailView (pages/knowledge/detail.vue) ===
+      参考: React src/pages/KnowledgeDetail.tsx + Stitch knowledge_detail/screen.png
+      
+      - TopAppBar("知识详情", 返回箭头, 编辑图标)
+      - Hero 区: 分类标签 + 状态标签 + 大标题 + 作者信息 + 更新时间
+      - 配图: 圆角图片区域
+      - 正文: 
+        - h3 标题 + 正文段落
+        - 步骤列表: 编号圆形(紫色) + 步骤标题 + 描述 (surface-container-low 背景卡片)
+        - 引用块: 左侧紫色竖条 + primary/5 背景
+      - 底部操作栏 (fixed, 毛玻璃):
+        - "下线" 按钮 (outline) + "编辑" 按钮 (渐变紫色, Edit 图标)
+      - 无 BottomNavBar
+
+    files_to_create:
+      - apps/teacher-app/src/pages/knowledge/index.vue
+      - apps/teacher-app/src/pages/knowledge/detail.vue
+
+    acceptance_criteria:
+      - AC-21: 知识库搜索框和分类 Tab 渲染正确
+      - AC-22: 知识卡片含分类标签、状态、作者信息
+      - AC-23: 知识详情步骤列表编号样式正确（紫色圆形）
+      - AC-24: 引用块有紫色左边框
+      - AC-25: 底部"下线/编辑"双按钮布局正确
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-06
+    title: 页面转换 — 个人中心
+    priority: P0
+    estimated_effort: 2-3h
+    depends_on: [F-V7-02]
+    phase: 1
+    description: |
+      转换 React Profile.tsx。
+
+      === ProfileView (pages/profile/index.vue) ===
+      参考: React src/pages/Profile.tsx + Stitch profile_settings/screen.png
+      
+      区块 A — 个人信息卡片:
+      - 紫色渐变背景 (from-primary to-primary-container)
+      - 装饰性模糊圆形 (白色半透明)
+      - 头像(96px 圆形, 白色边框) + 姓名 + 职称/学院 + 工号标签
+      
+      区块 B — 工作统计 (3 格):
+      - surface-container-low 背景, 2xl 圆角
+      - 156 累计处理 / 42 本月审批 / 28 知识入库
+      - 数字 primary 色
+      
+      区块 C — 系统设置:
+      - "系统设置" 小标题
+      - 设置组 1 (surface-container-low 背景, 2xl 圆角):
+        - 通知提醒 — Bell 图标 + Switch (开)
+        - 声音提示 — Volume 图标 + Switch (开)
+        - AI 自动回复 — Bot 图标 + Switch (关)
+      - 设置组 2:
+        - 修改密码 — Lock 图标 + ChevronRight
+        - 关于我们 — Info 图标 + ChevronRight
+      - 退出登录按钮: error-container/10 背景, error 文字, LogOut 图标
+      
+      - BottomNavBar
+
+      Mock 行为: Switch 可点击切换；退出登录 → uni.reLaunch 到登录页
+
+    files_to_create:
+      - apps/teacher-app/src/pages/profile/index.vue
+
+    acceptance_criteria:
+      - AC-26: 个人信息渐变卡片与 Stitch profile_settings/screen.png 一致
+      - AC-27: 工作统计 3 格数据正确
+      - AC-28: Switch 可交互切换
+      - AC-29: 退出登录跳转到登录页
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-07
+    title: 路由配置 + pages.json + 端到端冒烟
+    priority: P0
+    estimated_effort: 1-2h
+    depends_on: [F-V7-03, F-V7-04, F-V7-05, F-V7-06]
+    phase: 1
+    description: |
+      配置完整路由，确保所有页面可导航，端到端冒烟通过。
+
+      === pages.json 配置 ===
+      
+      pages (按顺序):
+      1. pages/login/index — 登录页 (custom navigationBar)
+      2. pages/dashboard/index — 工作台
+      3. pages/questions/index — 学生提问
+      4. pages/questions/detail — 提问详情 (custom navigationBar)
+      5. pages/knowledge/index — 知识库
+      6. pages/knowledge/detail — 知识详情 (custom navigationBar)
+      7. pages/profile/index — 个人中心
+
+      tabBar (custom: true):
+      - 工作台 (/pages/dashboard/index)
+      - 学生提问 (/pages/questions/index)
+      - 知识库 (/pages/knowledge/index)
+      - 我的 (/pages/profile/index)
+
+      === 冒烟测试路径 ===
+      1. 启动 → 登录页 → 点击登录 → 工作台
+      2. 工作台 → 点击待处理提问 → 提问详情 → 返回
+      3. 工作台 → "查看全部" → 提问列表 → 点击卡片 → 详情
+      4. 底部 Tab 切换: 工作台 ↔ 学生提问 ↔ 知识库 ↔ 我的
+      5. 知识库 → 点击卡片 → 知识详情 → 返回
+      6. 个人中心 → 退出登录 → 登录页
+
+    files_to_modify:
+      - apps/teacher-app/src/pages.json
+
+    acceptance_criteria:
+      - AC-30: 以上 6 条冒烟路径全部可走通
+      - AC-31: 所有页面间导航无白屏或报错
+      - AC-32: BottomNavBar 在 4 个 Tab 页面正确显示和切换
+      - AC-33: 非 Tab 页面（login, questions/detail, knowledge/detail）不显示 BottomNavBar
+
+# ===================================================================
+# Phase 2 — API 对接（Phase 1 完成后启动）
+# ===================================================================
+
+  - id: F-V7-08
+    title: API 对接 — 登录 + 用户信息
+    priority: P0
+    estimated_effort: 2-3h
+    depends_on: [F-V7-07]
+    phase: 2
+    description: |
+      将登录页从 Mock 改为真实 API 对接。
+
+      === 后端接口 ===
+      - POST /login — 登录 (username, password → token)
+      - GET /getInfo — 获取用户信息 (需 Bearer token)
+      
+      === 工作项 ===
+      1. 复用学生端 api/auth.ts (login, getInfo, logout)
+      2. 登录页: 调用真实 login API → 存 token → getInfo → 跳转
+      3. 个人中心: 从 store 读取真实用户信息显示
+      4. 工作台: 欢迎语使用真实用户昵称
+      5. request.ts 中 401 拦截 → 跳转登录页
+
+    acceptance_criteria:
+      - AC-34: 使用 liang_s_huli_24 / liangshufeng 可成功登录
+      - AC-35: 工作台显示真实姓名（梁淑芬）
+      - AC-36: 个人中心显示真实用户信息
+      - AC-37: 无效凭证登录提示错误
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-09
+    title: API 对接 — 工单/提问列表 + 详情
+    priority: P0
+    estimated_effort: 3-4h
+    depends_on: [F-V7-08]
+    phase: 2
+    description: |
+      对接 Escalation API（v6 Phase B 已验证通过的接口）。
+
+      === 后端接口 (已由 v6b-01 验证) ===
+      - GET /api/v1/escalations — 工单列表
+      - GET /api/v1/escalations/{id} — 工单详情
+      - PUT /api/v1/escalations/{id}/assign — 教师接单
+      - PUT /api/v1/escalations/{id}/resolve — 教师回复
+
+      === 新建 API 文件 ===
+      src/api/escalation.ts:
+      - getEscalations(params) — 列表(含筛选)
+      - getEscalationDetail(id) — 详情(含对话记录)
+      - assignEscalation(id) — 接单
+      - resolveEscalation(id, reply) — 回复解决
+
+      === 页面对接 ===
+      1. 工作台: 统计数字从 API 获取(如有统计接口；否则从列表计算)
+      2. 提问列表: 真实数据替换 Mock，筛选 Tab 对接 status 参数
+      3. 提问详情: 真实对话记录 + 接单/回复调用真实 API
+
+    acceptance_criteria:
+      - AC-38: 提问列表显示真实工单数据
+      - AC-39: 筛选 Tab 切换正确过滤
+      - AC-40: 教师可接单 → 状态变为处理中
+      - AC-41: 教师输入回复 → 工单变为已解决
+
+  # ────────────────────────────────────────────────────────────────
+
+  - id: F-V7-10
+    title: API 对接 — 知识库
+    priority: P1
+    estimated_effort: 2-3h
+    depends_on: [F-V7-08]
+    phase: 2
+    description: |
+      对接知识库 API。
+
+      === 后端接口 ===
+      需先确认: business-api 是否有教师端知识库 CRUD 接口。
+      如有: 直接对接。
+      如没有: 保留 Mock 数据，标记为 Phase 3 待开发。
+
+      可能的接口:
+      - GET /api/v1/knowledge — 知识列表
+      - GET /api/v1/knowledge/{id} — 知识详情
+      - POST /api/v1/knowledge — 新建知识
+      - PUT /api/v1/knowledge/{id} — 编辑
+      - DELETE /api/v1/knowledge/{id} — 删除
+
+    acceptance_criteria:
+      - AC-42: 如接口存在 → 知识列表显示真实数据
+      - AC-43: 如接口不存在 → 保留 Mock，输出缺失接口清单
+
+# ===================================================================
+# 验收标准汇总
+# ===================================================================
+
+acceptance_criteria_global:
+  phase_1_ui:
+    - AC-01~05: 项目初始化 + 色彩系统
+    - AC-06~09: 公共组件 + 图标
+    - AC-10~14: 登录页 + 工作台
+    - AC-15~20: 提问列表 + 详情（核心页面）
+    - AC-21~25: 知识库列表 + 详情
+    - AC-26~29: 个人中心
+    - AC-30~33: 路由 + 冒烟测试
+  phase_2_api:
+    - AC-34~37: 登录 API 对接
+    - AC-38~41: 工单/提问 API 对接
+    - AC-42~43: 知识库 API 对接
+
+# ===================================================================
+# 执行顺序
+# ===================================================================
+
+execution_order:
+  phase_1_sequential:
+    - F-V7-01 (项目初始化)
+    - F-V7-02 (公共组件 + 图标) → 依赖 01
+    - F-V7-03 + F-V7-04 + F-V7-05 + F-V7-06 (4 个页面模块可并行) → 依赖 02
+    - F-V7-07 (路由 + 冒烟) → 依赖 03~06 全部完成
+  phase_2_sequential:
+    - F-V7-08 (登录 API) → 依赖 07
+    - F-V7-09 + F-V7-10 (工单 + 知识库可并行) → 依赖 08
+
+# ===================================================================
+# T1 执行建议
+# ===================================================================
+
+t1_notes: |
+  1. Phase 1 是纯前端 UI 转换，不需要 165 服务器运行。
+     可以在 Windows 本机用 npx uni -p h5 开发和验证。
+  
+  2. 转换时以 React 源代码为主要参考，Stitch 截图用于视觉校准。
+     React 代码比 Stitch HTML 更准确（Stitch HTML 可能有不一致）。
+  
+  3. Tailwind 类名转 SCSS 的通用规则:
+     - bg-xxx → background: $xxx
+     - text-xxx → color: $xxx
+     - rounded-xxx → border-radius: 对应值
+     - p-4 → padding: 16px (或 32rpx)
+     - gap-4 → gap: 16px
+     - 布局类 (flex, grid, items-center 等) → 同名 CSS 属性
+  
+  4. UniApp 标签映射:
+     - <div> → <view>
+     - <span> / <p> / <h1~h6> → <text> 或 <view>
+     - <img> → <image>
+     - <input> → <input> (UniApp 原生)
+     - <button> → <view> + @click (推荐) 或 <button>
+     - <a> / <Link> → <navigator> 或 uni.navigateTo
+  
+  5. 头像图片: React 中使用 Google 外链，转换时改为本地占位图
+     或使用文字头像（取姓名首字）。
+  
+  6. rpx 与 px: UniApp H5 模式下 rpx 和 px 都可用。
+     建议统一用 px（与 React 原型一致），后续小程序编译时再考虑 rpx。
+
+# ===================================================================
+# 风险
+# ===================================================================
+
+risks:
+  - id: RISK-V7-01
+    description: |
+      UniApp H5 模式下 backdrop-filter (毛玻璃) 的兼容性。
+      iOS Safari 和 Chrome 都支持，但需要 -webkit- 前缀。
+      缓解: 添加 -webkit-backdrop-filter 前缀，或降级为纯白半透明背景。
+  - id: RISK-V7-02
+    description: |
+      Tailwind → SCSS 转换量大（~900 行 React TSX 中的类名），
+      可能遗漏样式或转换不精确。
+      缓解: 以 Stitch 截图为视觉基准逐页校对。
+  - id: RISK-V7-03
+    description: |
+      Escalation API 的响应数据结构可能与前端 Mock 数据不完全匹配
+      （如字段名、嵌套结构不同）。
+      缓解: Phase 2 开始时先用 curl 或 Postman 调一遍 API，确认数据结构再对接。
+  - id: RISK-V7-04
+    description: |
+      教师端知识库 CRUD 接口可能不存在（business-api 可能只有学生端查询接口）。
+      缓解: F-V7-10 已预设了降级方案（保留 Mock + 输出缺失清单）。
