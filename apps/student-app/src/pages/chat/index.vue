@@ -48,13 +48,18 @@
         class="message-item"
         :class="msg.role"
       >
+        <!-- 系统消息：居中显示 -->
+        <view v-if="msg.role === 'system'" class="system-message">
+          <text>{{ msg.content }}</text>
+        </view>
+
         <!-- AI 头像 -->
-        <view v-if="msg.role === 'assistant'" class="avatar ai-avatar">
+        <view v-else-if="msg.role === 'assistant'" class="avatar ai-avatar">
           <IconBot :size="24" color="#ffffff" />
         </view>
 
         <!-- 消息内容区 -->
-        <view class="message-content">
+        <view v-if="msg.role !== 'system'" class="message-content">
           <!-- AI 名称标签 -->
           <text v-if="msg.role === 'assistant'" class="sender-name">医小管</text>
 
@@ -158,6 +163,18 @@
     <!-- 输入区域 -->
     <view class="input-area" :style="{ paddingBottom: safeAreaBottom + 'px' }">
       <view class="input-wrapper">
+        <!-- 呼叫老师按钮 -->
+        <button
+          class="call-teacher-btn"
+          :class="{ called: teacherCalled, loading: teacherCallLoading }"
+          :disabled="teacherCalled || teacherCallLoading"
+          @click="handleCallTeacher"
+        >
+          <text v-if="teacherCallLoading" class="btn-icon">⏳</text>
+          <text v-else-if="teacherCalled" class="btn-icon">✓</text>
+          <text v-else class="btn-icon">👨‍🏫</text>
+          <text class="btn-text">{{ teacherCallLoading ? '呼叫中...' : (teacherCalled ? '等待老师接入...' : '呼叫老师') }}</text>
+        </button>
         <input
           v-model="inputMessage"
           class="message-input"
@@ -225,7 +242,8 @@ import IconBookOpen from '@/components/icons/IconBookOpen.vue'
 import { 
   createConversation, 
   getHistory, 
-  sendMessage as sendMessageAPI
+  sendMessage as sendMessageAPI,
+  callTeacher
 } from '@/api/chat'
 
 // ============ Markdown 渲染器 ============
@@ -254,7 +272,7 @@ interface Source {
 
 interface Message {
   id: string
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'system'
   content: string
   sources?: Source[]
   timestamp: number
@@ -270,6 +288,8 @@ const scrollTop = ref(0)
 const safeAreaBottom = ref(0)
 const copiedId = ref<string | null>(null)
 const conversationId = ref<number | null>(null)
+const teacherCalled = ref(false)
+const teacherCallLoading = ref(false)
 const sourcePreview = ref<{
   visible: boolean
   entryId: string
@@ -840,6 +860,49 @@ function scrollToBottom() {
     scrollTop.value = 9999999 + Math.random()
   })
 }
+
+// ============ 呼叫老师 ============
+async function handleCallTeacher() {
+  if (!conversationId.value) {
+    uni.showToast({
+      title: '请先开始对话',
+      icon: 'none'
+    })
+    return
+  }
+
+  teacherCallLoading.value = true
+
+  try {
+    await callTeacher({
+      conversationId: conversationId.value,
+      messageId: 0,
+      reason: '学生主动呼叫'
+    })
+
+    teacherCalled.value = true
+
+    // 在消息列表中插入系统提示
+    messages.value.push({
+      id: `system-${Date.now()}`,
+      role: 'system',
+      content: '你已呼叫老师，请稍候...',
+      timestamp: Date.now()
+    })
+
+    scrollToBottom()
+
+  } catch (error: any) {
+    console.error('呼叫老师失败:', error)
+    teacherCallLoading.value = false
+    uni.showToast({
+      title: error.message || '呼叫失败，请重试',
+      icon: 'none'
+    })
+  } finally {
+    teacherCallLoading.value = false
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -987,6 +1050,23 @@ function scrollToBottom() {
   &.assistant {
     justify-content: flex-start;
   }
+
+  &.system {
+    justify-content: center;
+  }
+}
+
+// ============ 系统消息 ============
+.system-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  font: $text-body-small;
+  color: $neutral-50;
+  text-align: center;
 }
 
 // ============ 头像 ============
@@ -1373,6 +1453,48 @@ function scrollToBottom() {
 
   &:disabled {
     opacity: 0.6;
+  }
+}
+
+// ============ 呼叫老师按钮 ============
+.call-teacher-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px;
+  height: 44px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, $primary-40 0%, #008a7a 100%);
+  border: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  .btn-icon {
+    font-size: 16px;
+  }
+
+  .btn-text {
+    font: $text-body-small;
+    color: #ffffff;
+    white-space: nowrap;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.called {
+    background: $neutral-80;
+    opacity: 0.8;
+  }
+
+  &.loading {
+    background: $neutral-80;
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    pointer-events: none;
   }
 }
 
