@@ -367,7 +367,7 @@ function getStatusText(status: number): string {
 
 function getConfidenceColor(confidence?: number): string {
   if (!confidence) return '#EF4444'
-  if (confidence > 80) return '#0D9488'
+  if (confidence > 80) return '#8B5CF6'
   if (confidence > 50) return '#F59E0B'
   return '#EF4444'
 }
@@ -612,7 +612,7 @@ onMounted(() => {
       font-weight: 700;
 
       &.warning {
-        color: #0D9488;
+        color: #8B5CF6;
       }
 
       &.danger {
@@ -725,7 +725,7 @@ onMounted(() => {
     }
 
     &.has-ai-reply {
-      background: linear-gradient(90deg, #F0FDFA 0%, #fff 3%);
+      background: linear-gradient(90deg, #F5F3FF 0%, #fff 3%);
     }
   }
 
@@ -885,7 +885,7 @@ onMounted(() => {
 }
 
 .ai-analysis-card {
-  background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
   border-radius: var(--radius-lg);
   padding: 24px;
   color: #fff;

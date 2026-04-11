@@ -8,15 +8,15 @@
 
 :root {
   /* ---- 主色调（深翠绿） ---- */
-  --primary-color: #00685f;
-  --primary-container: #008378;
-  --primary-light: #0D9488;
-  --primary-dark: #004d47;
-  --primary-bg: #f0fdfa;
-  --primary-bg-soft: #ccfbf1;
+  --primary-color: #7C3AED;
+  --primary-container: #6D28D9;
+  --primary-light: #8B5CF6;
+  --primary-dark: #5B21B6;
+  --primary-bg: #F5F3FF;
+  --primary-bg-soft: #EDE9FE;
   
   /* ---- 功能色 ---- */
-  --secondary: #006a63;
+  --secondary: #6D28D9;
   --tertiary: #924628;
   --success: #10b981;
   --success-bg: #ecfdf5;
@@ -54,7 +54,7 @@
   --card-bg: #ffffff;
   --card-border: #e0e3e5;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  --card-shadow-hover: 0 12px 32px -4px rgba(0, 104, 95, 0.08);
+  --card-shadow-hover: 0 12px 32px -4px rgba(124, 58, 237, 0.08);
   
   /* ---- 圆角 ---- */
   --radius-sm: 6px;
@@ -334,5 +334,5 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .el-textarea__inner:focus {
-  box-shadow: 0 0 0 2px rgba(0, 104, 95, 0.1);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
 }

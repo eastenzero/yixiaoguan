@@ -132,7 +132,7 @@
                 申请人信息
               </div>
               <div class="applicant-profile">
-                <el-avatar :size="48" :style="{ backgroundColor: '#0D9488' }">
+                <el-avatar :size="48" :style="{ backgroundColor: '#8B5CF6' }">
                   {{ selectedItem.applicantName?.charAt(0) || '?' }}
                 </el-avatar>
                 <div class="profile-info">
@@ -703,7 +703,7 @@ onMounted(() => {
 
     &:hover {
       color: var(--primary-color);
-      background: rgba(13, 148, 136, 0.05);
+      background: rgba(139, 92, 246, 0.05);
     }
 
     &.active {
@@ -1090,9 +1090,9 @@ onMounted(() => {
     font-weight: 600;
     border-radius: var(--radius-md);
     margin-bottom: 12px;
-    background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
     border: none;
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   }
 
   .action-secondary {

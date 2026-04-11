@@ -252,15 +252,15 @@ const areaChartOption = computed(() => ({
       smooth: true,
       symbol: 'circle',
       symbolSize: 8,
-      lineStyle: { width: 3, color: '#00685f' },
-      itemStyle: { color: '#00685f', borderWidth: 2, borderColor: '#fff' },
+      lineStyle: { width: 3, color: '#7C3AED' },
+      itemStyle: { color: '#7C3AED', borderWidth: 2, borderColor: '#fff' },
       areaStyle: {
         color: {
           type: 'linear',
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(0, 104, 95, 0.3)' },
-            { offset: 1, color: 'rgba(0, 104, 95, 0)' }
+            { offset: 0, color: 'rgba(124, 58, 237, 0.3)' },
+            { offset: 1, color: 'rgba(124, 58, 237, 0)' }
           ]
         }
       },
@@ -272,15 +272,15 @@ const areaChartOption = computed(() => ({
       smooth: true,
       symbol: 'circle',
       symbolSize: 8,
-      lineStyle: { width: 3, color: '#008378' },
-      itemStyle: { color: '#008378', borderWidth: 2, borderColor: '#fff' },
+      lineStyle: { width: 3, color: '#6D28D9' },
+      itemStyle: { color: '#6D28D9', borderWidth: 2, borderColor: '#fff' },
       areaStyle: {
         color: {
           type: 'linear',
           x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
-            { offset: 0, color: 'rgba(0, 131, 120, 0.3)' },
-            { offset: 1, color: 'rgba(0, 131, 120, 0)' }
+            { offset: 0, color: 'rgba(109, 40, 217, 0.3)' },
+            { offset: 1, color: 'rgba(109, 40, 217, 0)' }
           ]
         }
       },
@@ -375,8 +375,8 @@ const pieChartOption = computed(() => ({
       }
     },
     data: [
-      { value: 45, name: '教务相关', itemStyle: { color: '#00685f' } },
-      { value: 30, name: '技术故障', itemStyle: { color: '#008378' } },
+      { value: 45, name: '教务相关', itemStyle: { color: '#7C3AED' } },
+      { value: 30, name: '技术故障', itemStyle: { color: '#6D28D9' } },
       { value: 15, name: '后勤申报', itemStyle: { color: '#14b8a6' } },
       { value: 10, name: '其他', itemStyle: { color: '#5eead4' } }
     ]
@@ -472,12 +472,12 @@ const rankData = [
     flex-shrink: 0;
 
     &.primary {
-      background: rgba(0, 104, 95, 0.1);
+      background: rgba(124, 58, 237, 0.1);
       color: var(--primary-color);
     }
 
     &.secondary {
-      background: rgba(0, 106, 99, 0.1);
+      background: rgba(109, 40, 217, 0.1);
       color: var(--secondary);
     }
 
@@ -487,7 +487,7 @@ const rankData = [
     }
 
     &.quaternary {
-      background: rgba(13, 148, 136, 0.1);
+      background: rgba(139, 92, 246, 0.1);
       color: var(--primary-light);
     }
   }

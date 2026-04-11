@@ -69,7 +69,7 @@
         <div class="table-card hover-lift">
           <div class="card-header">
             <div class="header-title">
-              <el-icon :size="20" color="#00685f"><ChatDotRound /></el-icon>
+              <el-icon :size="20" color="#7C3AED"><ChatDotRound /></el-icon>
               <span class="font-display">今日学生提问列表</span>
             </div>
             <el-link type="primary" underline="never" class="view-link" @click="$router.push('/questions')">
@@ -131,7 +131,7 @@
           <div class="sub-card hover-lift">
             <div class="card-header">
               <div class="header-title">
-                <el-icon :size="18" color="#00685f"><Histogram /></el-icon>
+                <el-icon :size="18" color="#7C3AED"><Histogram /></el-icon>
                 <span class="font-display">高频问题热度统计</span>
               </div>
               <el-link type="primary" underline="never">查看全部</el-link>
@@ -156,7 +156,7 @@
           <div class="sub-card hover-lift">
             <div class="card-header">
               <div class="header-title">
-                <el-icon :size="18" color="#00685f"><Collection /></el-icon>
+                <el-icon :size="18" color="#7C3AED"><Collection /></el-icon>
                 <span class="font-display">知识库快捷入口</span>
               </div>
             </div>
@@ -179,7 +179,7 @@
         <div class="sidebar-card hover-lift">
           <div class="card-header">
             <div class="header-title">
-              <el-icon :size="20" color="#00685f"><Checked /></el-icon>
+              <el-icon :size="20" color="#7C3AED"><Checked /></el-icon>
               <span class="font-display">待审批事项</span>
             </div>
             <el-tag size="small" type="danger" effect="light" class="count-tag">
@@ -310,7 +310,7 @@ const aiWarning = ref<AIWarning | null | undefined>(null)
 
 // ===== 静态数据（知识库快捷入口）=====
 const quickAccess = [
-  { name: '学工政策', icon: 'Document', bgColor: '#ECFDF5', color: '#00685f' },
+  { name: '学工政策', icon: 'Document', bgColor: '#F5F3FF', color: '#7C3AED' },
   { name: '教学大纲', icon: 'Reading', bgColor: '#EFF6FF', color: '#3B82F6' },
   { name: '客服话术', icon: 'ChatLineRound', bgColor: '#F5F3FF', color: '#8B5CF6' },
   { name: '常见Q&A', icon: 'QuestionFilled', bgColor: '#FFF7ED', color: '#F97316' }
@@ -500,7 +500,7 @@ onMounted(() => {
   }
 
   &.primary {
-    background: linear-gradient(135deg, #00685f 0%, #008378 100%);
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
     color: #fff;
     border: none;
 
@@ -1058,7 +1058,7 @@ onMounted(() => {
 
 // AI 预警卡片
 .ai-warning-card {
-  background: linear-gradient(135deg, #00685f 0%, #008378 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
   border-radius: var(--radius-lg);
   padding: 24px;
   color: #fff;
@@ -1066,7 +1066,7 @@ onMounted(() => {
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px -4px rgba(0, 104, 95, 0.2);
+    box-shadow: 0 12px 32px -4px rgba(124, 58, 237, 0.2);
   }
 
   .warning-content {

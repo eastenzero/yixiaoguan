@@ -255,8 +255,10 @@ function formatTime(timeStr: string): string {
 // ===== 页面跳转 =====
 
 function goToConversation(item: Escalation) {
-  uni.navigateTo({
-    url: `/pages/chat/index?conversationId=${item.conversationId}`
+  // switchTab 不支持 query 参数，通过 storage 传递
+  uni.setStorageSync('pendingConversationId', item.conversationId)
+  uni.switchTab({
+    url: '/pages/chat/index'
   })
 }
 

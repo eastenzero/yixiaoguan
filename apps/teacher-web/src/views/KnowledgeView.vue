@@ -37,7 +37,7 @@
     <!-- 知识库快捷入口（参考图3） -->
     <div class="quick-access">
       <div class="access-title">
-        <el-icon :size="18" color="#0D9488"><Collection /></el-icon>
+        <el-icon :size="18" color="#8B5CF6"><Collection /></el-icon>
         <span>知识库快捷入口</span>
       </div>
       <div class="access-grid">
@@ -149,7 +149,7 @@ const categories = [
 ]
 
 const quickAccess = [
-  { name: '学工政策', icon: Document, bgColor: '#ECFDF5', color: '#0D9488' },
+  { name: '学工政策', icon: Document, bgColor: '#F5F3FF', color: '#8B5CF6' },
   { name: '教学大纲', icon: Reading, bgColor: '#EFF6FF', color: '#3B82F6' },
   { name: '客服话术', icon: ChatLineRound, bgColor: '#F5F3FF', color: '#8B5CF6' },
   { name: '常见Q&A', icon: QuestionFilled, bgColor: '#FFF7ED', color: '#F97316' }
@@ -460,7 +460,7 @@ const knowledgeList = [
 // AI 预警卡片
 // ========================================
 .ai-warning-card {
-  background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
   border-radius: var(--radius-lg);
   padding: 24px;
   color: #fff;
