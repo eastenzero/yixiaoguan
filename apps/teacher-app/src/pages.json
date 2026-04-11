@@ -1,0 +1,16 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "医小管教师端"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "医小管教师端",
+    "navigationBarBackgroundColor": "#faf5fb",
+    "backgroundColor": "#faf5fb"
+  }
+}
