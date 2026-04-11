@@ -871,13 +871,22 @@ async function handleCallTeacher() {
     return
   }
 
+  // 查找最后一条来自后端的消息（ID 为纯数字）
+  const lastRealMsg = [...messages.value].reverse().find(m => /^\d+$/.test(String(m.id)))
+  const messageId = lastRealMsg ? Number(lastRealMsg.id) : 0
+
+  if (!messageId) {
+    uni.showToast({ title: '请先发送一条消息再呼叫老师', icon: 'none' })
+    return
+  }
+
   teacherCallLoading.value = true
 
   try {
     await callTeacher({
       conversationId: conversationId.value,
-      messageId: 0,
-      reason: '学生主动呼叫'
+      messageId: messageId,
+      questionSummary: '学生主动呼叫'
     })
 
     teacherCalled.value = true
