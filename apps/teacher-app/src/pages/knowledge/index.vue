@@ -10,9 +10,11 @@
             <IconSearch :size="20" color="#5d5b5f" />
           </view>
           <input 
+            v-model="searchText"
             class="search-input" 
             placeholder="搜索知识文档、指南或规章..." 
             type="text"
+            @confirm="handleSearch"
           />
         </view>
       </view>
@@ -26,7 +28,7 @@
               :key="index"
               class="tab-item"
               :class="{ 'tab-item--active': activeCategory === index }"
-              @click="activeCategory = index"
+              @click="switchCategory(index)"
             >
               <text class="tab-text">{{ tab }}</text>
             </view>
@@ -34,80 +36,42 @@
         </scroll-view>
       </view>
 
+      <!-- Loading State -->
+      <view v-if="loading" class="loading-state">
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <!-- Empty State -->
+      <view v-else-if="entries.length === 0" class="empty-state">
+        <text class="empty-text">暂无知识文档</text>
+      </view>
+
       <!-- Knowledge List -->
-      <view class="knowledge-list">
-        <!-- Card 1 -->
+      <view v-else class="knowledge-list">
         <view 
-          class="knowledge-card animate-fade-up delay-3"
-          @click="goToDetail(1)"
+          v-for="(item, index) in entries" 
+          :key="item.id"
+          class="knowledge-card animate-fade-up"
+          :class="`delay-${Math.min(index + 3, 5)}`"
+          @click="goToDetail(item.id)"
         >
           <view class="card-header">
-            <view class="category-tag category-tag--secondary">
-              <text class="tag-text">教务管理</text>
+            <view class="category-tag" :class="getCategoryClass(item.categoryId)">
+              <text class="tag-text">{{ item.categoryName || getCategoryName(item.categoryId) }}</text>
             </view>
             <view class="status-tag">
-              <view class="status-dot status-dot--published"></view>
-              <text class="status-text status-text--published">已发布</text>
+              <view class="status-dot" :class="getStatusClass(item.status)"></view>
+              <text class="status-text" :class="getStatusTextClass(item.status)">{{ getStatusText(item.status) }}</text>
             </view>
           </view>
-          <text class="card-title">2024年春季学期排课调整指南</text>
-          <text class="card-summary">本指南详细说明了本学期教务排课的最新变更，包括多媒体教室申请流程、跨学院选修课的时间协调机制以及调课申请的截止日期...</text>
+          <text class="card-title">{{ item.title }}</text>
+          <text class="card-summary">{{ getSummary(item.content) }}</text>
           <view class="card-footer">
             <view class="author-info">
               <view class="avatar-placeholder"></view>
-              <text class="author-name">教务处 · 李老师</text>
+              <text class="author-name">{{ item.authorName || '未知作者' }}</text>
             </view>
-            <text class="time-text">2小时前</text>
-          </view>
-        </view>
-
-        <!-- Card 2 -->
-        <view 
-          class="knowledge-card animate-fade-up delay-4"
-          @click="goToDetail(2)"
-        >
-          <view class="card-header">
-            <view class="category-tag category-tag--tertiary">
-              <text class="tag-text">生活指南</text>
-            </view>
-            <view class="status-tag">
-              <view class="status-dot status-dot--draft"></view>
-              <text class="status-text status-text--draft">草稿</text>
-            </view>
-          </view>
-          <text class="card-title">校园智慧卡充值与挂失常见问题解答</text>
-          <text class="card-summary">针对近期学生反映的校园卡在线充值延迟及丢失补办手续繁杂的问题，后勤管理处整理了这份最新的FAQ手册供查阅...</text>
-          <view class="card-footer">
-            <view class="author-info">
-              <view class="avatar-placeholder"></view>
-              <text class="author-name">后勤处 · 王助理</text>
-            </view>
-            <text class="time-text">昨天 14:20</text>
-          </view>
-        </view>
-
-        <!-- Card 3 -->
-        <view 
-          class="knowledge-card animate-fade-up delay-5"
-          @click="goToDetail(3)"
-        >
-          <view class="card-header">
-            <view class="category-tag category-tag--secondary">
-              <text class="tag-text">学生服务</text>
-            </view>
-            <view class="status-tag">
-              <view class="status-dot status-dot--published"></view>
-              <text class="status-text status-text--published">已发布</text>
-            </view>
-          </view>
-          <text class="card-title">毕业生离校手续一站式办理流程 (2024版)</text>
-          <text class="card-summary">为了方便毕业生更快捷地完成离校手续，今年我们将全面采用线上预审模式。请同学们在离校前15天内完成以下步骤...</text>
-          <view class="card-footer">
-            <view class="author-info">
-              <view class="avatar-placeholder"></view>
-              <text class="author-name">学生处 · 赵处长</text>
-            </view>
-            <text class="time-text">2024-03-12</text>
+            <text class="time-text">{{ formatTime(item.updatedAt || item.createdAt) }}</text>
           </view>
         </view>
       </view>
@@ -118,17 +82,145 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import TopAppBar from '../../components/TopAppBar.vue'
 import BottomNavBar from '../../components/BottomNavBar.vue'
 import IconSearch from '../../components/icons/IconSearch.vue'
+import { getKnowledgeEntries } from '@/api/knowledge'
 
 const categories = ['全部', '教务管理', '学生服务', '生活指南']
-const activeCategory = ref(0)
+const categoryIds = [undefined, 1, 2, 3] // 对应分类ID映射
 
+const entries = ref<any[]>([])
+const loading = ref(false)
+const activeCategory = ref(0)
+const searchText = ref('')
+const total = ref(0)
+
+// 加载数据
+const loadData = async () => {
+  loading.value = true
+  try {
+    const res = await getKnowledgeEntries({
+      categoryId: categoryIds[activeCategory.value],
+      title: searchText.value || undefined,
+      pageNum: 1,
+      pageSize: 20
+    })
+    entries.value = res.rows || []
+    total.value = res.total || 0
+  } catch (e) {
+    console.error('加载知识库失败', e)
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+// 切换分类
+const switchCategory = (index: number) => {
+  activeCategory.value = index
+  loadData()
+}
+
+// 搜索
+const handleSearch = () => {
+  loadData()
+}
+
+// 跳转到详情
 const goToDetail = (id: number) => {
   uni.navigateTo({ url: `/pages/knowledge/detail?id=${id}` })
 }
+
+// 获取分类样式
+const getCategoryClass = (categoryId?: number) => {
+  const map: Record<number, string> = {
+    1: 'category-tag--secondary',
+    2: 'category-tag--secondary',
+    3: 'category-tag--tertiary'
+  }
+  return map[categoryId || 0] || 'category-tag--secondary'
+}
+
+// 获取分类名称
+const getCategoryName = (categoryId?: number) => {
+  const map: Record<number, string> = {
+    1: '教务管理',
+    2: '学生服务',
+    3: '生活指南'
+  }
+  return map[categoryId || 0] || '其他'
+}
+
+// 获取状态样式
+const getStatusClass = (status?: number) => {
+  const map: Record<number, string> = {
+    0: 'status-dot--draft',
+    1: 'status-dot--published',
+    2: 'status-dot--draft',
+    3: 'status-dot--draft'
+  }
+  return map[status || 0] || 'status-dot--draft'
+}
+
+// 获取状态文字样式
+const getStatusTextClass = (status?: number) => {
+  const map: Record<number, string> = {
+    0: 'status-text--draft',
+    1: 'status-text--published',
+    2: 'status-text--draft',
+    3: 'status-text--draft'
+  }
+  return map[status || 0] || 'status-text--draft'
+}
+
+// 获取状态文字
+const getStatusText = (status?: number) => {
+  const map: Record<number, string> = {
+    0: '草稿',
+    1: '已发布',
+    2: '审核中',
+    3: '已下线'
+  }
+  return map[status || 0] || '未知'
+}
+
+// 获取摘要
+const getSummary = (content?: string) => {
+  if (!content) return ''
+  return content.length > 100 ? content.substring(0, 100) + '...' : content
+}
+
+// 格式化时间
+const formatTime = (time?: string) => {
+  if (!time) return ''
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  // 一小时内
+  if (diff < 3600000) {
+    const mins = Math.floor(diff / 60000)
+    return mins < 1 ? '刚刚' : `${mins}分钟前`
+  }
+  // 一天内
+  if (diff < 86400000) {
+    const hours = Math.floor(diff / 3600000)
+    return `${hours}小时前`
+  }
+  // 一周内
+  if (diff < 604800000) {
+    const days = Math.floor(diff / 86400000)
+    return `${days}天前`
+  }
+  
+  return date.toLocaleDateString('zh-CN')
+}
+
+onMounted(() => loadData())
+onShow(() => loadData())
 </script>
 
 <style lang="scss" scoped>
@@ -223,6 +315,19 @@ const goToDetail = (id: number) => {
 .tab-text {
   font-size: 14px;
   font-weight: 500;
+  color: $on-surface-variant;
+}
+
+// Loading & Empty State
+.loading-state,
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-text,
+.empty-text {
+  font-size: 14px;
   color: $on-surface-variant;
 }
 

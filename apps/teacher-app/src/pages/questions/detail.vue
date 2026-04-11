@@ -3,55 +3,75 @@
     <TopAppBar title="提问详情" showBack />
 
     <scroll-view scroll-y class="main-content">
-      <!-- Student Info Card -->
-      <view class="student-card animate-fade-up delay-1">
-        <view class="avatar-wrapper">
-          <view class="avatar-placeholder"></view>
-          <view class="online-indicator"></view>
-        </view>
-        <view class="student-meta">
-          <view class="student-header">
-            <text class="student-name">张小洋</text>
-            <view class="status-tag">
-              <text class="status-text">待处理</text>
-            </view>
-          </view>
-          <text class="student-info-text">护理学院 · 2023级本科</text>
-        </view>
+      <!-- Loading State -->
+      <view v-if="loading" class="loading-container">
+        <text class="loading-text">加载中...</text>
       </view>
 
-      <!-- Chat History -->
-      <view class="chat-section">
-        <!-- Student Message -->
-        <view class="message-wrapper student-message animate-fade-up delay-2">
-          <view class="message-bubble student-bubble">
-            <text class="message-text student-text">请问学校的电费缴纳在哪里操作？我看校微中心没找到入口，宿舍快停电了有点急，麻烦老师指路一下。</text>
+      <template v-else-if="escalation">
+        <!-- Student Info Card -->
+        <view class="student-card animate-fade-up delay-1">
+          <view class="avatar-wrapper">
+            <view class="avatar-placeholder"></view>
+            <view class="online-indicator"></view>
           </view>
-          <text class="message-time">14:30</text>
-        </view>
-
-        <!-- AI Response (Refusal) -->
-        <view class="message-wrapper ai-message animate-fade-up delay-3">
-          <view class="ai-avatar">
-            <IconBot :size="24" color="#702ae1" />
-          </view>
-          <view class="ai-content">
-            <view class="message-bubble ai-bubble">
-              <view class="red-indicator"></view>
-              <text class="message-text ai-text">很抱歉，医小管目前尚未学习到关于"校微中心电费缴纳入口"的相关说明。系统提示可能在"智慧校园"APP的"后勤服务"模块中进行。已为您呼叫人工老师处理。</text>
+          <view class="student-meta">
+            <view class="student-header">
+              <text class="student-name">{{ escalation.studentRealName }}</text>
+              <view class="status-tag" :class="`status-${escalation.status}`">
+                <text class="status-text">{{ getStatusText(escalation.status) }}</text>
+              </view>
             </view>
-            <text class="message-time">14:31</text>
+            <text class="student-info-text">{{ escalation.studentClassName }}</text>
           </view>
         </view>
 
-        <!-- System Message -->
-        <view class="system-message animate-fade-up delay-4">
-          <view class="system-badge">
-            <IconBell :size="16" color="#5d5b5f" />
-            <text class="system-text">学生已呼叫老师 — 14:32</text>
+        <!-- Chat History -->
+        <view class="chat-section">
+          <!-- Student Message -->
+          <view class="message-wrapper student-message animate-fade-up delay-2">
+            <view class="message-bubble student-bubble">
+              <text class="message-text student-text">{{ escalation.questionSummary }}</text>
+            </view>
+            <text class="message-time">{{ formatTime(escalation.createdAt) }}</text>
+          </view>
+
+          <!-- AI Response (Refusal) -->
+          <view v-if="escalation.triggerType === 1" class="message-wrapper ai-message animate-fade-up delay-3">
+            <view class="ai-avatar">
+              <IconBot :size="24" color="#702ae1" />
+            </view>
+            <view class="ai-content">
+              <view class="message-bubble ai-bubble">
+                <view class="red-indicator"></view>
+                <text class="message-text ai-text">很抱歉，AI 暂时无法回答这个问题，已为您呼叫人工老师处理。</text>
+              </view>
+              <text class="message-time">{{ formatTime(escalation.createdAt) }}</text>
+            </view>
+          </view>
+
+          <!-- System Message -->
+          <view class="system-message animate-fade-up delay-4">
+            <view class="system-badge">
+              <IconBell :size="16" color="#5d5b5f" />
+              <text class="system-text">学生已呼叫老师 — {{ formatTime(escalation.createdAt) }}</text>
+            </view>
+          </view>
+
+          <!-- Teacher Reply (if resolved) -->
+          <view v-if="escalation.teacherReply" class="message-wrapper teacher-message animate-fade-up delay-3">
+            <view class="ai-avatar">
+              <IconUserCheck :size="20" color="#702ae1" />
+            </view>
+            <view class="ai-content">
+              <view class="message-bubble teacher-bubble">
+                <text class="message-text teacher-text">{{ escalation.teacherReply }}</text>
+              </view>
+              <text class="message-time">{{ escalation.resolvedAt ? formatTime(escalation.resolvedAt) : '' }}</text>
+            </view>
           </view>
         </view>
-      </view>
+      </template>
 
       <!-- Bottom padding for fixed action bar -->
       <view class="bottom-padding"></view>
@@ -59,24 +79,139 @@
 
     <!-- Fixed Bottom Action Bar -->
     <view class="action-bar animate-fade-up delay-5">
-      <view class="action-button" @click="handleAccept">
+      <!-- Status 0: 待处理 - 显示接单按钮 -->
+      <view v-if="escalation && escalation.status === 0" class="action-button" @click="handleAssign">
         <IconUserCheck :size="24" color="#f8f0ff" />
-        <text class="action-text">接单处理</text>
+        <text class="action-text">{{ submitting ? '接单中...' : '接单处理' }}</text>
+      </view>
+
+      <!-- Status 1: 处理中 - 显示回复输入框和解决按钮 -->
+      <view v-else-if="escalation && escalation.status === 1" class="reply-section">
+        <textarea
+          v-model="replyText"
+          class="reply-input"
+          placeholder="请输入回复内容..."
+          :maxlength="500"
+          :disabled="submitting"
+        />
+        <view class="reply-button" :class="{ 'reply-button--disabled': !replyText.trim() || submitting }" @click="handleResolve">
+          <IconMessage :size="20" color="#f8f0ff" />
+          <text class="action-text">{{ submitting ? '提交中...' : '回复并解决' }}</text>
+        </view>
+      </view>
+
+      <!-- Status 2: 已解决 - 显示已解决状态 -->
+      <view v-else-if="escalation && escalation.status === 2" class="action-button action-button--disabled">
+        <IconCheck :size="24" color="#f8f0ff" />
+        <text class="action-text">已解决</text>
+      </view>
+
+      <!-- Status 3: 已关闭 -->
+      <view v-else-if="escalation && escalation.status === 3" class="action-button action-button--disabled">
+        <text class="action-text">已关闭</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import TopAppBar from '../../components/TopAppBar.vue'
-import { IconBot, IconBell, IconUserCheck } from '../../components/icons'
+import { IconBot, IconBell, IconUserCheck, IconMessage, IconCheck } from '../../components/icons'
+import { getEscalationDetail, assignEscalation, resolveEscalation } from '@/api/escalation'
 
-const handleAccept = () => {
-  uni.showToast({
-    title: '已接单',
-    icon: 'success'
+const escalation = ref<any>(null)
+const loading = ref(false)
+const escalationId = ref(0)
+const replyText = ref('')
+const submitting = ref(false)
+
+// 格式化时间
+const formatTime = (timeStr: string) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleString('zh-CN', { 
+    month: '2-digit', 
+    day: '2-digit', 
+    hour: '2-digit', 
+    minute: '2-digit' 
   })
 }
+
+// 状态映射
+const getStatusText = (status: number) => {
+  const statusMap: Record<number, string> = {
+    0: '待处理',
+    1: '处理中',
+    2: '已解决',
+    3: '已关闭'
+  }
+  return statusMap[status] || '未知'
+}
+
+// 加载详情
+const loadDetail = async () => {
+  if (!escalationId.value) return
+  loading.value = true
+  try {
+    const res = await getEscalationDetail(escalationId.value)
+    escalation.value = res
+  } catch (e) {
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+// 接单操作
+const handleAssign = async () => {
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    await assignEscalation(escalationId.value)
+    uni.showToast({ title: '接单成功', icon: 'success' })
+    loadDetail() // 刷新状态
+  } catch (e: any) {
+    uni.showToast({ title: e?.message || '接单失败', icon: 'none' })
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 回复解决
+const handleResolve = async () => {
+  if (!replyText.value.trim()) {
+    uni.showToast({ title: '请输入回复内容', icon: 'none' })
+    return
+  }
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    await resolveEscalation(escalationId.value, replyText.value)
+    uni.showToast({ title: '回复成功', icon: 'success' })
+    replyText.value = ''
+    loadDetail()
+  } catch (e: any) {
+    uni.showToast({ title: e?.message || '回复失败', icon: 'none' })
+  } finally {
+    submitting.value = false
+  }
+}
+
+onLoad((options: any) => {
+  escalationId.value = Number(options?.id || 0)
+  if (escalationId.value) {
+    loadDetail()
+  }
+})
+
+onMounted(() => {
+  // 页面挂载时如果已有ID则加载（从其他页面返回时）
+  if (escalationId.value) {
+    loadDetail()
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -91,9 +226,22 @@ const handleAccept = () => {
   padding-top: 80px;
   padding-left: 16px;
   padding-right: 16px;
-  padding-bottom: 120px;
+  padding-bottom: 160px;
   height: 100vh;
   box-sizing: border-box;
+}
+
+// Loading State
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: $on-surface-variant;
 }
 
 // Student Card
@@ -151,13 +299,31 @@ const handleAccept = () => {
 
 .status-tag {
   padding: 4px 12px;
-  background: $primary-container;
   border-radius: 9999px;
 
   .status-text {
     font-size: 12px;
     font-weight: 700;
-    color: $on-primary-container;
+  }
+
+  &.status-0 {
+    background: rgba($error-container, 0.1);
+    .status-text { color: $error; }
+  }
+
+  &.status-1 {
+    background: rgba($primary-container, 0.2);
+    .status-text { color: $primary; }
+  }
+
+  &.status-2 {
+    background: rgba(#10b981, 0.1);
+    .status-text { color: #10b981; }
+  }
+
+  &.status-3 {
+    background: rgba($on-surface-variant, 0.1);
+    .status-text { color: $on-surface-variant; }
   }
 }
 
@@ -183,7 +349,8 @@ const handleAccept = () => {
   align-items: flex-end;
 }
 
-.ai-message {
+.ai-message,
+.teacher-message {
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
@@ -229,6 +396,13 @@ const handleAccept = () => {
   max-width: 90%;
 }
 
+.teacher-bubble {
+  background: rgba($primary-container, 0.3);
+  border: 1px solid rgba($primary, 0.2);
+  border-radius: 16px 16px 16px 0;
+  max-width: 90%;
+}
+
 .red-indicator {
   position: absolute;
   top: 0;
@@ -250,6 +424,10 @@ const handleAccept = () => {
 .ai-text {
   color: $on-surface;
   padding-left: 8px;
+}
+
+.teacher-text {
+  color: $on-surface;
 }
 
 .message-time {
@@ -291,8 +469,8 @@ const handleAccept = () => {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.9);
+  padding: 16px 24px calc(16px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: 50;
@@ -312,12 +490,59 @@ const handleAccept = () => {
   &:active {
     transform: scale(0.95);
   }
+
+  &--disabled {
+    background: linear-gradient(135deg, #9ca3af, #d1d5db);
+    box-shadow: none;
+    pointer-events: none;
+  }
 }
 
 .action-text {
   font-size: 18px;
   font-weight: 700;
   color: $on-primary;
+}
+
+// Reply Section
+.reply-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reply-input {
+  width: 100%;
+  min-height: 80px;
+  max-height: 120px;
+  background: $surface-container;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: $on-surface;
+  box-sizing: border-box;
+}
+
+.reply-button {
+  height: 48px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, $primary, $primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px -4px rgba($primary, 0.2);
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &--disabled {
+    background: linear-gradient(135deg, #9ca3af, #d1d5db);
+    box-shadow: none;
+    pointer-events: none;
+  }
 }
 
 // Animation delays

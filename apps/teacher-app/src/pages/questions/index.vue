@@ -10,40 +10,50 @@
             v-for="(tab, index) in filterTabs" 
             :key="index"
             class="filter-tab"
-            :class="{ 'filter-tab--active': activeFilter === index }"
-            @click="activeFilter = index"
+            :class="{ 'filter-tab--active': activeTab === index }"
+            @click="switchTab(index)"
           >
-            <text class="tab-text">{{ tab.label }}({{ tab.count }})</text>
+            <text class="tab-text">{{ tab.label }}</text>
           </view>
         </view>
       </scroll-view>
 
+      <!-- Loading State -->
+      <view v-if="loading" class="loading-container">
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <!-- Empty State -->
+      <view v-else-if="questions.length === 0" class="empty-container">
+        <text class="empty-text">暂无工单</text>
+      </view>
+
       <!-- Question List -->
-      <view class="question-list">
+      <view v-else class="question-list">
         <view 
-          v-for="(question, index) in questions" 
-          :key="question.id"
+          v-for="(item, index) in questions" 
+          :key="item.id"
           class="question-card animate-fade-up"
-          :class="`delay-${index + 2}`"
-          @click="goToDetail(question.id)"
+          :class="`delay-${Math.min(index + 2, 4)}`"
+          @click="goToDetail(item.id)"
         >
           <view class="card-header">
             <view class="student-info">
               <view class="avatar-placeholder"></view>
               <view class="student-meta">
-                <text class="student-name">{{ question.studentName }}</text>
-                <text class="student-major">{{ question.major }} · {{ question.time }}</text>
+                <text class="student-name">{{ item.studentRealName }}</text>
+                <text class="student-major">{{ item.studentClassName }} · {{ formatTime(item.createdAt) }}</text>
               </view>
             </view>
             <view 
               class="status-tag"
-              :class="`status-${question.status}`"
+              :class="`status-${item.status}`"
             >
-              <text class="status-text">{{ getStatusText(question.status) }}</text>
+              <text class="status-text">{{ getStatusText(item.status) }}</text>
             </view>
           </view>
 
-          <text class="question-content">{{ question.content }}</text>
+          <text class="question-content">{{ item.questionSummary }}</text>
 
           <!-- AI Confidence Section -->
           <view class="ai-confidence">
@@ -52,13 +62,13 @@
                 <IconBrain :size="12" color="#5d5b5f" />
                 <text class="label-text">AI 匹配度</text>
               </view>
-              <text class="confidence-value">{{ question.confidence }}%</text>
+              <text class="confidence-value">{{ item.confidence || 80 }}%</text>
             </view>
             <view class="progress-bar">
               <view 
                 class="progress-fill"
-                :class="getProgressColorClass(question.confidence)"
-                :style="{ width: `${question.confidence}%` }"
+                :class="getProgressColorClass(item.confidence || 80)"
+                :style="{ width: `${item.confidence || 80}%` }"
               ></view>
             </view>
           </view>
@@ -66,64 +76,63 @@
       </view>
     </view>
 
-    <BottomNavBar :current="1" :badge="3" />
+    <BottomNavBar :current="1" :badge="total > 99 ? 99 : total" />
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onShow } from 'vue'
 import TopAppBar from '../../components/TopAppBar.vue'
 import BottomNavBar from '../../components/BottomNavBar.vue'
 import { IconBrain } from '../../components/icons'
+import { getPendingEscalations, getAssignedEscalations } from '@/api/escalation'
 
 // Filter tabs data
 const filterTabs = [
-  { label: '全部', count: 28 },
-  { label: '待处理', count: 3 },
-  { label: '处理中', count: 5 },
-  { label: '已解决', count: 20 }
+  { label: '全部' },
+  { label: '待处理' },
+  { label: '处理中' },
+  { label: '已解决' }
 ]
 
-const activeFilter = ref(0)
+const activeTab = ref(0)
+const questions = ref<any[]>([])
+const loading = ref(false)
+const total = ref(0)
 
-// Mock questions data
-const questions = [
-  {
-    id: 1,
-    studentName: '陈小明',
-    major: '计算机科学与技术',
-    time: '10分钟前',
-    status: 'pending',
-    content: '老师您好，在最新的深度学习作业中，关于Transformer模型的多头注意力机制实现，我不太确定在多头拼接后的线性映射层是否需要添加Bias...',
-    confidence: 92
-  },
-  {
-    id: 2,
-    studentName: '林静怡',
-    major: '数字媒体艺术',
-    time: '2小时前',
-    status: 'processing',
-    content: '关于期中作品集的排版，目前的C4D渲染结果噪点比较多，请问在Octane渲染器中如何平衡采样率和渲染时间？',
-    confidence: 74
-  },
-  {
-    id: 3,
-    studentName: '张子涵',
-    major: '应用数学系',
-    time: '昨天',
-    status: 'pending',
-    content: '请问偏微分方程在金融定价模型中的具体推导过程，上课讲的Black-Scholes方程部分，热传导方程的变换还没完全理解。',
-    confidence: 38
+// 格式化时间
+const formatTime = (timeStr: string) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  // 小于1小时
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000)
+    return minutes < 1 ? '刚刚' : `${minutes}分钟前`
   }
-]
+  // 小于24小时
+  if (diff < 86400000) {
+    return `${Math.floor(diff / 3600000)}小时前`
+  }
+  // 小于7天
+  if (diff < 604800000) {
+    return `${Math.floor(diff / 86400000)}天前`
+  }
+  
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
 
-const getStatusText = (status: string) => {
-  const statusMap: Record<string, string> = {
-    pending: '待处理',
-    processing: '处理中',
-    resolved: '已解决'
+// 状态映射
+const getStatusText = (status: number) => {
+  const statusMap: Record<number, string> = {
+    0: '待处理',
+    1: '处理中',
+    2: '已解决',
+    3: '已关闭'
   }
-  return statusMap[status] || status
+  return statusMap[status] || '未知'
 }
 
 const getProgressColorClass = (confidence: number) => {
@@ -132,9 +141,50 @@ const getProgressColorClass = (confidence: number) => {
   return 'progress-red'
 }
 
+// 加载数据
+const loadData = async () => {
+  loading.value = true
+  try {
+    let res: any
+    if (activeTab.value === 1) {
+      // 待处理 = pending (status=0, 未分配)
+      res = await getPendingEscalations(1, 20)
+    } else {
+      // 全部/处理中/已解决 = assigned (带 status 筛选)
+      const statusMap: Record<number, number | undefined> = {
+        0: undefined, // 全部
+        2: 1,         // 处理中
+        3: 2          // 已解决
+      }
+      res = await getAssignedEscalations(statusMap[activeTab.value], 1, 20)
+    }
+    questions.value = res.rows || []
+    total.value = res.total || 0
+  } catch (e) {
+    console.error('加载工单失败', e)
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+// Tab 切换
+const switchTab = (index: number) => {
+  activeTab.value = index
+  loadData()
+}
+
 const goToDetail = (id: number) => {
   uni.navigateTo({ url: `/pages/questions/detail?id=${id}` })
 }
+
+onMounted(() => {
+  loadData()
+})
+
+onShow(() => {
+  loadData()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -150,6 +200,21 @@ const goToDetail = (id: number) => {
   padding-top: 80px;
   padding-left: 20px;
   padding-right: 20px;
+}
+
+// Loading & Empty State
+.loading-container,
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.loading-text,
+.empty-text {
+  font-size: 14px;
+  color: $on-surface-variant;
 }
 
 // Filter Tabs
@@ -258,7 +323,7 @@ const goToDetail = (id: number) => {
     letter-spacing: 0.05em;
   }
 
-  &.status-pending {
+  &.status-0 {
     background: rgba($error-container, 0.1);
 
     .status-text {
@@ -266,11 +331,27 @@ const goToDetail = (id: number) => {
     }
   }
 
-  &.status-processing {
+  &.status-1 {
     background: rgba($primary-container, 0.2);
 
     .status-text {
       color: $primary;
+    }
+  }
+
+  &.status-2 {
+    background: rgba(#10b981, 0.1);
+
+    .status-text {
+      color: #10b981;
+    }
+  }
+
+  &.status-3 {
+    background: rgba($on-surface-variant, 0.1);
+
+    .status-text {
+      color: $on-surface-variant;
     }
   }
 }

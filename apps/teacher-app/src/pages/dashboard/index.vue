@@ -21,7 +21,7 @@
         <view class="welcome-content">
           <view class="welcome-text">
             <text class="welcome-greeting">早上好，{{ displayName }} 👋</text>
-            <text class="welcome-subtitle">今天有 3 条待处理提问</text>
+            <text class="welcome-subtitle">今天有 {{ pendingCount }} 条待处理提问</text>
           </view>
           <view class="avatar-placeholder"></view>
         </view>
@@ -57,28 +57,28 @@
         <view class="stat-card stat-card-1">
           <view class="stat-header">
             <IconDashboard :size="24" :color="primaryColor" />
-            <text class="stat-number">12</text>
+            <text class="stat-number">{{ stats.todayQuestions }}</text>
           </view>
           <text class="stat-label">今日提问</text>
         </view>
         <view class="stat-card stat-card-2">
           <view class="stat-header">
             <IconAlert :size="24" :color="errorColor" />
-            <text class="stat-number">3</text>
+            <text class="stat-number">{{ pendingCount }}</text>
           </view>
           <text class="stat-label">待处理</text>
         </view>
         <view class="stat-card stat-card-3">
           <view class="stat-header">
             <IconBook :size="24" :color="emeraldColor" />
-            <text class="stat-number">731</text>
+            <text class="stat-number">{{ stats.knowledgeCount }}</text>
           </view>
           <text class="stat-label">知识条目</text>
         </view>
         <view class="stat-card stat-card-4">
           <view class="stat-header">
             <IconCheck :size="24" :color="amberColor" />
-            <text class="stat-number">5</text>
+            <text class="stat-number">{{ stats.todayApprovals }}</text>
           </view>
           <text class="stat-label">今日审批</text>
         </view>
@@ -91,27 +91,37 @@
           <text class="section-link" @click="viewAllQuestions">查看全部</text>
         </view>
 
-        <view class="question-list">
+        <!-- Loading State -->
+        <view v-if="loading" class="loading-container">
+          <text class="loading-text">加载中...</text>
+        </view>
+
+        <!-- Empty State -->
+        <view v-else-if="pendingQuestions.length === 0" class="empty-container">
+          <text class="empty-text">暂无待处理提问</text>
+        </view>
+
+        <view v-else class="question-list">
           <view
             v-for="(question, index) in pendingQuestions"
-            :key="index"
+            :key="question.id"
             class="question-card"
             @click="viewQuestion(question.id)"
           >
             <view class="question-header">
               <view class="question-author">
-                <text class="author-name">{{ question.author }}</text>
+                <text class="author-name">{{ question.studentRealName }}</text>
                 <view class="department-tag">
-                  <text class="department-text">{{ question.department }}</text>
+                  <text class="department-text">{{ question.studentClassName }}</text>
                 </view>
               </view>
-              <text class="question-time">{{ question.time }}</text>
+              <text class="question-time">{{ formatTime(question.createdAt) }}</text>
             </view>
-            <text class="question-content">{{ question.content }}</text>
+            <text class="question-content">{{ question.questionSummary }}</text>
             <view class="question-footer">
               <view class="status-badge">
                 <view class="status-dot" :class="`status-${question.status}`"></view>
-                <text class="status-text" :class="`status-text-${question.status}`">{{ question.statusText }}</text>
+                <text class="status-text" :class="`status-text-${question.status}`">{{ getStatusText(question.status) }}</text>
               </view>
               <IconArrowRight :size="16" :color="onSurfaceVariantColor" />
             </view>
@@ -121,12 +131,12 @@
     </view>
 
     <!-- 底部导航栏 -->
-    <BottomNavBar :current="0" :badge="3" />
+    <BottomNavBar :current="0" :badge="pendingCount > 99 ? 99 : pendingCount" />
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onShow } from 'vue'
 import { useUserStore } from '@/stores/user'
 import IconDashboard from '../../components/icons/IconDashboard.vue'
 import IconBell from '../../components/icons/IconBell.vue'
@@ -139,6 +149,7 @@ import IconBook from '../../components/icons/IconBook.vue'
 import IconCheck from '../../components/icons/IconCheck.vue'
 import IconArrowRight from '../../components/icons/IconArrowRight.vue'
 import BottomNavBar from '../../components/BottomNavBar.vue'
+import { getPendingEscalations } from '@/api/escalation'
 
 // 用户状态
 const userStore = useUserStore()
@@ -160,36 +171,65 @@ const errorColor = '#b41340'
 const emeraldColor = '#059669'
 const amberColor = '#d97706'
 
-// Mock 数据
-const pendingQuestions = ref([
-  {
-    id: 1,
-    author: '张晓明',
-    department: '软件工程系',
-    time: '10:24',
-    content: '老师，请问关于 React 的 useEffect 钩子函数中的依赖项...',
-    status: 'pending',
-    statusText: '待处理'
-  },
-  {
-    id: 2,
-    author: '李思源',
-    department: '计算机科学',
-    time: '09:15',
-    content: '大模型微调时，Lora参数的选择一般基于什么标准？',
-    status: 'processing',
-    statusText: '处理中'
-  },
-  {
-    id: 3,
-    author: '陈锦',
-    department: '数学系',
-    time: '昨天',
-    content: '关于线性代数中特征值分解在图像压缩中的应用...',
-    status: 'pending',
-    statusText: '待处理'
+// 统计数据（暂保留 mock）
+const stats = ref({
+  todayQuestions: 12,
+  knowledgeCount: 731,
+  todayApprovals: 5
+})
+
+// 待处理提问列表
+const pendingQuestions = ref<any[]>([])
+const loading = ref(false)
+const pendingCount = computed(() => pendingQuestions.value.length)
+
+// 格式化时间
+const formatTime = (timeStr: string) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  // 小于1小时
+  if (diff < 3600000) {
+    const minutes = Math.floor(diff / 60000)
+    return minutes < 1 ? '刚刚' : `${minutes}分钟前`
   }
-])
+  // 小于24小时
+  if (diff < 86400000) {
+    return `${Math.floor(diff / 3600000)}小时前`
+  }
+  // 小于7天
+  if (diff < 604800000) {
+    return `${Math.floor(diff / 86400000)}天前`
+  }
+  
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
+
+// 状态映射
+const getStatusText = (status: number) => {
+  const statusMap: Record<number, string> = {
+    0: '待处理',
+    1: '处理中',
+    2: '已解决',
+    3: '已关闭'
+  }
+  return statusMap[status] || '未知'
+}
+
+// 加载待处理提问
+const loadPendingQuestions = async () => {
+  loading.value = true
+  try {
+    const res = await getPendingEscalations(1, 5)
+    pendingQuestions.value = res.rows || []
+  } catch (e) {
+    console.error('加载待处理提问失败', e)
+  } finally {
+    loading.value = false
+  }
+}
 
 // 通知点击
 const handleNotification = () => {
@@ -216,6 +256,14 @@ const viewAllQuestions = () => {
 const viewQuestion = (id: number) => {
   uni.navigateTo({ url: `/pages/questions/detail?id=${id}` })
 }
+
+onMounted(() => {
+  loadPendingQuestions()
+})
+
+onShow(() => {
+  loadPendingQuestions()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -462,6 +510,24 @@ const viewQuestion = (id: number) => {
   color: $primary;
 }
 
+// Loading & Empty State
+.loading-container,
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: $surface-container-low;
+  border-radius: 16px;
+}
+
+.loading-text,
+.empty-text {
+  font-family: $font-body;
+  font-size: 14px;
+  color: $on-surface-variant;
+}
+
 .question-list {
   display: flex;
   flex-direction: column;
@@ -545,12 +611,20 @@ const viewQuestion = (id: number) => {
   border-radius: 50%;
 }
 
-.status-pending {
+.status-0 {
   background: $error;
 }
 
-.status-processing {
+.status-1 {
   background: #f59e0b;
+}
+
+.status-2 {
+  background: #10b981;
+}
+
+.status-3 {
+  background: $on-surface-variant;
 }
 
 .status-text {
@@ -559,12 +633,20 @@ const viewQuestion = (id: number) => {
   font-weight: 700;
 }
 
-.status-text-pending {
+.status-text-0 {
   color: $error;
 }
 
-.status-text-processing {
+.status-text-1 {
   color: #d97706;
+}
+
+.status-text-2 {
+  color: #10b981;
+}
+
+.status-text-3 {
+  color: $on-surface-variant;
 }
 
 // 动画
