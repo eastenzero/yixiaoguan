@@ -1,0 +1,374 @@
+# ===================================================================
+# 医小管 (YiXiaoGuan) — T0 架构师需求规格 v6
+# 日期: 2026-04-11
+# 作者: T0 Architect (Cascade)
+# 状态: ready_for_t1
+# 前置: spec-v5e (completed), spec-v5f (completed)
+# ===================================================================
+#
+# 背景:
+#   老师要求尽快内测上线。当前项目各模块现状评估完成（2026-04-11），
+#   确定以下优先级排序，分三阶段推进：
+#
+#   Phase A — 基础就绪（并行，~2天）
+#     教师端换紫色 ‖ 学生端加呼叫老师按钮 ‖ 批量测试账号
+#
+#   Phase B — 核心闭环（~2-3天）
+#     教师介入对话端到端联调（WebSocket 打通）
+#     学生发起工单 → 老师收到 → 老师回复 → 学生收到
+#
+#   Phase C — 教师移动端（~3-5天）
+#     教师竖屏 App 开发（复用 Phase B 的接口）
+#
+# 关键依赖链:
+#   Phase C 依赖 Phase B（介入对话接口已跑通）
+#   Phase B 依赖 Phase A 中的 F-V6A-02（呼叫老师按钮）
+#   Phase A 三项可并行
+#
+# 已丢弃功能:
+#   - 快捷问题（getSuggestions）— 老师明确丢弃
+# ===================================================================
+
+project: 医小管 (YiXiaoGuan)
+version: spec-v6
+date: 2026-04-11
+author: T0-Architect
+status: ready_for_t1
+
+# ===================================================================
+# Phase A — 基础就绪
+# ===================================================================
+
+modules:
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V6A-01: 教师端主题色换紫
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V6A-01
+    title: 教师端 (teacher-web) 主题色从绿色改为紫色
+    priority: P0
+    estimated_effort: 4-6h
+    depends_on: []
+    phase: A
+    description: |
+      当前教师端全局主题色为绿色系 (#00685f)，需同步学生端改为紫色系。
+
+      === 当前状态 ===
+      文件: apps/teacher-web/src/assets/main.css
+      CSS 变量:
+        --primary-color: #00685f
+        --primary-container: #008378
+        --primary-light: #0D9488
+        --primary-dark: #004d47
+        --primary-bg: #f0fdfa
+      Element Plus 通过 CSS 变量覆盖使用上述颜色。
+
+      === 目标色值 ===
+      对齐学生端 apps/student-app/src/styles/theme.scss 的紫色系:
+        --primary-color: #7C3AED (对应 $primary-40)
+        --primary-container: #6D28D9 (对应 violet-700)
+        --primary-light: #8B5CF6 (对应 $primary-50)
+        --primary-dark: #5B21B6 (对应 violet-800)
+        --primary-bg: #F5F3FF (对应 violet-50)
+      
+      注意: 学生端有 $primary: #630ed4 作为常用主色（深色），
+      教师端可根据实际视觉效果在 #630ed4 和 #7C3AED 间选择主色。
+
+      === 变更范围 ===
+      1. src/assets/main.css — 全局 CSS 变量改色
+      2. 搜索所有 .vue 文件中的 #00685f / #008378 / #0D9488 / #004d47 硬编码 → 替换为 CSS 变量
+      3. Element Plus 组件主题覆盖（如有单独配置）
+      4. 侧边栏、头部导航、按钮、链接等所有绿色元素
+      5. 检查 SVG/icon 中是否有硬编码绿色
+
+    files_to_modify:
+      - apps/teacher-web/src/assets/main.css
+      - apps/teacher-web/src/views/*.vue (所有视图文件)
+      - apps/teacher-web/src/components/*.vue (所有组件文件)
+      - apps/teacher-web/src/App.vue
+
+    acceptance_criteria:
+      - AC-A01: main.css 中 --primary-color 为紫色系值 (#7C3AED 或 #630ed4)
+      - AC-A02: 全局搜索 #00685f 在 teacher-web 下无结果（除注释外）
+      - AC-A03: 登录页、侧边栏、导航栏、按钮均呈现紫色
+      - AC-A04: Element Plus 表格、表单等组件主题色为紫色
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V6A-02: 学生端呼叫老师按钮
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V6A-02
+    title: 学生端 AI 对话页添加"呼叫老师"按钮
+    priority: P0
+    estimated_effort: 3-4h
+    depends_on: []
+    phase: A
+    description: |
+      学生端 src/api/chat.ts 已有 callTeacher() 接口定义，
+      但聊天页面 UI 中没有触发按钮。需要添加按钮 + 状态反馈。
+
+      === API 现状 ===
+      文件: apps/student-app/src/api/chat.ts
+      接口: callTeacher(conversationId) — 向后端发起教师介入请求
+
+      === UI 需求 ===
+      1. 在聊天页面（chat/index.vue）添加"呼叫老师"按钮
+         - 位置: 输入框区域附近（具体位置待定，可参考常见 IM 设计）
+         - 建议: 输入框左侧的功能按钮区，或消息列表底部的提示区
+         
+      2. 按钮状态:
+         - 默认: 显示图标+文字"呼叫老师"
+         - 已呼叫/等待中: 按钮变为"等待老师接入..."（禁用状态）
+         - 老师已接入: 显示提示"老师已加入对话"
+         
+      3. 点击流程:
+         a. 用户点击"呼叫老师"
+         b. 调用 callTeacher(conversationId)
+         c. 按钮变为等待状态
+         d. 在消息列表中插入一条系统消息: "你已呼叫老师，请稍候..."
+         
+      4. 触发条件（可选优化）:
+         - AI 回复"很抱歉，医小管目前尚未学习到相关说明"时，
+           自动显示一条提示: "AI 暂时无法回答此问题，你可以呼叫老师获取帮助"
+         - 这个优化是 P1，MVP 阶段只做手动呼叫按钮即可
+
+    files_to_modify:
+      - apps/student-app/src/pages/chat/index.vue
+
+    acceptance_criteria:
+      - AC-A05: 聊天页面可见"呼叫老师"按钮
+      - AC-A06: 点击按钮 → 调用 callTeacher API → 按钮变为等待状态
+      - AC-A07: 消息列表出现系统提示消息
+      - AC-A08: 已呼叫状态下按钮不可重复点击
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V6A-03: 批量测试账号
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V6A-03
+    title: 批量生成内测测试账号
+    priority: P0
+    estimated_effort: 2-3h
+    depends_on: []
+    phase: A
+    description: |
+      当前仅 5 个学生 + 3 个教师测试账号，内测需要更多账号。
+
+      === 当前账号 ===
+      学生 (5): 2524010001, 2021010002, 2024010103, 2024410004, 2024010003
+      教师 (3): liang_s_huli_24, deng_p_linchuang_24, cheng_d_fangshe_24
+      生成脚本: scripts/generate_user_data.py（BCrypt 哈希）
+
+      === 目标 ===
+      新增至少 20 个学生账号 + 5 个教师账号（总计约 30 个可用账号）
+      
+      === 执行步骤 ===
+      1. 修改 scripts/generate_user_data.py，扩展学生和教师数据列表
+         - 学生: 使用真实感的混淆学号（2024/2025 开头），姓名随机
+         - 教师: 使用院系缩写_姓名拼音格式
+         - 密码规则不变: 学生=学号, 教师=姓名全拼
+      2. 生成新的 SQL INSERT 语句
+      3. 在 165 服务器上执行（需连接 PostgreSQL）
+      4. 验证: 选取 2 个新账号测试登录
+
+      === 注意 ===
+      - 密码必须 BCrypt $2a$ 哈希（脚本已有此功能）
+      - yx_user 表 + yx_user_role 表都要插入
+      - status=1 (启用)
+      - 不能与现有账号冲突
+
+    files_to_modify:
+      - scripts/generate_user_data.py
+
+    acceptance_criteria:
+      - AC-A09: yx_user 表总计 ≥ 28 条记录（含原有 8 条 + 新增 ≥ 20 条）
+      - AC-A10: 新增账号均有对应 yx_user_role 记录
+      - AC-A11: 随机选取 2 个新学生账号可成功登录
+      - AC-A12: 随机选取 1 个新教师账号可成功登录
+
+# ===================================================================
+# Phase B — 教师介入对话端到端联调
+# ===================================================================
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V6B-01: 教师介入对话端到端联调
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V6B-01
+    title: 教师介入对话端到端联调
+    priority: P0
+    estimated_effort: 2-3d
+    depends_on: [F-V6A-02]
+    phase: B
+    description: |
+      打通"学生呼叫老师 → 老师收到通知 → 老师接单回复 → 学生收到回复"
+      的完整链路。
+
+      === 后端现状（已实现，需验证） ===
+      - ConversationController: 会话 CRUD
+      - MessageController: 消息 CRUD
+      - WebSocket: TEACHER_JOIN / TEACHER_MESSAGE / TEACHER_LEAVE 指令
+      - EscalationController: 
+        - POST /api/v1/escalations — 创建工单
+        - GET /api/v1/escalations — 查询工单列表
+        - PUT /api/v1/escalations/{id}/assign — 教师接单
+        - PUT /api/v1/escalations/{id}/resolve — 教师回复解决
+
+      === 需要联调的环节 ===
+      
+      1. 学生端 → 后端:
+         - callTeacher() 实际请求路径和参数是否与后端匹配
+         - 工单创建后，学生端如何收到"老师已接入"的通知
+         - 考虑方案: WebSocket / 轮询 / SSE
+      
+      2. 教师端(web) → 后端:
+         - QuestionsView 是否正确显示待处理工单
+         - assignEscalation 是否正确变更工单状态
+         - resolveEscalation 回复是否写入 yx_message 表
+      
+      3. 后端 → 学生端:
+         - 教师回复的消息如何实时推送到学生端
+         - 需要确认 WebSocket 连接是否在学生端已建立
+         - 或需要新增学生端的轮询机制
+      
+      4. 消息展示:
+         - 学生端聊天页面需区分 AI 消息 vs 教师消息
+         - 教师消息用不同的气泡样式（如头像、颜色）
+         - 系统消息（老师加入/离开）用居中灰色样式
+
+      === T1 执行建议 ===
+      Phase B 涉及前后端多模块联调，建议:
+      1. 先在 165 服务器上验证后端 WebSocket + Escalation API 是否正常
+      2. 再对接前端
+      3. 端到端冒烟测试
+
+    files_to_modify:
+      - apps/student-app/src/pages/chat/index.vue (接收教师消息)
+      - apps/student-app/src/api/chat.ts (WebSocket 或轮询)
+      - apps/teacher-web/src/views/QuestionsView.vue (工单处理)
+      - apps/teacher-web/src/api/questions.ts (API 调用)
+      - services/business-api/ (如需修复接口)
+
+    acceptance_criteria:
+      - AC-B01: 学生点击"呼叫老师" → 后端创建 escalation 工单
+      - AC-B02: 教师端 QuestionsView 显示新工单
+      - AC-B03: 教师接单 → 工单状态变为"处理中"
+      - AC-B04: 教师输入回复 → 消息写入 yx_message 表
+      - AC-B05: 学生端实时收到教师回复消息（≤5秒延迟）
+      - AC-B06: 学生端聊天页面区分 AI 消息和教师消息（不同样式）
+      - AC-B07: 教师回复后工单状态变为"已解决"
+
+# ===================================================================
+# Phase C — 教师移动端 App
+# ===================================================================
+
+  # ────────────────────────────────────────────────────────────────
+  # F-V6C-01: 教师竖屏移动端 App
+  # ────────────────────────────────────────────────────────────────
+  - id: F-V6C-01
+    title: 教师竖屏移动端 App 开发
+    priority: P0
+    estimated_effort: 3-5d
+    depends_on: [F-V6B-01]
+    phase: C
+    description: |
+      为教师开发竖屏（移动端 H5）应用，复用 Phase B 已跑通的后端接口。
+
+      === 技术选型待定 ===
+      选项 1: UniApp（与学生端同技术栈）
+        - 优点: 代码复用、组件复用、统一构建
+        - 缺点: 教师端目前是 Vue 3 + Element Plus (teacher-web)，
+          UniApp 不能用 Element Plus
+      
+      选项 2: 独立 Vue 3 + Tailwind（类似 aether-academic）
+        - 优点: 标准 Vue，灵活，Tailwind 移动优先
+        - 缺点: 与现有项目技术栈不完全统一
+
+      选项 3: 在现有 teacher-web 基础上加响应式
+        - 优点: 零新建项目
+        - 缺点: 改造量大，桌面端 Element Plus 布局不适合手机
+
+      建议: 选项 1（UniApp），可在 apps/ 下新建 teacher-app/，
+      复用 student-app 的基础设施（请求封装、登录、主题）。
+
+      === 页面清单（MVP） ===
+      1. 登录页 — 可复用学生端登录逻辑
+      2. 工作台首页 — 待处理工单数、今日提问统计、快捷入口
+      3. 学生提问列表 — 筛选（待处理/已接单/已解决）
+      4. 对话详情 + 介入回复 — 查看 AI 对话记录 + 教师输入回复
+      5. 个人中心 — 基本信息展示
+
+      === 关键技术点 ===
+      - 对话详情页需支持 WebSocket 实时通信（复用 Phase B 接口）
+      - 紫色主题色，对齐学生端
+      - 无设计参考图，需参考学生端风格自行设计
+
+      === 注意 ===
+      本模块规格将在 Phase B 完成后细化。
+      当前仅提供高级规划，详细 spec 将单独出。
+
+    files_to_create:
+      - apps/teacher-app/ (新项目目录)
+
+    acceptance_criteria:
+      - AC-C01: 手机浏览器访问教师移动端可正常登录
+      - AC-C02: 工作台显示待处理工单数
+      - AC-C03: 提问列表可筛选查看
+      - AC-C04: 对话详情可查看完整 AI 对话历史
+      - AC-C05: 教师可在移动端输入回复 → 学生端收到
+      - AC-C06: 紫色主题色，移动端适配
+
+# ===================================================================
+# 验收标准汇总
+# ===================================================================
+acceptance_criteria_global:
+  phase_a:
+    - AC-A01: 教师端 --primary-color 为紫色系
+    - AC-A02: 教师端无 #00685f 硬编码（除注释）
+    - AC-A03: 教师端登录页/侧边栏/导航栏/按钮均紫色
+    - AC-A04: Element Plus 组件主题色紫色
+    - AC-A05: 学生聊天页面有"呼叫老师"按钮
+    - AC-A06: 点击呼叫 → 调 API → 按钮变等待态
+    - AC-A07: 消息列表出现系统提示
+    - AC-A08: 已呼叫状态不可重复点击
+    - AC-A09: yx_user ≥ 28 条
+    - AC-A10: 新账号有 yx_user_role
+    - AC-A11: 2 个新学生账号可登录
+    - AC-A12: 1 个新教师账号可登录
+  phase_b:
+    - AC-B01~B07: 教师介入对话端到端闭环
+  phase_c:
+    - AC-C01~C06: 教师移动端 MVP
+
+# ===================================================================
+# 执行顺序
+# ===================================================================
+execution_order:
+  phase_a_parallel:
+    - F-V6A-01 (教师端换紫色, 独立, 无依赖)
+    - F-V6A-02 (呼叫老师按钮, 独立, 无依赖)
+    - F-V6A-03 (批量测试账号, 独立, 无依赖)
+  phase_b:
+    - F-V6B-01 (教师介入联调, 依赖 F-V6A-02)
+  phase_c:
+    - F-V6C-01 (教师移动端, 依赖 F-V6B-01)
+
+# ===================================================================
+# 风险
+# ===================================================================
+risks:
+  - id: RISK-V6-01
+    description: |
+      后端 WebSocket 实现可能不完整或有 bug。
+      ConversationHandler 的 TEACHER_JOIN/MESSAGE/LEAVE 需要实际测试。
+      缓解: Phase B 开始时先用 Postman/wscat 单独测试 WebSocket 端点。
+  - id: RISK-V6-02
+    description: |
+      学生端 UniApp H5 环境 WebSocket 兼容性。
+      uni.connectSocket 在 H5 模式下应等同于原生 WebSocket，但需验证。
+      缓解: 如 WebSocket 不可靠，降级为短轮询（每 3 秒查一次新消息）。
+  - id: RISK-V6-03
+    description: |
+      教师移动端无设计参考图，UI 质量依赖开发者审美。
+      缓解: 参考学生端风格 + Material Design 3 移动端规范。
+  - id: RISK-V6-04
+    description: |
+      教师端换色可能遗漏深层组件（Element Plus 弹窗、表格等）。
+      缓解: 换色后全页面截图审查。
