@@ -169,8 +169,6 @@ const handleLogout = () => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .profile-page {
   min-height: 100vh;
   background: $surface;

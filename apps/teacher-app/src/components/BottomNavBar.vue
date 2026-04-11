@@ -61,8 +61,6 @@ const handleTabClick = (index: number) => {
 </script>
 
 <style lang="scss" scoped>
-@import '../styles/theme.scss';
-
 .bottom-nav-bar {
   position: fixed;
   bottom: 0;

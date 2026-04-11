@@ -81,7 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onShow } from 'vue'
+import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import TopAppBar from '../../components/TopAppBar.vue'
 import BottomNavBar from '../../components/BottomNavBar.vue'
 import { IconBrain } from '../../components/icons'
@@ -188,8 +189,6 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .questions-page {
   min-height: 100vh;
   background: $surface;

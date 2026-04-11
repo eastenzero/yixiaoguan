@@ -215,8 +215,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .question-detail-page {
   min-height: 100vh;
   background: $surface;

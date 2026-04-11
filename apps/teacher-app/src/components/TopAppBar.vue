@@ -77,8 +77,6 @@ const handleAction = () => {
 </script>
 
 <style lang="scss" scoped>
-@import '../styles/theme.scss';
-
 .top-app-bar {
   position: fixed;
   top: 0;

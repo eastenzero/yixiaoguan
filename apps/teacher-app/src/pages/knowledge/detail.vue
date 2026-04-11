@@ -161,8 +161,6 @@ const formatTime = (time?: string) => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .knowledge-detail-page {
   min-height: 100vh;
   background: $surface;

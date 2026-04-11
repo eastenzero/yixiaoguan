@@ -233,8 +233,6 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .login-page {
   position: relative;
   min-height: 100vh;

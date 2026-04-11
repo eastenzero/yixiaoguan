@@ -224,8 +224,6 @@ onShow(() => loadData())
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .knowledge-page {
   min-height: 100vh;
   padding-bottom: 112px;

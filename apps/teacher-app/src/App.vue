@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
-import './styles/theme.scss';
-import './styles/global.scss';
 
 onLaunch(() => {
   console.log("Teacher App Launch");
@@ -15,8 +13,7 @@ onHide(() => {
 </script>
 
 <style lang="scss">
-@import '@/styles/theme.scss';
-
+@import './styles/global.scss';
 :root {
   --color-primary: #{$primary};
 }

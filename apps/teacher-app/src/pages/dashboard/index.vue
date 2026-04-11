@@ -136,7 +136,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onShow } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 import IconDashboard from '../../components/icons/IconDashboard.vue'
 import IconBell from '../../components/icons/IconBell.vue'
@@ -267,8 +268,6 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/theme.scss';
-
 .dashboard-page {
   min-height: 100vh;
   background: $surface;
