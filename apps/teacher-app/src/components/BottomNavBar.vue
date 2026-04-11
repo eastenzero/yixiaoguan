@@ -105,12 +105,14 @@ const handleTabClick = (index: number) => {
   font-weight: 500;
   color: $on-surface-variant;
   opacity: 0.6;
+  transition: all 0.2s ease;
 }
 
 .tab-item--active {
   .tab-label {
     color: $primary;
     opacity: 1;
+    font-weight: 700;
   }
 }
 

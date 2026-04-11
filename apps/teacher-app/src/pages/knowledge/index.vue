@@ -231,7 +231,7 @@ onShow(() => loadData())
 }
 
 .main-content {
-  padding-top: 80px;
+  padding-top: 72px;
   padding-left: 20px;
   padding-right: 20px;
 }
@@ -277,7 +277,10 @@ onShow(() => loadData())
 
 // Tabs
 .tabs-section {
-  overflow: hidden;
+  margin-left: -20px;
+  margin-right: -20px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .tabs-scroll {
@@ -285,12 +288,14 @@ onShow(() => loadData())
 }
 
 .tabs-wrapper {
-  display: flex;
+  display: inline-flex;
   gap: 12px;
   padding-bottom: 8px;
 }
 
 .tab-item {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 10px 24px;
   background: $surface-container-low;
   border-radius: 9999px;
@@ -302,7 +307,7 @@ onShow(() => loadData())
   
   &--active {
     background: $primary;
-    box-shadow: 0 4px 15px rgba($primary, 0.3);
+    box-shadow: 0 8px 16px -4px rgba($primary, 0.2);
     
     .tab-text {
       color: $on-primary;
@@ -314,6 +319,7 @@ onShow(() => loadData())
   font-size: 14px;
   font-weight: 500;
   color: $on-surface-variant;
+  white-space: nowrap;
 }
 
 // Loading & Empty State

@@ -176,7 +176,7 @@ const handleLogout = () => {
 }
 
 .main-content {
-  padding-top: 80px;
+  padding-top: 72px;
   padding-left: 20px;
   padding-right: 20px;
 }
@@ -338,13 +338,13 @@ const handleLogout = () => {
 }
 
 .setting-item + .setting-item {
-  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-top: 1px solid rgba($outline-variant, 0.08);
 }
 
 .item-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .icon-circle {

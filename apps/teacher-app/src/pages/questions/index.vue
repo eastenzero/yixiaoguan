@@ -196,7 +196,7 @@ onShow(() => {
 }
 
 .main-content {
-  padding-top: 80px;
+  padding-top: 72px;
   padding-left: 20px;
   padding-right: 20px;
 }
@@ -235,8 +235,9 @@ onShow(() => {
   flex-shrink: 0;
   padding: 10px 24px;
   border-radius: 9999px;
-  background: $surface-container;
+  background: $surface-container-low;
   transition: all 0.2s ease;
+  white-space: nowrap;
 
   .tab-text {
     font-size: 14px;

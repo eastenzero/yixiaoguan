@@ -331,8 +331,8 @@ onShow(() => {
 // 主内容区域
 .main-content {
   padding-top: 72px;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 // 欢迎横幅
@@ -394,7 +394,7 @@ onShow(() => {
 
 // 快捷操作
 .quick-actions {
-  margin-top: 24px;
+  margin-top: 32px;
 }
 
 .quick-actions-scroll {
@@ -432,10 +432,10 @@ onShow(() => {
 
 // 统计网格
 .stats-grid {
-  margin-top: 24px;
+  margin-top: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
 }
 
 .stat-card {
