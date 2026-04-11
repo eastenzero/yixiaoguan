@@ -56,7 +56,7 @@
           </view>
 
           <!-- 验证码区域 -->
-          <view class="input-group">
+          <view v-if="captchaEnabled" class="input-group">
             <text class="input-label">验证码</text>
             <view class="captcha-row">
               <view class="input-wrapper captcha-input">
@@ -148,6 +148,7 @@ const password = ref('')
 const captchaCode = ref('')
 const captchaImg = ref('')
 const captchaUuid = ref('')
+const captchaEnabled = ref(true)
 const loading = ref(false)
 const rememberMe = ref(true)
 const showPassword = ref(false)
@@ -156,10 +157,22 @@ const showPassword = ref(false)
 const refreshCaptcha = async () => {
   try {
     const res = await getCaptcha()
-    captchaImg.value = 'data:image/png;base64,' + res.img
-    captchaUuid.value = res.uuid
+    console.log('[Login] captcha response:', JSON.stringify(res))
+    if (res.captchaEnabled === false) {
+      captchaEnabled.value = false
+      captchaImg.value = ''
+      return
+    }
+    captchaEnabled.value = true
+    if (res.img) {
+      captchaImg.value = 'data:image/png;base64,' + res.img
+      captchaUuid.value = res.uuid
+    } else {
+      console.warn('[Login] captcha img is empty, response:', res)
+      captchaImg.value = ''
+    }
   } catch (e) {
-    console.error('获取验证码失败', e)
+    console.error('[Login] 获取验证码失败', e)
     uni.showToast({ title: '获取验证码失败', icon: 'none' })
   }
 }
@@ -180,18 +193,21 @@ const handleLogin = async () => {
     uni.showToast({ title: '请输入账号和密码', icon: 'none' })
     return
   }
-  if (!captchaCode.value) {
+  if (captchaEnabled.value && !captchaCode.value) {
     uni.showToast({ title: '请输入验证码', icon: 'none' })
     return
   }
   loading.value = true
   try {
-    const loginRes = await loginApi({
+    const loginParams: any = {
       username: username.value,
-      password: password.value,
-      code: captchaCode.value,
-      uuid: captchaUuid.value
-    })
+      password: password.value
+    }
+    if (captchaEnabled.value) {
+      loginParams.code = captchaCode.value
+      loginParams.uuid = captchaUuid.value
+    }
+    const loginRes = await loginApi(loginParams)
     userStore.setToken(loginRes.token)
     
     // 获取用户信息
