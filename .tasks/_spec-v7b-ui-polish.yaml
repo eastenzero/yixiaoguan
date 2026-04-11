@@ -1,0 +1,295 @@
+# ============================================================
+# spec-v7b — 双端移动 App UI 精修 + BUG 修复
+# 日期: 2026-04-12
+# 状态: draft
+# 前置: spec-v7 (PASS), feat/v6-launch (merged)
+# ============================================================
+
+meta:
+  id: spec-v7b
+  title: "双端移动 App UI 精修 + BUG 修复"
+  date: "2026-04-12"
+  status: draft
+  depends_on: [spec-v7]
+  scope: |
+    1. 修复 spec-v7 遗留 BUG (params 不生效)
+    2. teacher-app 视觉质感对齐 Stitch 原型 (阴影、渐变、字体、间距)
+    3. student-app 样式统一化 (消除硬编码、内联SVG整理、色彩Token一致性)
+    4. 两端共享: Web Font 加载、微信小程序降级预备
+
+# ============================================================
+# Module A — Teacher App BUG 修复
+# 优先级: P0 | 预计: 0.5h
+# ============================================================
+modules:
+  - id: F-V7B-01
+    title: "Teacher App BUG 修复: request params 不生效"
+    priority: P0
+    effort: "0.5h"
+    description: |
+      spec-v7 验收发现: escalation.ts 和 knowledge.ts 直接调用 request() 时
+      传递 params 属性，但 uni.request 不支持 params，只有 data。
+      GET 请求的 query parameters 需要拼接到 URL 上。
+      
+      修复方案（二选一，推荐方案 A）：
+      A) 在 request.ts 的 request() 函数中增加 params → URL query string 拼接逻辑
+      B) 将 escalation.ts / knowledge.ts 中的 request() 调用改为 get() 辅助函数
+    files:
+      - path: apps/teacher-app/src/utils/request.ts
+        action: modify
+        detail: "在 request() 中检测 options.params，自动拼接到 URL"
+      - path: apps/teacher-app/src/api/escalation.ts
+        action: verify
+        detail: "确认修复后 params 能正确发送"
+      - path: apps/teacher-app/src/api/knowledge.ts
+        action: verify
+        detail: "确认修复后 params 能正确发送"
+    acceptance:
+      - id: AC-01
+        desc: "GET /api/v1/escalations/pending?pageNum=1&pageSize=20 请求中 URL 包含 query 参数"
+      - id: AC-02
+        desc: "GET /api/v1/knowledge/entries?categoryId=1&pageNum=1 请求中 URL 包含筛选参数"
+      - id: AC-03
+        desc: "现有 get()/post()/put()/del() 辅助函数行为不受影响"
+
+  # ============================================================
+  # Module B — Teacher App 视觉精修
+  # 优先级: P1 | 预计: 2h
+  # ============================================================
+  - id: F-V7B-02
+    title: "Teacher App 阴影 & 渐变精修"
+    priority: P1
+    effort: "2h"
+    description: |
+      对齐 Stitch React 原型的视觉质感，重点修复以下差距：
+      1. 卡片阴影: 当前单层简化阴影 → 多层色彩阴影 (tinted shadow)
+      2. 渐变细腻度: 2-stop 简化渐变 → 多 stop + 装饰元素
+      3. 间距节奏: 部分 padding/gap 值偏离 4px 基准网格
+      4. 毛玻璃参数: backdrop-filter 的 blur 值和透明度微调
+      
+      设计参考值（来自 React 原型 index.css）：
+      - 卡片阴影: box-shadow: 0 8px 24px -4px rgba(var(--primary-rgb), 0.12)
+      - 导航栏: backdrop-filter: blur(20px) saturate(180%)
+      - 渐变: linear-gradient(135deg, primary 0%, primary-container 50%, tertiary-container 100%)
+    files:
+      - path: apps/teacher-app/src/styles/theme.scss
+        action: modify
+        detail: "新增 $elevation-1/2/3 多层阴影变量、$gradient-primary 等渐变预设"
+      - path: apps/teacher-app/src/pages/dashboard/index.vue
+        action: modify
+        detail: "统计卡片阴影精修、欢迎 banner 渐变增加中间 stop"
+      - path: apps/teacher-app/src/pages/questions/index.vue
+        action: modify
+        detail: "卡片阴影层次、状态标签微调"
+      - path: apps/teacher-app/src/pages/knowledge/index.vue
+        action: modify
+        detail: "卡片阴影、分类标签色彩饱和度"
+      - path: apps/teacher-app/src/pages/knowledge/detail.vue
+        action: modify
+        detail: "hero 区域渐变、引用块样式补充"
+      - path: apps/teacher-app/src/pages/profile/index.vue
+        action: modify
+        detail: "hero 卡片渐变增加第三色 stop、统计卡片阴影"
+      - path: apps/teacher-app/src/pages/login/index.vue
+        action: modify
+        detail: "登录卡片毛玻璃 + 阴影微调"
+      - path: apps/teacher-app/src/components/TopAppBar.vue
+        action: modify
+        detail: "backdrop-filter 参数对齐: blur(20px) saturate(180%)"
+      - path: apps/teacher-app/src/components/BottomNavBar.vue
+        action: modify
+        detail: "同上 backdrop-filter 参数对齐"
+    acceptance:
+      - id: AC-04
+        desc: "theme.scss 包含 $elevation-1/2/3 三级阴影变量"
+      - id: AC-05
+        desc: "Dashboard 统计卡片使用多层阴影，悬停/按压有层次感"
+      - id: AC-06
+        desc: "TopAppBar 和 BottomNavBar 的 backdrop-filter 包含 saturate(180%)"
+      - id: AC-07
+        desc: "Profile hero 卡片渐变至少 3 个 color stop"
+      - id: AC-08
+        desc: "Knowledge Detail 页面包含引用块样式（紫色左竖条 4px + 浅紫背景）"
+
+  # ============================================================
+  # Module C — Teacher App 字体 & 细节
+  # 优先级: P1 | 预计: 0.5h
+  # ============================================================
+  - id: F-V7B-03
+    title: "Teacher App 字体加载 + 杂项清理"
+    priority: P1
+    effort: "0.5h"
+    description: |
+      1. 加载 Manrope web font（CDN 或本地 woff2）
+      2. 清理孤儿文件 pages/index/index.vue
+      3. Dashboard 快捷操作按钮指向不存在页面 → 改为 Toast "功能开发中"
+    files:
+      - path: apps/teacher-app/src/App.vue
+        action: modify
+        detail: "添加 @font-face 引入 Manrope (Google Fonts CDN 或本地)"
+      - path: apps/teacher-app/src/pages/index/index.vue
+        action: delete
+        detail: "孤儿页面，不在 pages.json 中"
+      - path: apps/teacher-app/src/pages/dashboard/index.vue
+        action: modify
+        detail: "快捷操作按钮 navigateTo → showToast('功能开发中')"
+    acceptance:
+      - id: AC-09
+        desc: "@font-face 声明存在，font-family 包含 Manrope"
+      - id: AC-10
+        desc: "pages/index/index.vue 已删除"
+      - id: AC-11
+        desc: "Dashboard 4 个快捷操作按钮点击后显示 Toast 而非跳转报错"
+
+  # ============================================================
+  # Module D — Student App 色彩 Token 统一
+  # 优先级: P1 | 预计: 1.5h
+  # ============================================================
+  - id: F-V7B-04
+    title: "Student App 色彩硬编码清理"
+    priority: P1
+    effort: "1.5h"
+    description: |
+      当前问题：
+      1. home/index.vue 在 <style> 中重新声明了 $primary-container: #00A79D 等本地变量，
+         覆盖了 theme.scss 的全局 Token → 导致页面间色彩不一致
+      2. 已知 DEBT-V4-01: 5 处 #006a64 硬编码散落在各页面
+      3. chat/index.vue 使用 CSS var(--color-primary, #006a64) 混用方式
+      
+      目标：
+      - 所有页面统一通过 @import theme.scss 引用 token
+      - 消除 #006a64 / #00A79D 等颜色硬编码
+      - 本地 $primary / $surface 等 alias 全部删除，使用全局 token
+    files:
+      - path: apps/student-app/src/pages/home/index.vue
+        action: modify
+        detail: "删除 <style> 中 20+ 行本地颜色变量声明，使用全局 theme token"
+      - path: apps/student-app/src/pages/chat/index.vue
+        action: modify
+        detail: "将 var(--color-primary, #006a64) 替换为 SCSS $primary-40 或 $md-sys-color-primary"
+      - path: apps/student-app/src/pages/profile/index.vue
+        action: modify
+        detail: "检查并替换任何硬编码颜色值"
+      - path: apps/student-app/src/pages/questions/index.vue
+        action: modify
+        detail: "检查并替换任何硬编码颜色值"
+      - path: apps/student-app/src/pages/services/index.vue
+        action: modify
+        detail: "检查并替换任何硬编码颜色值"
+      - path: apps/student-app/src/components/BentoCard.vue
+        action: modify
+        detail: "检查并替换任何硬编码颜色值"
+      - path: apps/student-app/src/components/CustomTabBar.vue
+        action: modify
+        detail: "检查并替换任何硬编码颜色值"
+    acceptance:
+      - id: AC-12
+        desc: "全局 grep '#006a64' 在 .vue/.scss 文件中返回 0 结果（仅 theme.scss 中定义 $primary-40 除外）"
+      - id: AC-13
+        desc: "全局 grep '#00A79D' 在 .vue 文件中返回 0 结果"
+      - id: AC-14
+        desc: "home/index.vue <style> 中不再包含本地 $primary / $surface 等重定义"
+      - id: AC-15
+        desc: "所有页面 <style> 均通过 @import '@/styles/theme.scss' 引用全局 token"
+
+  # ============================================================
+  # Module E — Student App 图标组件化
+  # 优先级: P2 | 预计: 1h
+  # ============================================================
+  - id: F-V7B-05
+    title: "Student App 内联 SVG → 图标组件"
+    priority: P2
+    effort: "1h"
+    description: |
+      当前问题：
+      1. home/index.vue 中 6 个 SVG 图标通过 h() render function 内联定义
+      2. profile/index.vue 中多处 <svg> 标签内联
+      3. chat/index.vue 中 📋 emoji 用作图标（iOS/Android 渲染不一致）
+      
+      目标：
+      - 将高频复用的 SVG 迁移到 components/icons/ 目录
+      - chat 页面的 📋 替换为 IconClipboard SVG 组件
+      - home 页面的 h() render icons 替换为 .vue 组件 import
+      
+      注意：student-app/src/components/icons/ 已有 53 个图标组件，
+      优先复用已有的，仅补充缺失的。
+    files:
+      - path: apps/student-app/src/pages/home/index.vue
+        action: modify
+        detail: "用 icon 组件替换 h() render function 定义的 6 个图标"
+      - path: apps/student-app/src/pages/chat/index.vue
+        action: modify
+        detail: "📋 emoji → IconClipboard 或类似图标组件"
+      - path: apps/student-app/src/pages/profile/index.vue
+        action: modify
+        detail: "内联 <svg> → 图标组件"
+      - path: apps/student-app/src/components/icons/
+        action: create-if-missing
+        detail: "补充缺失的图标组件（如 IconClipboard、IconGlobe 等）"
+    acceptance:
+      - id: AC-16
+        desc: "home/index.vue 不包含 h('svg', ...) render function 定义"
+      - id: AC-17
+        desc: "chat/index.vue 不包含 📋 emoji 文字"
+      - id: AC-18
+        desc: "profile/index.vue 中内联 <svg> 数量减少至 ≤ 2 个（装饰性 SVG 除外）"
+
+  # ============================================================
+  # Module F — Student App 卡片阴影 & 间距统一
+  # 优先级: P2 | 预计: 1h
+  # ============================================================
+  - id: F-V7B-06
+    title: "Student App 阴影 & 间距规范化"
+    priority: P2
+    effort: "1h"
+    description: |
+      目标：
+      1. 使用 theme.scss 已定义的 $md-sys-elevation-1/2/3 替代各页面的手写 box-shadow
+      2. 统一 border-radius 使用 $radius-* token
+      3. 统一 padding/margin 使用 $space-* token（不强求 100%，优先高频区域）
+    files:
+      - path: apps/student-app/src/pages/home/index.vue
+        action: modify
+        detail: "卡片 box-shadow 替换为 $md-sys-elevation-* token"
+      - path: apps/student-app/src/pages/profile/index.vue
+        action: modify
+        detail: "同上"
+      - path: apps/student-app/src/components/BentoCard.vue
+        action: modify
+        detail: "阴影 token 化"
+      - path: apps/student-app/src/components/LinkCard.vue
+        action: modify
+        detail: "阴影 token 化"
+    acceptance:
+      - id: AC-19
+        desc: "home/index.vue 中 box-shadow 值使用 $md-sys-elevation-* 变量而非手写"
+      - id: AC-20
+        desc: "BentoCard.vue 和 LinkCard.vue 的阴影使用 token"
+
+# ============================================================
+# 全局验收 & 执行计划
+# ============================================================
+global_acceptance:
+  - "teacher-app npx uni -p h5 编译无报错"
+  - "student-app npx uni -p h5 编译无报错（允许 Sass deprecation warning）"
+  - "两端页面无白屏、无明显样式错乱"
+  - "teacher-app API 请求 Network tab 中可见正确的 query string"
+
+execution_order:
+  - batch-1: [F-V7B-01]                    # P0 BUG 修复 (0.5h)
+  - batch-2: [F-V7B-02, F-V7B-03]          # Teacher App 视觉 (2.5h)
+  - batch-3: [F-V7B-04]                    # Student App 色彩统一 (1.5h)
+  - batch-4: [F-V7B-05, F-V7B-06]          # Student App 图标+阴影 (2h)
+
+total_effort: "~7h"
+
+risks:
+  - id: R1
+    desc: "Manrope 字体 CDN 在校园网可能加载慢"
+    mitigation: "提供本地 woff2 fallback，font-display: swap"
+  - id: R2
+    desc: "student-app 色彩替换后可能出现意外样式变化"
+    mitigation: "逐页面替换 + 截图对比"
+  - id: R3
+    desc: "student-app 已有 53 个 icon 组件，补充时可能命名冲突"
+    mitigation: "先 ls icons/ 列出已有组件，再补充缺失的"
