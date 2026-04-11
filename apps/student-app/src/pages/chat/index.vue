@@ -230,7 +230,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import MarkdownIt from 'markdown-it'
 import IconSend from '@/components/icons/IconSend.vue'
 import IconCopy from '@/components/icons/IconCopy.vue'
@@ -331,6 +331,19 @@ onLoad((options: any) => {
   if (options?.conversationId) {
     conversationId.value = parseInt(options.conversationId)
     loadHistory()
+  }
+})
+
+// tabbar 页面后续切换只触发 onShow，在此检查待加载的会话
+onShow(() => {
+  const pendingId = uni.getStorageSync('pendingConversationId')
+  if (pendingId) {
+    uni.removeStorageSync('pendingConversationId')
+    const id = Number(pendingId)
+    if (id !== conversationId.value) {
+      conversationId.value = id
+      loadHistory()
+    }
   }
 })
 

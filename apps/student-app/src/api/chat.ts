@@ -118,7 +118,11 @@ export function getMyEscalations(
   status?: number,
   params?: PageParams
 ): Promise<PageResult<Escalation>> {
-  return get('/api/v1/escalations/my', { status, ...params })
+  const query: Record<string, any> = { ...params }
+  if (status !== undefined && status !== null) {
+    query.status = status
+  }
+  return get('/api/v1/escalations/my', query)
 }
 
 /**
